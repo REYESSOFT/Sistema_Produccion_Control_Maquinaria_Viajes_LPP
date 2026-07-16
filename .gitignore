@@ -1,0 +1,32 @@
+# Archivos compilados de Java
+*.class
+*.war
+
+# Carpetas compiladas de Java
+bin/
+build/
+target/
+out/
+
+# Eclipse
+.metadata/
+.settings/
+.classpath
+.project
+
+# IntelliJ
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+
+# Registros y temporales
+*.log
+*.tmp
+Thumbs.db
+.DS_Store
