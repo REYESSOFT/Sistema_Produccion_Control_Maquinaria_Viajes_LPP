@@ -16,6 +16,8 @@ public class ControlProyeccionPage extends JPanel {
     
     private static final String PANTALLA_PROYECTOS =
             "PROYECTOS";
+    private static final String PANTALLA_ASIGNACION_MAQUINARIA =
+            "ASIGNACION_MAQUINARIA";
 
 
     public ControlProyeccionPage() {
@@ -49,6 +51,12 @@ public class ControlProyeccionPage extends JPanel {
             ),
         PANTALLA_PROYECTOS
     );
+    panelPantallas.add(
+                new AsignacionMaquinariaPage(
+                        this::mostrarPantallaPrincipal
+                ),
+                PANTALLA_ASIGNACION_MAQUINARIA
+        );
 
     add(
             panelPantallas,
@@ -132,7 +140,7 @@ public class ControlProyeccionPage extends JPanel {
             crearTarjeta(
                     "Asignación de maquinaria",
                     "Asignar equipos y volquetas a cada proyecto.",
-                    null
+                    this::mostrarAsignacionMaquinaria
             )
     );
 
@@ -327,6 +335,13 @@ private void mostrarProyectos() {
     cardLayout.show(
             panelPantallas,
             PANTALLA_PROYECTOS
+    );
+}
+private void mostrarAsignacionMaquinaria() {
+
+    cardLayout.show(
+            panelPantallas,
+            PANTALLA_ASIGNACION_MAQUINARIA
     );
 }
 }

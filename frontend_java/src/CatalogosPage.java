@@ -20,8 +20,8 @@ public class CatalogosPage extends JPanel {
             "SECTORES";
     private static final String PANTALLA_PISCINAS =
             "PISCINAS";
-
-
+    private static final String PANTALLA_TIPOS_ACTIVIDAD =
+            "TIPOS_ACTIVIDAD";
 
     public CatalogosPage(
             Runnable accionVolverModulo
@@ -67,6 +67,12 @@ public class CatalogosPage extends JPanel {
                         this::mostrarCatalogos
                 ),
                 PANTALLA_PISCINAS
+        );
+        panelPantallas.add(
+                new TipoActividadProyectoPage(
+                        this::mostrarCatalogos
+                ),
+                PANTALLA_TIPOS_ACTIVIDAD
         );
 
         add(
@@ -198,6 +204,14 @@ public class CatalogosPage extends JPanel {
                         "Crear, editar y administrar "
                                 + "las piscinas de cada sector.",
                         this::mostrarPiscinas
+                )
+        );
+        panelOpciones.add(
+                crearTarjeta(
+                        "Tipos de Actividad",
+                        "Crear, editar y administrar "
+                                + "los tipos de actividad de los proyectos.",
+                        this::mostrarTiposActividad
                 )
         );
 
@@ -376,6 +390,13 @@ private void mostrarPiscinas() {
     cardLayout.show(
             panelPantallas,
             PANTALLA_PISCINAS
+    );
+}
+private void mostrarTiposActividad() {
+
+    cardLayout.show(
+            panelPantallas,
+            PANTALLA_TIPOS_ACTIVIDAD
     );
 }
 

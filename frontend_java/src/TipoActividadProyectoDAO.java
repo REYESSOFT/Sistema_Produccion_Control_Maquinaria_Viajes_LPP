@@ -253,41 +253,103 @@ public class TipoActividadProyectoDAO {
     }
 
     public static void eliminar(
-            int idTipoActividad
-    ) throws Exception {
+        int idTipoActividad
+) throws Exception {
 
-        String sql = """
-                UPDATE tipos_actividad_proyecto
-                SET activo = 0
-                WHERE id_tipo_actividad = ?
-                  AND activo = 1
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(sql)
-        ) {
-
-            ps.setInt(
-                    1,
+    int proyectosRelacionados =
+            contarProyectosRelacionados(
                     idTipoActividad
             );
 
-            int filas =
-                    ps.executeUpdate();
+    if (proyectosRelacionados > 0) {
 
-            if (filas == 0) {
+        throw new Exception(
+                "No se puede eliminar este tipo de actividad.\n\n"
+                        + "Está asignado a "
+                        + proyectosRelacionados
+                        + (
+                            proyectosRelacionados == 1
+                                    ? " proyecto."
+                                    : " proyectos."
+                        )
+                        + "\n\n"
+                        + "Puede editar su descripción, "
+                        + "pero debe conservarse para proteger el historial."
+        );
+    }
 
-                throw new Exception(
-                        "El tipo de actividad no existe "
-                                + "o ya fue eliminado."
+    String sql = """
+            UPDATE tipos_actividad_proyecto
+            SET activo = 0
+            WHERE id_tipo_actividad = ?
+              AND activo = 1
+            """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(sql)
+    ) {
+
+        ps.setInt(
+                1,
+                idTipoActividad
+        );
+
+        int filas =
+                ps.executeUpdate();
+
+        if (filas == 0) {
+
+            throw new Exception(
+                    "El tipo de actividad no existe "
+                            + "o ya fue eliminado."
+            );
+        }
+    }
+}
+
+public static int contarProyectosRelacionados(
+        int idTipoActividad
+) throws Exception {
+
+    String sql = """
+        SELECT COUNT(*) AS total
+        FROM proyectos
+        WHERE id_tipo_actividad = ?
+        """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(sql)
+    ) {
+
+        ps.setInt(
+                1,
+                idTipoActividad
+        );
+
+        try (
+                ResultSet rs =
+                        ps.executeQuery()
+        ) {
+
+            if (rs.next()) {
+
+                return rs.getInt(
+                        "total"
                 );
             }
         }
     }
+
+    return 0;
+}
 
     private static void validarNombre(
             String nombreActividad
