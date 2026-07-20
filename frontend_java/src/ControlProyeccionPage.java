@@ -18,6 +18,8 @@ public class ControlProyeccionPage extends JPanel {
             "PROYECTOS";
     private static final String PANTALLA_ASIGNACION_MAQUINARIA =
             "ASIGNACION_MAQUINARIA";
+    private static final String PANTALLA_MANTENIMIENTO =
+            "MANTENIMIENTO";
 
 
     public ControlProyeccionPage() {
@@ -57,6 +59,10 @@ public class ControlProyeccionPage extends JPanel {
                 ),
                 PANTALLA_ASIGNACION_MAQUINARIA
         );
+    panelPantallas.add(
+                crearPantallaMantenimiento(),
+                PANTALLA_MANTENIMIENTO
+    );
 
     add(
             panelPantallas,
@@ -112,8 +118,8 @@ public class ControlProyeccionPage extends JPanel {
     JPanel panelOpciones =
             new JPanel(
                     new GridLayout(
-                            3,
-                            3,
+                            0,
+                            4,
                             15,
                             15
                     )
@@ -141,6 +147,14 @@ public class ControlProyeccionPage extends JPanel {
                     "Asignación de maquinaria",
                     "Asignar equipos y volquetas a cada proyecto.",
                     this::mostrarAsignacionMaquinaria
+            )
+    );
+    panelOpciones.add(
+            crearTarjeta(
+                    "Mantenimiento",
+                    "Gestión de mantenimiento de maquinaria. "
+                            + "Estructura pendiente de definición.",
+                    this::mostrarMantenimiento
             )
     );
 
@@ -191,13 +205,189 @@ public class ControlProyeccionPage extends JPanel {
                     null
             )
     );
+    panelOpciones.setPreferredSize(
+        new Dimension(
+                1500,
+                650
+        )
+);
 
-    panelPrincipal.add(
-            panelOpciones,
+    JScrollPane scrollOpciones =
+        new JScrollPane(
+                panelOpciones
+        );
+
+scrollOpciones.setBorder(null);
+
+scrollOpciones.setHorizontalScrollBarPolicy(
+        JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+);
+
+scrollOpciones.setVerticalScrollBarPolicy(
+        JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+);
+
+scrollOpciones.getHorizontalScrollBar()
+        .setUnitIncrement(24);
+
+scrollOpciones.getVerticalScrollBar()
+        .setUnitIncrement(20);
+
+scrollOpciones.getViewport()
+        .setBackground(
+                new Color(
+                        244,
+                        246,
+                        248
+                )
+        );
+
+panelPrincipal.add(
+        scrollOpciones,
+        BorderLayout.CENTER
+);
+
+    return panelPrincipal;
+}
+private JPanel crearPantallaMantenimiento() {
+
+    JPanel panel =
+            new JPanel(
+                    new BorderLayout(
+                            15,
+                            15
+                    )
+            );
+
+    panel.setBackground(
+            new Color(
+                    244,
+                    246,
+                    248
+            )
+    );
+
+    panel.setBorder(
+            BorderFactory.createEmptyBorder(
+                    20,
+                    20,
+                    20,
+                    20
+            )
+    );
+
+    JPanel encabezado =
+            new JPanel(
+                    new BorderLayout(
+                            10,
+                            10
+                    )
+            );
+
+    encabezado.setOpaque(false);
+
+    JButton btnVolver =
+            new JButton(
+                    "← Volver"
+            );
+
+    btnVolver.setFocusPainted(false);
+
+    btnVolver.addActionListener(
+            e -> mostrarPantallaPrincipal()
+    );
+
+    JLabel titulo =
+            new JLabel(
+                    "Mantenimiento de Maquinaria"
+            );
+
+    titulo.setFont(
+            new Font(
+                    "Segoe UI",
+                    Font.BOLD,
+                    28
+            )
+    );
+
+    titulo.setForeground(
+            new Color(
+                    31,
+                    41,
+                    55
+            )
+    );
+
+    encabezado.add(
+            btnVolver,
+            BorderLayout.WEST
+    );
+
+    encabezado.add(
+            titulo,
             BorderLayout.CENTER
     );
 
-    return panelPrincipal;
+    JPanel contenido =
+            new JPanel(
+                    new GridBagLayout()
+            );
+
+    contenido.setBackground(
+            Color.WHITE
+    );
+
+    contenido.setBorder(
+            BorderFactory.createLineBorder(
+                    new Color(
+                            209,
+                            213,
+                            219
+                    )
+            )
+    );
+
+    JLabel mensaje =
+            new JLabel(
+                    "<html><div style='text-align:center;'>"
+                            + "<b>Módulo creado.</b><br><br>"
+                            + "La estructura, campos y reglas de mantenimiento "
+                            + "se encuentran pendientes de definición."
+                            + "</div></html>",
+                    SwingConstants.CENTER
+            );
+
+    mensaje.setFont(
+            new Font(
+                    "Segoe UI",
+                    Font.PLAIN,
+                    17
+            )
+    );
+
+    mensaje.setForeground(
+            new Color(
+                    75,
+                    85,
+                    99
+            )
+    );
+
+    contenido.add(
+            mensaje
+    );
+
+    panel.add(
+            encabezado,
+            BorderLayout.NORTH
+    );
+
+    panel.add(
+            contenido,
+            BorderLayout.CENTER
+    );
+
+    return panel;
 }
 
 
@@ -342,6 +532,13 @@ private void mostrarAsignacionMaquinaria() {
     cardLayout.show(
             panelPantallas,
             PANTALLA_ASIGNACION_MAQUINARIA
+    );
+}
+private void mostrarMantenimiento() {
+
+    cardLayout.show(
+            panelPantallas,
+            PANTALLA_MANTENIMIENTO
     );
 }
 }

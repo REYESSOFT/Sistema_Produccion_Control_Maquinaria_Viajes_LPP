@@ -158,6 +158,9 @@ public class AsignacionMaquinariaPage extends JPanel {
                 new JTable(
                         modeloTabla
                 );
+        tabla.setAutoResizeMode(
+                JTable.AUTO_RESIZE_OFF
+        );
 
         tabla.setRowHeight(26);
 
@@ -174,21 +177,15 @@ public class AsignacionMaquinariaPage extends JPanel {
                 )
         );
 
-        tabla.getColumnModel()
-                .getColumn(0)
-                .setPreferredWidth(45);
-
-        tabla.getColumnModel()
-                .getColumn(1)
-                .setPreferredWidth(240);
-
-        tabla.getColumnModel()
-                .getColumn(2)
-                .setPreferredWidth(260);
-
-        tabla.getColumnModel()
-                .getColumn(3)
-                .setPreferredWidth(160);
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(60);   // ID
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(260);  // Proyecto
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(320);  // Maquinaria
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(180);  // Propietario
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(90);   // Cantidad
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(140);  // Fecha ingreso
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(140);  // Fecha salida
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(120);  // Tarifa hora
+        tabla.getColumnModel().getColumn(8).setPreferredWidth(140);  // Estado
 
         return new JScrollPane(
                 tabla
@@ -231,21 +228,15 @@ public class AsignacionMaquinariaPage extends JPanel {
         );
 
         btnEditar.addActionListener(
-                e -> validarSeleccionTemporal(
-                        "Editar"
-                )
+                e -> editarAsignacion()
         );
 
         btnDetalle.addActionListener(
-                e -> validarSeleccionTemporal(
-                        "Detalle"
-                )
-        );
+                e -> verDetalleAsignacion()
+)       ;
 
         btnEliminar.addActionListener(
-                e -> validarSeleccionTemporal(
-                        "Eliminar"
-                )
+                e -> eliminarAsignacion()
         );
 
         panel.add(btnNueva);
@@ -376,6 +367,150 @@ public class AsignacionMaquinariaPage extends JPanel {
     if (formulario.isGuardado()) {
 
         cargarAsignaciones();
+    }
+}
+private void editarAsignacion() {
+
+    int fila =
+            tabla.getSelectedRow();
+
+    if (fila == -1) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Seleccione una asignación.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        return;
+    }
+
+    int idAsignacion =
+            Integer.parseInt(
+                    modeloTabla
+                            .getValueAt(
+                                    fila,
+                                    0
+                            )
+                            .toString()
+            );
+
+    FormAsignacionMaquinaria formulario =
+            new FormAsignacionMaquinaria(
+                    SwingUtilities.getWindowAncestor(this),
+                    idAsignacion
+            );
+
+    formulario.setVisible(true);
+
+    if (formulario.isGuardado()) {
+
+        cargarAsignaciones();
+    }
+}
+private void verDetalleAsignacion() {
+
+    int fila =
+            tabla.getSelectedRow();
+
+    if (fila == -1) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Seleccione una asignación.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        return;
+    }
+
+    int idAsignacion =
+            Integer.parseInt(
+                    modeloTabla
+                            .getValueAt(
+                                    fila,
+                                    0
+                            )
+                            .toString()
+            );
+
+    FormAsignacionMaquinaria formulario =
+            new FormAsignacionMaquinaria(
+                    SwingUtilities.getWindowAncestor(this),
+                    idAsignacion,
+                    true
+            );
+
+    formulario.setVisible(true);
+}
+private void eliminarAsignacion() {
+
+    int fila =
+            tabla.getSelectedRow();
+
+    if (fila == -1) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Seleccione una asignación.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        return;
+    }
+
+    int idAsignacion =
+            Integer.parseInt(
+                    modeloTabla
+                            .getValueAt(
+                                    fila,
+                                    0
+                            )
+                            .toString()
+            );
+
+    int respuesta =
+            JOptionPane.showConfirmDialog(
+                    this,
+                    "¿Está seguro de eliminar esta asignación?\n\n"
+                            + "La asignación dejará de mostrarse en la pantalla,\n"
+                            + "pero permanecerá almacenada en la base de datos.",
+                    "Confirmar eliminación",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+    if (respuesta != JOptionPane.YES_OPTION) {
+
+        return;
+    }
+
+    try {
+
+        AsignacionMaquinariaDAO.eliminar(
+                idAsignacion
+        );
+
+        cargarAsignaciones();
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Asignación eliminada correctamente.",
+                "LPP Smart ERP",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+
+    } catch (Exception ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
     }
 }
 }

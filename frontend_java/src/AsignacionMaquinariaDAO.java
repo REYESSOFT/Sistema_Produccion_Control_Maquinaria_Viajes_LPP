@@ -60,6 +60,21 @@ public class AsignacionMaquinariaDAO {
             String estado
     ) {
     }
+    public record AsignacionDetalle(
+        int idAsignacion,
+        int idProyecto,
+        int idMaquinaria,
+        String codigoHistorico,
+        String descripcionHistorica,
+        String proveedorHistorico,
+        int cantidad,
+        LocalDate fechaIngreso,
+        LocalDate fechaSalida,
+        Double tarifaHora,
+        String estado,
+        String observaciones
+) {
+}
 
     public record DatosHistoricosMaquinaria(
         String codigo,
@@ -290,6 +305,86 @@ public class AsignacionMaquinariaDAO {
         return asignaciones;
     }
 
+    public static AsignacionDetalle obtenerPorId(
+        int idAsignacion
+) throws Exception {
+
+    String sql = """
+            SELECT
+                id_asignacion,
+                id_proyecto,
+                id_maquinaria,
+                COALESCE(codigo_historico, '') AS codigo_historico,
+                COALESCE(descripcion_historica, '') AS descripcion_historica,
+                COALESCE(proveedor_historico, '') AS proveedor_historico,
+                cantidad,
+                fecha_ingreso,
+                fecha_salida,
+                tarifa_hora_asignada,
+                estado,
+                COALESCE(observaciones, '') AS observaciones
+            FROM proyecto_maquinaria
+            WHERE id_asignacion = ?
+              AND activo = 1
+            LIMIT 1
+            """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(sql)
+    ) {
+
+        ps.setInt(
+                1,
+                idAsignacion
+        );
+
+        try (
+                ResultSet rs =
+                        ps.executeQuery()
+        ) {
+
+            if (!rs.next()) {
+
+                throw new Exception(
+                        "No se encontró la asignación."
+                );
+            }
+
+            Date fechaIngresoSql =
+                    rs.getDate("fecha_ingreso");
+
+            Date fechaSalidaSql =
+                    rs.getDate("fecha_salida");
+
+            return new AsignacionDetalle(
+                    rs.getInt("id_asignacion"),
+                    rs.getInt("id_proyecto"),
+                    rs.getInt("id_maquinaria"),
+                    rs.getString("codigo_historico"),
+                    rs.getString("descripcion_historica"),
+                    rs.getString("proveedor_historico"),
+                    rs.getInt("cantidad"),
+                    fechaIngresoSql == null
+                            ? null
+                            : fechaIngresoSql.toLocalDate(),
+                    fechaSalidaSql == null
+                            ? null
+                            : fechaSalidaSql.toLocalDate(),
+                    obtenerDoubleNullable(
+                            rs,
+                            "tarifa_hora_asignada"
+                    ),
+                    rs.getString("estado"),
+                    rs.getString("observaciones")
+            );
+        }
+    }
+}
+
     public static int insertar(
             int idProyecto,
             int idMaquinaria,
@@ -302,18 +397,25 @@ public class AsignacionMaquinariaDAO {
     ) throws Exception {
 
         validarDatos(
-                idProyecto,
-                idMaquinaria,
-                cantidad,
-                fechaIngreso,
-                fechaSalida
-        );
+        idProyecto,
+        idMaquinaria,
+        cantidad,
+        fechaIngreso,
+        fechaSalida
+);
 
-        validarAsignacionDuplicada(
-                idProyecto,
-                idMaquinaria,
-                fechaIngreso
-        );
+validarDisponibilidadMaquinaria(
+        0,
+        idMaquinaria,
+        fechaIngreso,
+        fechaSalida
+);
+
+validarAsignacionDuplicada(
+        idProyecto,
+        idMaquinaria,
+        fechaIngreso
+);
         DatosHistoricosMaquinaria datosHistoricos =
             obtenerDatosHistoricosMaquinaria(
                     idMaquinaria
@@ -445,6 +547,175 @@ public class AsignacionMaquinariaDAO {
                         + "pero no se pudo obtener su ID."
         );
     }
+    public static void actualizar(
+        int idAsignacion,
+        int cantidad,
+        LocalDate fechaIngreso,
+        LocalDate fechaSalida,
+        Double tarifaHoraAsignada,
+        String estado,
+        String observaciones
+) throws Exception {
+
+    validarDatosEdicion(
+            cantidad,
+            fechaIngreso,
+            fechaSalida
+    );
+    AsignacionDetalle asignacionActual =
+        obtenerPorId(idAsignacion);
+
+    validarDisponibilidadMaquinaria(
+        idAsignacion,
+        asignacionActual.idMaquinaria(),
+        fechaIngreso,
+        fechaSalida
+    );
+
+    String sql = """
+            UPDATE proyecto_maquinaria
+            SET
+                cantidad = ?,
+                fecha_ingreso = ?,
+                fecha_salida = ?,
+                tarifa_hora_asignada = ?,
+                estado = ?,
+                observaciones = ?
+            WHERE id_asignacion = ?
+              AND activo = 1
+            """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(sql)
+    ) {
+
+        ps.setInt(
+                1,
+                cantidad
+        );
+
+        ps.setDate(
+                2,
+                Date.valueOf(fechaIngreso)
+        );
+
+        asignarFecha(
+                ps,
+                3,
+                fechaSalida
+        );
+
+        asignarDecimal(
+                ps,
+                4,
+                tarifaHoraAsignada
+        );
+
+        ps.setString(
+                5,
+                estado
+        );
+
+        asignarTexto(
+                ps,
+                6,
+                observaciones
+        );
+
+        ps.setInt(
+                7,
+                idAsignacion
+        );
+
+        int filas =
+                ps.executeUpdate();
+
+        if (filas == 0) {
+
+            throw new Exception(
+                    "No fue posible actualizar la asignación."
+            );
+        }
+    }
+}
+public static void eliminar(
+        int idAsignacion
+) throws Exception {
+
+    if (idAsignacion <= 0) {
+
+        throw new Exception(
+                "La asignación seleccionada no es válida."
+        );
+    }
+
+    String sql = """
+            UPDATE proyecto_maquinaria
+            SET activo = 0
+            WHERE id_asignacion = ?
+              AND activo = 1
+            """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(sql)
+    ) {
+
+        ps.setInt(
+                1,
+                idAsignacion
+        );
+
+        int filas =
+                ps.executeUpdate();
+
+        if (filas == 0) {
+
+            throw new Exception(
+                    "No fue posible eliminar la asignación. "
+                            + "Puede que ya haya sido eliminada."
+            );
+        }
+    }
+}
+private static void validarDatosEdicion(
+        int cantidad,
+        LocalDate fechaIngreso,
+        LocalDate fechaSalida
+) throws Exception {
+
+    if (cantidad <= 0) {
+
+        throw new Exception(
+                "La cantidad debe ser mayor que cero."
+        );
+    }
+
+    if (fechaIngreso == null) {
+
+        throw new Exception(
+                "La fecha de ingreso es obligatoria."
+        );
+    }
+
+    if (
+        fechaSalida != null
+        && fechaSalida.isBefore(fechaIngreso)
+    ) {
+
+        throw new Exception(
+                "La fecha de salida no puede ser "
+                        + "anterior a la fecha de ingreso."
+        );
+    }
+}
 
     private static DatosHistoricosMaquinaria
         obtenerDatosHistoricosMaquinaria(
@@ -627,6 +898,151 @@ public class AsignacionMaquinariaDAO {
             }
         }
     }
+    private static void validarDisponibilidadMaquinaria(
+        int idAsignacionExcluir,
+        int idMaquinaria,
+        LocalDate fechaIngresoNueva,
+        LocalDate fechaSalidaNueva
+) throws Exception {
+
+    if (fechaSalidaNueva == null) {
+        fechaSalidaNueva = LocalDate.of(9999, 12, 31);
+    }
+
+    String sql = """
+        SELECT
+            CONCAT(
+                p.codigo_proyecto,
+                ' - ',
+                p.descripcion
+            ) AS proyecto,
+
+            pm.fecha_ingreso,
+            pm.fecha_salida
+
+        FROM proyecto_maquinaria pm
+
+        INNER JOIN proyectos p
+            ON p.id_proyecto = pm.id_proyecto
+
+        WHERE pm.activo = 1
+          AND pm.estado <> 'CANCELADA'
+          AND pm.id_maquinaria = ?
+          AND pm.id_asignacion <> ?
+
+          AND
+
+          (
+                ? <= COALESCE(
+                        pm.fecha_salida,
+                        '9999-12-31'
+                    )
+
+            AND
+
+                ? >= pm.fecha_ingreso
+          )
+
+        LIMIT 1
+        """;
+
+    try (
+
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(sql)
+
+    ) {
+
+        ps.setInt(
+                1,
+                idMaquinaria
+        );
+
+        ps.setInt(
+                2,
+                idAsignacionExcluir
+        );
+
+        ps.setDate(
+                3,
+                Date.valueOf(fechaIngresoNueva)
+        );
+
+        ps.setDate(
+                4,
+                Date.valueOf(fechaSalidaNueva)
+        );
+
+        try (
+
+                ResultSet rs =
+                        ps.executeQuery()
+
+        ) {
+
+            if (rs.next()) {
+
+                LocalDate fechaInicio =
+                        rs.getDate(
+                                "fecha_ingreso"
+                        ).toLocalDate();
+
+                Date fechaFinSql =
+                        rs.getDate(
+                                "fecha_salida"
+                        );
+
+                String fechaFin;
+
+                if (fechaFinSql == null) {
+
+                    fechaFin =
+                            "SIN FECHA";
+
+                } else {
+
+                    fechaFin =
+                            fechaFinSql
+                                    .toLocalDate()
+                                    .toString();
+
+                }
+
+                throw new Exception(
+
+                        "No se puede realizar la asignación.\n\n"
+
+                        + "La maquinaria ya se encuentra asignada.\n\n"
+
+                        + "Proyecto: "
+                        + rs.getString("proyecto")
+
+                        + "\n\n"
+
+                        + "Fecha inicio: "
+                        + fechaInicio
+
+                        + "\n"
+
+                        + "Fecha final: "
+                        + fechaFin
+
+                        + "\n\n"
+
+                        + "Revise las fechas antes de continuar."
+
+                );
+
+            }
+
+        }
+
+    }
+
+}
 
     private static Double obtenerDoubleNullable(
             ResultSet rs,

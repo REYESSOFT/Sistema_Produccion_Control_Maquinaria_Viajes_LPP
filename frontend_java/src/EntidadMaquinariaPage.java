@@ -1,27 +1,19 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
-public class ProyectoPage extends JPanel {
+public class EntidadMaquinariaPage extends JPanel {
 
     private final Runnable accionVolver;
 
     private JTable tabla;
     private DefaultTableModel modeloTabla;
 
-    private JComboBox<String> cmbEmpresaFiltro;
+    private JTextField txtNombreFiltro;
+    private JComboBox<String> cmbTipoFiltro;
     private JComboBox<String> cmbEstadoFiltro;
 
-    private JTextField txtCodigoFiltro;
-
-    private static final DateTimeFormatter FORMATO_FECHA =
-            DateTimeFormatter.ofPattern(
-                    "dd/MM/yyyy"
-            );
-
-    public ProyectoPage(
+    public EntidadMaquinariaPage(
             Runnable accionVolver
     ) {
 
@@ -53,8 +45,7 @@ public class ProyectoPage extends JPanel {
         );
 
         crearInterfaz();
-        cargarFiltros();
-        cargarProyectos();
+        cargarEntidades();
     }
 
     private void crearInterfaz() {
@@ -75,7 +66,7 @@ public class ProyectoPage extends JPanel {
         );
 
         panelSuperior.add(
-                crearPanelFiltros(),
+                crearFiltros(),
                 BorderLayout.CENTER
         );
 
@@ -85,12 +76,12 @@ public class ProyectoPage extends JPanel {
         );
 
         add(
-                crearPanelTabla(),
+                crearTabla(),
                 BorderLayout.CENTER
         );
 
         add(
-                crearPanelBotones(),
+                crearBotones(),
                 BorderLayout.SOUTH
         );
     }
@@ -120,7 +111,7 @@ public class ProyectoPage extends JPanel {
 
         JLabel titulo =
                 new JLabel(
-                        "Catálogo de Proyectos"
+                        "Proveedores y Propietarios"
                 );
 
         titulo.setFont(
@@ -152,7 +143,7 @@ public class ProyectoPage extends JPanel {
         return panel;
     }
 
-    private JPanel crearPanelFiltros() {
+    private JPanel crearFiltros() {
 
         JPanel panel =
                 new JPanel(
@@ -170,23 +161,27 @@ public class ProyectoPage extends JPanel {
                 )
         );
 
-        cmbEmpresaFiltro =
-                new JComboBox<>();
+        txtNombreFiltro =
+                new JTextField();
+
+        cmbTipoFiltro =
+                new JComboBox<>(
+                        new String[]{
+                                "Todos",
+                                "EMPRESA",
+                                "PERSONA",
+                                "OTRO"
+                        }
+                );
 
         cmbEstadoFiltro =
                 new JComboBox<>(
                         new String[]{
                                 "Todos",
-                                "PLANIFICADO",
-                                "EN_EJECUCION",
-                                "SUSPENDIDO",
-                                "FINALIZADO",
-                                "CANCELADO"
+                                "ACTIVO",
+                                "INACTIVO"
                         }
                 );
-
-        txtCodigoFiltro =
-                new JTextField();
 
         JButton btnBuscar =
                 new JButton(
@@ -194,12 +189,18 @@ public class ProyectoPage extends JPanel {
                 );
 
         btnBuscar.addActionListener(
-                e -> cargarProyectos()
+                e -> cargarEntidades()
         );
 
         panel.add(
                 new JLabel(
-                        "Empresa:"
+                        "Nombre:"
+                )
+        );
+
+        panel.add(
+                new JLabel(
+                        "Tipo:"
                 )
         );
 
@@ -210,25 +211,19 @@ public class ProyectoPage extends JPanel {
         );
 
         panel.add(
-                new JLabel(
-                        "Código:"
-                )
-        );
-
-        panel.add(
                 new JLabel("")
         );
 
         panel.add(
-                cmbEmpresaFiltro
+                txtNombreFiltro
+        );
+
+        panel.add(
+                cmbTipoFiltro
         );
 
         panel.add(
                 cmbEstadoFiltro
-        );
-
-        panel.add(
-                txtCodigoFiltro
         );
 
         panel.add(
@@ -238,107 +233,97 @@ public class ProyectoPage extends JPanel {
         return panel;
     }
 
-    private JScrollPane crearPanelTabla() {
+    private JScrollPane crearTabla() {
 
-    modeloTabla =
-            new DefaultTableModel(
-                    new String[]{
-                            "ID",
-                            "Código",
-                            "Empresa",
-                            "Descripción",
-                            "Sector",
-                            "Piscina",
-                            "Inicio",
-                            "Fin estimado",
-                            "Estado"
-                    },
-                    0
-            ) {
-
-                @Override
-                public boolean isCellEditable(
-                        int fila,
-                        int columna
+        modeloTabla =
+                new DefaultTableModel(
+                        new String[]{
+                                "ID",
+                                "Nombre",
+                                "Tipo",
+                                "Identificación",
+                                "Teléfono",
+                                "Correo",
+                                "Estado"
+                        },
+                        0
                 ) {
 
-                    return false;
-                }
-            };
+                    @Override
+                    public boolean isCellEditable(
+                            int fila,
+                            int columna
+                    ) {
 
-    tabla =
-            new JTable(
-                    modeloTabla
-            );
+                        return false;
+                    }
+                };
 
-    tabla.setAutoResizeMode(
-            JTable.AUTO_RESIZE_OFF
-    );
+        tabla =
+                new JTable(
+                        modeloTabla
+                );
 
-    tabla.setRowHeight(26);
+        tabla.setAutoResizeMode(
+                JTable.AUTO_RESIZE_OFF
+        );
 
-    tabla.setSelectionMode(
-            ListSelectionModel
-                    .SINGLE_SELECTION
-    );
+        tabla.setRowHeight(26);
 
-    tabla.getTableHeader().setFont(
-            new Font(
-                    "Segoe UI",
-                    Font.BOLD,
-                    13
-            )
-    );
+        tabla.setSelectionMode(
+                ListSelectionModel
+                        .SINGLE_SELECTION
+        );
 
-    tabla.getColumnModel()
-            .getColumn(0)
-            .setPreferredWidth(60);
+        tabla.getTableHeader().setFont(
+                new Font(
+                        "Segoe UI",
+                        Font.BOLD,
+                        13
+                )
+        );
 
-    tabla.getColumnModel()
-            .getColumn(1)
-            .setPreferredWidth(140);
+        tabla.getColumnModel()
+                .getColumn(0)
+                .setPreferredWidth(60);
 
-    tabla.getColumnModel()
-            .getColumn(2)
-            .setPreferredWidth(180);
+        tabla.getColumnModel()
+                .getColumn(1)
+                .setPreferredWidth(280);
 
-    tabla.getColumnModel()
-            .getColumn(3)
-            .setPreferredWidth(300);
+        tabla.getColumnModel()
+                .getColumn(2)
+                .setPreferredWidth(120);
 
-    tabla.getColumnModel()
-            .getColumn(4)
-            .setPreferredWidth(180);
+        tabla.getColumnModel()
+                .getColumn(3)
+                .setPreferredWidth(150);
 
-    tabla.getColumnModel()
-            .getColumn(5)
-            .setPreferredWidth(180);
+        tabla.getColumnModel()
+                .getColumn(4)
+                .setPreferredWidth(150);
 
-    tabla.getColumnModel()
-            .getColumn(6)
-            .setPreferredWidth(120);
+        tabla.getColumnModel()
+                .getColumn(5)
+                .setPreferredWidth(260);
 
-    tabla.getColumnModel()
-            .getColumn(7)
-            .setPreferredWidth(140);
+        tabla.getColumnModel()
+                .getColumn(6)
+                .setPreferredWidth(120);
 
-    tabla.getColumnModel()
-            .getColumn(8)
-            .setPreferredWidth(140);
+        JScrollPane scroll =
+                new JScrollPane(
+                        tabla
+                );
 
-    JScrollPane scroll =
-            new JScrollPane(
-                    tabla
-            );
+        scroll.setHorizontalScrollBarPolicy(
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        );
 
-    scroll.setHorizontalScrollBarPolicy(
-            JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
-    );
+        return scroll;
+    }
 
-    return scroll;
-}
-
-    private JPanel crearPanelBotones() {
+    private JPanel crearBotones() {
 
         JPanel panel =
                 new JPanel(
@@ -351,7 +336,7 @@ public class ProyectoPage extends JPanel {
 
         JButton btnNuevo =
                 new JButton(
-                        "Nuevo proyecto"
+                        "Nueva entidad"
                 );
 
         JButton btnEditar =
@@ -370,19 +355,19 @@ public class ProyectoPage extends JPanel {
                 );
 
         btnNuevo.addActionListener(
-                e -> abrirNuevoProyecto()
+                e -> abrirNuevaEntidad()
         );
 
         btnEditar.addActionListener(
-                e -> editarProyecto()
+                e -> editarEntidad()
         );
 
         btnDetalle.addActionListener(
-                e -> mostrarDetalleProyecto()
+                e -> verDetalleEntidad()
         );
 
         btnEliminar.addActionListener(
-                e -> eliminarProyecto()
+                e -> eliminarEntidad()
         );
 
         panel.add(btnNuevo);
@@ -393,74 +378,52 @@ public class ProyectoPage extends JPanel {
         return panel;
     }
 
-    private void cargarFiltros() {
-
-        try {
-
-            cmbEmpresaFiltro.removeAllItems();
-
-            cmbEmpresaFiltro.addItem(
-                    "Todas"
-            );
-
-            for (
-                    ProyectoDAO.EmpresaItem empresa
-                    : ProyectoDAO.obtenerEmpresas()
-            ) {
-
-                cmbEmpresaFiltro.addItem(
-                        empresa.nombre()
-                );
-            }
-
-        } catch (Exception e) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error al cargar las empresas:\n"
-                            + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-
-            e.printStackTrace();
-        }
-    }
-
-    private void cargarProyectos() {
+    private void cargarEntidades() {
 
         try {
 
             modeloTabla.setRowCount(0);
 
-            String empresaFiltro =
-                    obtenerTextoSeleccionado(
-                            cmbEmpresaFiltro
-                    );
-
-            String estadoFiltro =
-                    obtenerTextoSeleccionado(
-                            cmbEstadoFiltro
-                    );
-
-            String codigoFiltro =
-                    txtCodigoFiltro
+            String nombreFiltro =
+                    txtNombreFiltro
                             .getText()
                             .trim()
                             .toUpperCase();
 
+            String tipoFiltro =
+                    obtenerSeleccion(
+                            cmbTipoFiltro
+                    );
+
+            String estadoFiltro =
+                    obtenerSeleccion(
+                            cmbEstadoFiltro
+                    );
+
             for (
-                    ProyectoDAO.ProyectoResumen proyecto
-                    : ProyectoDAO.obtenerActivos()
+                    EntidadMaquinariaDAO.EntidadResumen entidad
+                    : EntidadMaquinariaDAO.obtenerTodas()
             ) {
 
                 if (
-                    !empresaFiltro.equalsIgnoreCase(
-                            "Todas"
+                    !nombreFiltro.isEmpty()
+                    && !entidad.nombre()
+                            .toUpperCase()
+                            .contains(
+                                    nombreFiltro
+                            )
+                ) {
+
+                    continue;
+                }
+
+                if (
+                    !tipoFiltro.equalsIgnoreCase(
+                            "Todos"
                     )
-                    && !proyecto.empresa()
+                    && !entidad.tipoEntidad()
                             .equalsIgnoreCase(
-                                    empresaFiltro
+                                    tipoFiltro
                             )
                 ) {
 
@@ -471,7 +434,7 @@ public class ProyectoPage extends JPanel {
                     !estadoFiltro.equalsIgnoreCase(
                             "Todos"
                     )
-                    && !proyecto.estado()
+                    && !entidad.estado()
                             .equalsIgnoreCase(
                                     estadoFiltro
                             )
@@ -480,33 +443,15 @@ public class ProyectoPage extends JPanel {
                     continue;
                 }
 
-                if (
-                    !codigoFiltro.isEmpty()
-                    && !proyecto.codigoProyecto()
-                            .toUpperCase()
-                            .contains(
-                                    codigoFiltro
-                            )
-                ) {
-
-                    continue;
-                }
-
                 modeloTabla.addRow(
                         new Object[]{
-                                proyecto.idProyecto(),
-                                proyecto.codigoProyecto(),
-                                proyecto.empresa(),
-                                proyecto.descripcion(),
-                                proyecto.sector(),
-                                proyecto.piscina(),
-                                formatearFecha(
-                                        proyecto.fechaInicio()
-                                ),
-                                formatearFecha(
-                                        proyecto.fechaFinEstimada()
-                                ),
-                                proyecto.estado()
+                                entidad.idEntidad(),
+                                entidad.nombre(),
+                                entidad.tipoEntidad(),
+                                entidad.identificacion(),
+                                entidad.telefono(),
+                                entidad.correo(),
+                                entidad.estado()
                         }
                 );
             }
@@ -515,7 +460,7 @@ public class ProyectoPage extends JPanel {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Error al cargar los proyectos:\n"
+                    "Error al cargar proveedores y propietarios:\n"
                             + e.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE
@@ -525,7 +470,7 @@ public class ProyectoPage extends JPanel {
         }
     }
 
-    private String obtenerTextoSeleccionado(
+    private String obtenerSeleccion(
             JComboBox<String> combo
     ) {
 
@@ -535,17 +480,6 @@ public class ProyectoPage extends JPanel {
         return seleccionado == null
                 ? ""
                 : seleccionado.toString();
-    }
-
-    private String formatearFecha(
-            LocalDate fecha
-    ) {
-
-        return fecha == null
-                ? ""
-                : fecha.format(
-                        FORMATO_FECHA
-                );
     }
 
     private void validarSeleccionTemporal(
@@ -558,8 +492,7 @@ public class ProyectoPage extends JPanel {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Seleccione un proyecto "
-                            + "en la tabla.",
+                    "Seleccione una entidad en la tabla.",
                     "Validación",
                     JOptionPane.WARNING_MESSAGE
             );
@@ -586,23 +519,21 @@ public class ProyectoPage extends JPanel {
                 JOptionPane.INFORMATION_MESSAGE
         );
     }
-    private void abrirNuevoProyecto() {
+    private void abrirNuevaEntidad() {
 
-    FormProyecto formulario =
-            new FormProyecto(
-                    SwingUtilities
-                            .getWindowAncestor(this)
+    FormEntidadMaquinaria formulario =
+            new FormEntidadMaquinaria(
+                    SwingUtilities.getWindowAncestor(this)
             );
 
     formulario.setVisible(true);
 
     if (formulario.isGuardado()) {
 
-        cargarProyectos();
+        cargarEntidades();
     }
 }
-
-private void editarProyecto() {
+private void editarEntidad() {
 
     int fila =
             tabla.getSelectedRow();
@@ -611,7 +542,7 @@ private void editarProyecto() {
 
         JOptionPane.showMessageDialog(
                 this,
-                "Seleccione un proyecto.",
+                "Seleccione una entidad.",
                 "Validación",
                 JOptionPane.WARNING_MESSAGE
         );
@@ -619,37 +550,30 @@ private void editarProyecto() {
         return;
     }
 
-    int filaModelo =
-            tabla.convertRowIndexToModel(
-                    fila
-            );
-
-    int idProyecto =
+    int idEntidad =
             Integer.parseInt(
                     modeloTabla
                             .getValueAt(
-                                    filaModelo,
+                                    fila,
                                     0
                             )
                             .toString()
             );
 
-    FormProyecto formulario =
-            new FormProyecto(
-                    SwingUtilities
-                            .getWindowAncestor(this),
-                    idProyecto
+    FormEntidadMaquinaria formulario =
+            new FormEntidadMaquinaria(
+                    SwingUtilities.getWindowAncestor(this),
+                    idEntidad
             );
 
     formulario.setVisible(true);
 
     if (formulario.isGuardado()) {
 
-        cargarProyectos();
+        cargarEntidades();
     }
 }
-
-private void mostrarDetalleProyecto() {
+private void verDetalleEntidad() {
 
     int fila =
             tabla.getSelectedRow();
@@ -658,7 +582,43 @@ private void mostrarDetalleProyecto() {
 
         JOptionPane.showMessageDialog(
                 this,
-                "Seleccione un proyecto.",
+                "Seleccione una entidad.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        return;
+    }
+
+    int idEntidad =
+            Integer.parseInt(
+                    modeloTabla
+                            .getValueAt(
+                                    fila,
+                                    0
+                            )
+                            .toString()
+            );
+
+    FormEntidadMaquinaria formulario =
+            new FormEntidadMaquinaria(
+                    SwingUtilities.getWindowAncestor(this),
+                    idEntidad,
+                    true
+            );
+
+    formulario.setVisible(true);
+}
+private void eliminarEntidad() {
+
+    int fila =
+            tabla.getSelectedRow();
+
+    if (fila == -1) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Seleccione una entidad.",
                 "Validación",
                 JOptionPane.WARNING_MESSAGE
         );
@@ -671,7 +631,7 @@ private void mostrarDetalleProyecto() {
                     fila
             );
 
-    int idProyecto =
+    int idEntidad =
             Integer.parseInt(
                     modeloTabla
                             .getValueAt(
@@ -681,48 +641,7 @@ private void mostrarDetalleProyecto() {
                             .toString()
             );
 
-    DetalleProyectoDialog detalle =
-            new DetalleProyectoDialog(
-                    SwingUtilities
-                            .getWindowAncestor(this),
-                    idProyecto
-            );
-
-    detalle.setVisible(true);
-}
-private void eliminarProyecto() {
-
-    int fila =
-            tabla.getSelectedRow();
-
-    if (fila == -1) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Seleccione un proyecto.",
-                "Validación",
-                JOptionPane.WARNING_MESSAGE
-        );
-
-        return;
-    }
-
-    int filaModelo =
-            tabla.convertRowIndexToModel(
-                    fila
-            );
-
-    int idProyecto =
-            Integer.parseInt(
-                    modeloTabla
-                            .getValueAt(
-                                    filaModelo,
-                                    0
-                            )
-                            .toString()
-            );
-
-    String codigoProyecto =
+    String nombreEntidad =
             modeloTabla
                     .getValueAt(
                             filaModelo,
@@ -733,13 +652,11 @@ private void eliminarProyecto() {
     int respuesta =
             JOptionPane.showConfirmDialog(
                     this,
-                    "¿Desea eliminar el proyecto "
-                            + codigoProyecto
-                            + "?\n\n"
-                            + "El proyecto dejará de aparecer "
-                            + "en la pantalla,\n"
-                            + "pero permanecerá almacenado "
-                            + "en MySQL para conservar el historial.",
+                    "¿Desea eliminar la entidad \""
+                            + nombreEntidad
+                            + "\"?\n\n"
+                            + "La entidad quedará INACTIVA y "
+                            + "permanecerá almacenada en MySQL.",
                     "Confirmar eliminación",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE
@@ -749,33 +666,36 @@ private void eliminarProyecto() {
         respuesta
         != JOptionPane.YES_OPTION
     ) {
+
         return;
     }
 
     try {
 
-        ProyectoDAO.eliminar(
-                idProyecto
+        EntidadMaquinariaDAO.eliminarLogico(
+                idEntidad
         );
 
-        cargarProyectos();
+        cargarEntidades();
 
         JOptionPane.showMessageDialog(
                 this,
-                "Proyecto eliminado correctamente.",
+                "Entidad eliminada correctamente.",
                 "LPP Smart ERP",
                 JOptionPane.INFORMATION_MESSAGE
         );
 
-    } catch (Exception e) {
+    } catch (Exception ex) {
 
         JOptionPane.showMessageDialog(
                 this,
-                "Error al eliminar el proyecto:\n"
-                        + e.getMessage(),
+                "No fue posible eliminar la entidad:\n"
+                        + ex.getMessage(),
                 "Error",
                 JOptionPane.ERROR_MESSAGE
         );
+
+        ex.printStackTrace();
     }
 }
 }

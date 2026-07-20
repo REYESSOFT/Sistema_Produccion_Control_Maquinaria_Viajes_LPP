@@ -36,6 +36,10 @@ public class FormAsignacionMaquinaria extends JDialog {
                     "dd/MM/yyyy"
             );
 
+    private Integer idAsignacionEditar = null;
+    private boolean modoEdicion = false;
+    private boolean modoDetalle = false;
+
     public FormAsignacionMaquinaria(
             Window parent
     ) {
@@ -60,6 +64,38 @@ public class FormAsignacionMaquinaria extends JDialog {
 
         return guardado;
     }
+
+    public FormAsignacionMaquinaria(
+        Window owner,
+        int idAsignacion
+) {
+
+    this(owner);
+
+    this.idAsignacionEditar = idAsignacion;
+    this.modoEdicion = true;
+
+    cargarAsignacion();
+}
+public FormAsignacionMaquinaria(
+        Window owner,
+        int idAsignacion,
+        boolean detalle
+) {
+
+    this(owner);
+
+    this.idAsignacionEditar = idAsignacion;
+    this.modoDetalle = detalle;
+
+    setTitle(
+            "Detalle de asignación"
+    );
+
+    cargarAsignacion();
+
+    bloquearFormulario();
+}
 
     private void crearInterfaz() {
 
@@ -499,45 +535,72 @@ if (!textoTarifa.isEmpty()) {
 
         try {
 
-            AsignacionMaquinariaDAO.insertar(
-                    proyecto.idProyecto(),
-                    maquinaria.idMaquinaria(),
-                    cantidad,
-                    fechaIngreso,
-                    fechaSalida,
-                    tarifaHora,
-                    cmbEstado
-                            .getSelectedItem()
-                            .toString(),
-                    txtObservaciones
-                            .getText()
-                            .trim()
-            );
+    if (modoEdicion) {
 
-            guardado = true;
+        AsignacionMaquinariaDAO.actualizar(
+                idAsignacionEditar,
+                cantidad,
+                fechaIngreso,
+                fechaSalida,
+                tarifaHora,
+                cmbEstado
+                        .getSelectedItem()
+                        .toString(),
+                txtObservaciones
+                        .getText()
+                        .trim()
+        );
 
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Asignación guardada correctamente.",
-                    "LPP Smart ERP",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+        JOptionPane.showMessageDialog(
+                this,
+                "Asignación actualizada correctamente.",
+                "LPP Smart ERP",
+                JOptionPane.INFORMATION_MESSAGE
+        );
 
-            dispose();
+    } else {
 
-        } catch (Exception e) {
+        AsignacionMaquinariaDAO.insertar(
+                proyecto.idProyecto(),
+                maquinaria.idMaquinaria(),
+                cantidad,
+                fechaIngreso,
+                fechaSalida,
+                tarifaHora,
+                cmbEstado
+                        .getSelectedItem()
+                        .toString(),
+                txtObservaciones
+                        .getText()
+                        .trim()
+        );
 
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error al guardar la asignación:\n"
-                            + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-
-            e.printStackTrace();
-        }
+        JOptionPane.showMessageDialog(
+                this,
+                "Asignación guardada correctamente.",
+                "LPP Smart ERP",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
+
+    guardado = true;
+
+    dispose();
+
+} catch (Exception e) {
+
+    JOptionPane.showMessageDialog(
+            this,
+            "Error al guardar la asignación:\n"
+                    + e.getMessage(),
+            "Error",
+            JOptionPane.ERROR_MESSAGE
+    );
+
+    e.printStackTrace();
+}
+    }
+
 
     private JFormattedTextField crearCampoFecha() {
 
@@ -762,4 +825,149 @@ if (!textoTarifa.isEmpty()) {
                         }
                 );
     }
+
+    private void seleccionarProyecto(
+        int idProyecto
+) {
+
+    for (
+            int i = 0;
+            i < cmbProyecto.getItemCount();
+            i++
+    ) {
+
+        AsignacionMaquinariaDAO.ProyectoItem item =
+                cmbProyecto.getItemAt(i);
+
+        if (
+            item.idProyecto()
+                    == idProyecto
+        ) {
+
+            cmbProyecto.setSelectedIndex(i);
+            return;
+        }
+    }
+}
+
+private void seleccionarMaquinaria(
+        int idMaquinaria
+) {
+
+    for (
+            int i = 0;
+            i < cmbMaquinaria.getItemCount();
+            i++
+    ) {
+
+        AsignacionMaquinariaDAO.MaquinariaItem item =
+                cmbMaquinaria.getItemAt(i);
+
+        if (
+            item.idMaquinaria()
+                    == idMaquinaria
+        ) {
+
+            cmbMaquinaria.setSelectedIndex(i);
+            return;
+        }
+    }
+}
+
+private void bloquearFormulario() {
+
+    cmbProyecto.setEnabled(false);
+    cmbMaquinaria.setEnabled(false);
+
+    txtCantidad.setEditable(false);
+    txtTarifa.setEditable(false);
+
+    txtFechaIngreso.setEditable(false);
+    txtFechaSalida.setEditable(false);
+
+    cmbEstado.setEnabled(false);
+
+    txtObservaciones.setEditable(false);
+}
+
+    private void cargarAsignacion() {
+
+    try {
+
+        AsignacionMaquinariaDAO.AsignacionDetalle asignacion =
+                AsignacionMaquinariaDAO.obtenerPorId(
+                        idAsignacionEditar
+                );
+
+        // Proyecto
+        seleccionarProyecto(
+                asignacion.idProyecto()
+        );
+
+        // Maquinaria
+        seleccionarMaquinaria(
+                asignacion.idMaquinaria()
+        );
+
+        // Bloquear cambios
+        cmbProyecto.setEnabled(false);
+        cmbMaquinaria.setEnabled(false);
+
+        // Cantidad
+        txtCantidad.setText(
+                String.valueOf(
+                        asignacion.cantidad()
+                )
+        );
+
+        // Tarifa
+        txtTarifa.setText(
+                asignacion.tarifaHora() == null
+                        ? ""
+                        : String.valueOf(
+                                asignacion.tarifaHora()
+                        )
+        );
+
+        // Fecha ingreso
+        if (asignacion.fechaIngreso() != null) {
+
+            txtFechaIngreso.setText(
+                    asignacion.fechaIngreso()
+                            .format(FORMATO_FECHA)
+            );
+        }
+
+        // Fecha salida
+        if (asignacion.fechaSalida() != null) {
+
+            txtFechaSalida.setText(
+                    asignacion.fechaSalida()
+                            .format(FORMATO_FECHA)
+            );
+        }
+
+        // Estado
+        cmbEstado.setSelectedItem(
+                asignacion.estado()
+        );
+
+        // Observaciones
+        txtObservaciones.setText(
+                asignacion.observaciones()
+        );
+
+    } catch (Exception ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+        dispose();
+    }
+}
+
 }
