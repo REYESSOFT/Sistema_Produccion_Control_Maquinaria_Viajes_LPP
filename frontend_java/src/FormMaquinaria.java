@@ -11,8 +11,11 @@ public class FormMaquinaria extends JDialog {
     private JTextField txtSerieMaquina;
     private JTextField txtSerieActual;
     private JTextField txtHorometro;
+
     private JTextField txtCostoProveedor;
+    private JTextField txtCostoFijoProveedor;
     private JTextField txtPrecioCliente;
+    private JTextField txtPrecioFijoCliente;
 
     private JComboBox<ItemCombo> cmbTipo;
     private JComboBox<ItemCombo> cmbProveedor;
@@ -20,6 +23,7 @@ public class FormMaquinaria extends JDialog {
 
     private JComboBox<String> cmbTipoPropiedad;
     private JComboBox<String> cmbEstado;
+    private JComboBox<String> cmbTipoCobro;
 
     private JCheckBox chkHorometroConfirmado;
     private JTextArea txtObservaciones;
@@ -35,28 +39,29 @@ public class FormMaquinaria extends JDialog {
                 ModalityType.APPLICATION_MODAL
         );
 
-        setSize(850, 700);
+        setSize(900, 760);
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         crearInterfaz();
         cargarCatalogos();
+        actualizarCamposTipoCobro();
     }
 
     public FormMaquinaria(
-        Window parent,
-        int idMaquinaria
-) {
+            Window parent,
+            int idMaquinaria
+    ) {
 
-    this(parent);
+        this(parent);
 
-    this.idMaquinariaEdicion =
-            idMaquinaria;
+        this.idMaquinariaEdicion =
+                idMaquinaria;
 
-    setTitle("Editar maquinaria");
+        setTitle("Editar maquinaria");
 
-    cargarDatosEdicion();
-}
+        cargarDatosEdicion();
+    }
 
     public boolean isGuardado() {
         return guardado;
@@ -65,16 +70,31 @@ public class FormMaquinaria extends JDialog {
     private void crearInterfaz() {
 
         JPanel panelPrincipal =
-                new JPanel(new BorderLayout(10, 10));
+                new JPanel(
+                        new BorderLayout(
+                                10,
+                                10
+                        )
+                );
 
         panelPrincipal.setBorder(
                 BorderFactory.createEmptyBorder(
-                        15, 15, 15, 15
+                        15,
+                        15,
+                        15,
+                        15
                 )
         );
 
         JPanel panelCampos =
-                new JPanel(new GridLayout(9, 4, 10, 8));
+                new JPanel(
+                        new GridLayout(
+                                11,
+                                4,
+                                10,
+                                8
+                        )
+                );
 
         txtCodigoInterno = new JTextField();
         txtCodigoActual = new JTextField();
@@ -85,7 +105,9 @@ public class FormMaquinaria extends JDialog {
         txtSerieActual = new JTextField();
         txtHorometro = new JTextField();
         txtCostoProveedor = new JTextField();
+        txtCostoFijoProveedor = new JTextField();
         txtPrecioCliente = new JTextField();
+        txtPrecioFijoCliente = new JTextField();
 
         cmbTipo = new JComboBox<>();
         cmbProveedor = new JComboBox<>();
@@ -110,103 +132,43 @@ public class FormMaquinaria extends JDialog {
                         }
                 );
 
+        cmbTipoCobro =
+                new JComboBox<>(
+                        new String[]{
+                                "POR_HORA",
+                                "FIJO_DIARIO",
+                                "FIJO_SERVICIO"
+                        }
+                );
+
         chkHorometroConfirmado =
                 new JCheckBox("Sí");
 
-        agregarCampo(
-                panelCampos,
-                "Código interno:",
-                txtCodigoInterno
-        );
+        agregarCampo(panelCampos, "Código interno:", txtCodigoInterno);
+        agregarCampo(panelCampos, "Código actual:", txtCodigoActual);
+        agregarCampo(panelCampos, "Placa:", txtPlaca);
+        agregarCampo(panelCampos, "Descripción:", txtDescripcion);
+        agregarCampo(panelCampos, "Tipo de maquinaria:", cmbTipo);
+        agregarCampo(panelCampos, "Modelo:", txtModelo);
+        agregarCampo(panelCampos, "Serie máquina:", txtSerieMaquina);
+        agregarCampo(panelCampos, "Serie actual:", txtSerieActual);
+        agregarCampo(panelCampos, "Horómetro actual:", txtHorometro);
+        agregarCampo(panelCampos, "Horómetro confirmado:", chkHorometroConfirmado);
+        agregarCampo(panelCampos, "Proveedor:", cmbProveedor);
+        agregarCampo(panelCampos, "Propietario:", cmbPropietario);
+        agregarCampo(panelCampos, "Tipo de propiedad:", cmbTipoPropiedad);
+        agregarCampo(panelCampos, "Estado operativo:", cmbEstado);
+        agregarCampo(panelCampos, "Tipo de cobro:", cmbTipoCobro);
+        agregarCampo(panelCampos, "Costo hora proveedor:", txtCostoProveedor);
+        agregarCampo(panelCampos, "Costo fijo proveedor:", txtCostoFijoProveedor);
+        agregarCampo(panelCampos, "Precio hora cliente:", txtPrecioCliente);
+        agregarCampo(panelCampos, "Precio fijo cliente:", txtPrecioFijoCliente);
 
-        agregarCampo(
-                panelCampos,
-                "Código actual:",
-                txtCodigoActual
-        );
+        panelCampos.add(new JLabel());
+        panelCampos.add(new JLabel());
 
-        agregarCampo(
-                panelCampos,
-                "Placa:",
-                txtPlaca
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Descripción:",
-                txtDescripcion
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Tipo de maquinaria:",
-                cmbTipo
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Modelo:",
-                txtModelo
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Serie máquina:",
-                txtSerieMaquina
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Serie actual:",
-                txtSerieActual
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Horómetro actual:",
-                txtHorometro
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Horómetro confirmado:",
-                chkHorometroConfirmado
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Proveedor:",
-                cmbProveedor
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Propietario:",
-                cmbPropietario
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Tipo de propiedad:",
-                cmbTipoPropiedad
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Estado operativo:",
-                cmbEstado
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Costo hora proveedor:",
-                txtCostoProveedor
-        );
-
-        agregarCampo(
-                panelCampos,
-                "Precio hora cliente:",
-                txtPrecioCliente
+        cmbTipoCobro.addActionListener(
+                e -> actualizarCamposTipoCobro()
         );
 
         panelPrincipal.add(
@@ -215,7 +177,10 @@ public class FormMaquinaria extends JDialog {
         );
 
         txtObservaciones =
-                new JTextArea(5, 30);
+                new JTextArea(
+                        5,
+                        30
+                );
 
         txtObservaciones.setLineWrap(true);
         txtObservaciones.setWrapStyleWord(true);
@@ -234,11 +199,8 @@ public class FormMaquinaria extends JDialog {
                 BorderLayout.CENTER
         );
 
-        JButton btnGuardar =
-                new JButton("Guardar");
-
-        JButton btnCancelar =
-                new JButton("Cancelar");
+        JButton btnGuardar = new JButton("Guardar");
+        JButton btnCancelar = new JButton("Cancelar");
 
         btnGuardar.addActionListener(
                 e -> guardarMaquinaria()
@@ -289,8 +251,7 @@ public class FormMaquinaria extends JDialog {
 
             for (
                     MaquinariaDAO.CatalogoItem item
-                    : MaquinariaDAO
-                            .obtenerTiposMaquinaria()
+                    : MaquinariaDAO.obtenerTiposMaquinaria()
             ) {
 
                 cmbTipo.addItem(
@@ -301,13 +262,13 @@ public class FormMaquinaria extends JDialog {
                 );
             }
 
-            ItemCombo sinAsignar =
+            cmbProveedor.addItem(
                     new ItemCombo(
                             0,
                             "Sin asignar"
-                    );
+                    )
+            );
 
-            cmbProveedor.addItem(sinAsignar);
             cmbPropietario.addItem(
                     new ItemCombo(
                             0,
@@ -349,142 +310,158 @@ public class FormMaquinaria extends JDialog {
         }
     }
 
-
     private void cargarDatosEdicion() {
 
-    try {
+        try {
 
-        MaquinariaDAO.MaquinariaDetalle maquinaria =
-                MaquinariaDAO.obtenerPorId(
-                        idMaquinariaEdicion
-                );
+            MaquinariaDAO.MaquinariaDetalle maquinaria =
+                    MaquinariaDAO.obtenerPorId(
+                            idMaquinariaEdicion
+                    );
 
-        txtCodigoInterno.setText(
-                maquinaria.codigoInterno()
-        );
+            txtCodigoInterno.setText(maquinaria.codigoInterno());
+            txtCodigoActual.setText(maquinaria.codigoActual());
+            txtPlaca.setText(maquinaria.codigoPlaca());
+            txtDescripcion.setText(maquinaria.descripcion());
+            txtModelo.setText(maquinaria.modelo());
+            txtSerieMaquina.setText(maquinaria.serieMaquina());
+            txtSerieActual.setText(maquinaria.serieActual());
 
-        txtCodigoActual.setText(
-                maquinaria.codigoActual()
-        );
+            txtHorometro.setText(
+                    maquinaria.horometroActual() == null
+                            ? ""
+                            : maquinaria.horometroActual().toString()
+            );
 
-        txtPlaca.setText(
-                maquinaria.codigoPlaca()
-        );
+            chkHorometroConfirmado.setSelected(
+                    maquinaria.horometroConfirmado()
+            );
 
-        txtDescripcion.setText(
-                maquinaria.descripcion()
-        );
+            txtCostoProveedor.setText(
+                    String.valueOf(
+                            maquinaria.costoHoraProveedor()
+                    )
+            );
 
-        txtModelo.setText(
-                maquinaria.modelo()
-        );
+            txtCostoFijoProveedor.setText(
+                    String.valueOf(
+                            maquinaria.costoFijoProveedor()
+                    )
+            );
 
-        txtSerieMaquina.setText(
-                maquinaria.serieMaquina()
-        );
+            txtPrecioCliente.setText(
+                    String.valueOf(
+                            maquinaria.precioHoraCliente()
+                    )
+            );
 
-        txtSerieActual.setText(
-                maquinaria.serieActual()
-        );
+            txtPrecioFijoCliente.setText(
+                    String.valueOf(
+                            maquinaria.precioFijoCliente()
+                    )
+            );
 
-        txtHorometro.setText(
-                maquinaria.horometroActual() == null
-                        ? ""
-                        : maquinaria
-                                .horometroActual()
-                                .toString()
-        );
+            txtObservaciones.setText(
+                    maquinaria.observaciones()
+            );
 
-        chkHorometroConfirmado.setSelected(
-                maquinaria.horometroConfirmado()
-        );
+            seleccionarItemPorId(
+                    cmbTipo,
+                    maquinaria.idTipoMaquinaria()
+            );
 
-        txtCostoProveedor.setText(
-                String.valueOf(
-                        maquinaria.costoHoraProveedor()
-                )
-        );
+            seleccionarItemPorId(
+                    cmbProveedor,
+                    maquinaria.idProveedor()
+            );
 
-        txtPrecioCliente.setText(
-                String.valueOf(
-                        maquinaria.precioHoraCliente()
-                )
-        );
+            seleccionarItemPorId(
+                    cmbPropietario,
+                    maquinaria.idPropietario()
+            );
 
-        txtObservaciones.setText(
-                maquinaria.observaciones()
-        );
+            cmbTipoPropiedad.setSelectedItem(
+                    maquinaria.tipoPropiedad()
+            );
 
-        seleccionarItemPorId(
-                cmbTipo,
-                maquinaria.idTipoMaquinaria()
-        );
+            cmbEstado.setSelectedItem(
+                    maquinaria.estadoOperativo()
+            );
 
-        seleccionarItemPorId(
-                cmbProveedor,
-                maquinaria.idProveedor()
-        );
+            cmbTipoCobro.setSelectedItem(
+                    maquinaria.tipoCobro()
+            );
 
-        seleccionarItemPorId(
-                cmbPropietario,
-                maquinaria.idPropietario()
-        );
+            actualizarCamposTipoCobro();
 
-        cmbTipoPropiedad.setSelectedItem(
-                maquinaria.tipoPropiedad()
-        );
+        } catch (Exception e) {
 
-        cmbEstado.setSelectedItem(
-                maquinaria.estadoOperativo()
-        );
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error al cargar la maquinaria:\n"
+                            + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
 
-    } catch (Exception e) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error al cargar la maquinaria:\n"
-                        + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-        );
-
-        e.printStackTrace();
-        dispose();
-    }
-}
-
-
-private void seleccionarItemPorId(
-        JComboBox<ItemCombo> combo,
-        Integer id
-) {
-
-    if (id == null) {
-
-        combo.setSelectedIndex(0);
-        return;
-    }
-
-    for (
-            int i = 0;
-            i < combo.getItemCount();
-            i++
-    ) {
-
-        ItemCombo item =
-                combo.getItemAt(i);
-
-        if (
-            item != null
-            && item.id == id
-        ) {
-
-            combo.setSelectedIndex(i);
-            return;
+            e.printStackTrace();
+            dispose();
         }
     }
-}
 
+    private void seleccionarItemPorId(
+            JComboBox<ItemCombo> combo,
+            Integer id
+    ) {
+
+        if (id == null) {
+
+            combo.setSelectedIndex(0);
+            return;
+        }
+
+        for (
+                int i = 0;
+                i < combo.getItemCount();
+                i++
+        ) {
+
+            ItemCombo item =
+                    combo.getItemAt(i);
+
+            if (
+                    item != null
+                            && item.id == id
+            ) {
+
+                combo.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    private void actualizarCamposTipoCobro() {
+
+        Object seleccionado =
+                cmbTipoCobro.getSelectedItem();
+
+        String tipoCobro =
+                seleccionado == null
+                        ? "POR_HORA"
+                        : seleccionado.toString();
+
+        boolean usaHora =
+                "POR_HORA".equals(tipoCobro);
+
+        boolean usaFijo =
+                "FIJO_DIARIO".equals(tipoCobro)
+                        || "FIJO_SERVICIO".equals(tipoCobro);
+
+        txtCostoProveedor.setEnabled(usaHora);
+        txtPrecioCliente.setEnabled(usaHora);
+        txtCostoFijoProveedor.setEnabled(usaFijo);
+        txtPrecioFijoCliente.setEnabled(usaFijo);
+    }
 
     private void guardarMaquinaria() {
 
@@ -501,9 +478,9 @@ private void seleccionarItemPorId(
                 txtDescripcion.getText().trim();
 
         if (
-            codigoInterno.isEmpty()
-            && codigoActual.isEmpty()
-            && placa.isEmpty()
+                codigoInterno.isEmpty()
+                        && codigoActual.isEmpty()
+                        && placa.isEmpty()
         ) {
 
             JOptionPane.showMessageDialog(
@@ -533,8 +510,8 @@ private void seleccionarItemPorId(
                 (ItemCombo) cmbTipo.getSelectedItem();
 
         if (
-            tipo == null
-            || tipo.id == 0
+                tipo == null
+                        || tipo.id == 0
         ) {
 
             JOptionPane.showMessageDialog(
@@ -554,9 +531,19 @@ private void seleccionarItemPorId(
                             txtHorometro.getText()
                     );
 
+            String tipoCobro =
+                    cmbTipoCobro
+                            .getSelectedItem()
+                            .toString();
+
             double costoProveedor =
                     convertirDecimal(
                             txtCostoProveedor.getText()
+                    );
+
+            double costoFijoProveedor =
+                    convertirDecimal(
+                            txtCostoFijoProveedor.getText()
                     );
 
             double precioCliente =
@@ -564,89 +551,107 @@ private void seleccionarItemPorId(
                             txtPrecioCliente.getText()
                     );
 
+            double precioFijoCliente =
+                    convertirDecimal(
+                            txtPrecioFijoCliente.getText()
+                    );
+
+            if ("POR_HORA".equals(tipoCobro)) {
+
+                costoFijoProveedor = 0.00;
+                precioFijoCliente = 0.00;
+
+            } else {
+
+                costoProveedor = 0.00;
+                precioCliente = 0.00;
+            }
+
             ItemCombo proveedor =
-                    (ItemCombo)
-                            cmbProveedor.getSelectedItem();
+                    (ItemCombo) cmbProveedor.getSelectedItem();
 
             ItemCombo propietario =
-                    (ItemCombo)
-                            cmbPropietario.getSelectedItem();
+                    (ItemCombo) cmbPropietario.getSelectedItem();
+
+            Integer idProveedor =
+                    proveedor == null
+                            || proveedor.id == 0
+                            ? null
+                            : proveedor.id;
+
+            Integer idPropietario =
+                    propietario == null
+                            || propietario.id == 0
+                            ? null
+                            : propietario.id;
 
             if (idMaquinariaEdicion == null) {
 
-    MaquinariaDAO.insertar(
-            codigoInterno,
-            codigoActual,
-            placa,
-            descripcion,
-            tipo.id,
-            txtModelo.getText().trim(),
-            txtSerieMaquina.getText().trim(),
-            txtSerieActual.getText().trim(),
-            horometro,
-            chkHorometroConfirmado.isSelected(),
-            proveedor == null || proveedor.id == 0
-                    ? null
-                    : proveedor.id,
-            propietario == null
-                    || propietario.id == 0
-                    ? null
-                    : propietario.id,
-            cmbTipoPropiedad
-                    .getSelectedItem()
-                    .toString(),
-            cmbEstado
-                    .getSelectedItem()
-                    .toString(),
-            costoProveedor,
-            precioCliente,
-            txtObservaciones
-                    .getText()
-                    .trim()
-    );
+                MaquinariaDAO.insertar(
+                        codigoInterno,
+                        codigoActual,
+                        placa,
+                        descripcion,
+                        tipo.id,
+                        txtModelo.getText().trim(),
+                        txtSerieMaquina.getText().trim(),
+                        txtSerieActual.getText().trim(),
+                        horometro,
+                        chkHorometroConfirmado.isSelected(),
+                        idProveedor,
+                        idPropietario,
+                        cmbTipoPropiedad
+                                .getSelectedItem()
+                                .toString(),
+                        cmbEstado
+                                .getSelectedItem()
+                                .toString(),
+                        tipoCobro,
+                        costoProveedor,
+                        costoFijoProveedor,
+                        precioCliente,
+                        precioFijoCliente,
+                        txtObservaciones.getText().trim()
+                );
 
-} else {
+            } else {
 
-    MaquinariaDAO.actualizar(
-            idMaquinariaEdicion,
-            codigoInterno,
-            codigoActual,
-            placa,
-            descripcion,
-            tipo.id,
-            txtModelo.getText().trim(),
-            txtSerieMaquina.getText().trim(),
-            txtSerieActual.getText().trim(),
-            horometro,
-            chkHorometroConfirmado.isSelected(),
-            proveedor == null || proveedor.id == 0
-                    ? null
-                    : proveedor.id,
-            propietario == null
-                    || propietario.id == 0
-                    ? null
-                    : propietario.id,
-            cmbTipoPropiedad
-                    .getSelectedItem()
-                    .toString(),
-            cmbEstado
-                    .getSelectedItem()
-                    .toString(),
-            costoProveedor,
-            precioCliente,
-            txtObservaciones
-                    .getText()
-                    .trim()
-    );
-}
+                MaquinariaDAO.actualizar(
+                        idMaquinariaEdicion,
+                        codigoInterno,
+                        codigoActual,
+                        placa,
+                        descripcion,
+                        tipo.id,
+                        txtModelo.getText().trim(),
+                        txtSerieMaquina.getText().trim(),
+                        txtSerieActual.getText().trim(),
+                        horometro,
+                        chkHorometroConfirmado.isSelected(),
+                        idProveedor,
+                        idPropietario,
+                        cmbTipoPropiedad
+                                .getSelectedItem()
+                                .toString(),
+                        cmbEstado
+                                .getSelectedItem()
+                                .toString(),
+                        tipoCobro,
+                        costoProveedor,
+                        costoFijoProveedor,
+                        precioCliente,
+                        precioFijoCliente,
+                        txtObservaciones.getText().trim()
+                );
+            }
 
             guardado = true;
 
             JOptionPane.showMessageDialog(
                     this,
                     idMaquinariaEdicion == null
-                        ? "Maquinaria guardada correctamente."
-                        : "Maquinaria actualizada correctamente.",
+                            ? "Maquinaria guardada correctamente."
+                            : "Maquinaria actualizada correctamente.",
                     "LPP Smart ERP",
                     JOptionPane.INFORMATION_MESSAGE
             );
@@ -657,7 +662,7 @@ private void seleccionarItemPorId(
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Horómetro, costo y precio deben "
+                    "Horómetro, costos y precios deben "
                             + "contener solamente números.",
                     "Validación",
                     JOptionPane.WARNING_MESSAGE
@@ -682,9 +687,10 @@ private void seleccionarItemPorId(
     ) {
 
         if (
-            texto == null
-            || texto.trim().isEmpty()
+                texto == null
+                        || texto.trim().isEmpty()
         ) {
+
             return 0.00;
         }
 
@@ -698,9 +704,10 @@ private void seleccionarItemPorId(
     ) {
 
         if (
-            texto == null
-            || texto.trim().isEmpty()
+                texto == null
+                        || texto.trim().isEmpty()
         ) {
+
             return null;
         }
 

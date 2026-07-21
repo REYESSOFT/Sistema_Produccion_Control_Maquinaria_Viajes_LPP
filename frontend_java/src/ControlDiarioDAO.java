@@ -40,6 +40,7 @@ public class ControlDiarioDAO {
             double metrosLineales,
             Double ancho,
             Double espesor,
+            Double volumenReal,
             String observaciones
     ) {
     }
@@ -166,6 +167,7 @@ public static ControlDiarioDetalle obtenerPorId(
                 metros_lineales,
                 ancho,
                 espesor,
+                volumen_real,
                 COALESCE(
                     observaciones,
                     ''
@@ -238,12 +240,16 @@ public static ControlDiarioDetalle obtenerPorId(
                             : rs.getDouble("ancho"),
 
                     rs.getObject("espesor") == null
-                            ? null
-                            : rs.getDouble("espesor"),
+        ? null
+        : rs.getDouble("espesor"),
 
-                    rs.getString(
-                            "observaciones"
-                    )
+rs.getObject("volumen_real") == null
+        ? null
+        : rs.getDouble("volumen_real"),
+
+rs.getString(
+        "observaciones"
+)
 
             );
 
@@ -279,6 +285,19 @@ public static int insertar(
             idProyecto,
             fechaControl
     );
+    double volumenReal = 0;
+
+if (
+        ancho != null
+        && espesor != null
+) {
+
+    volumenReal =
+            metrosLineales
+            * ancho
+            * espesor;
+
+}
 
     String sql = """
             INSERT INTO control_diario (
@@ -287,11 +306,12 @@ public static int insertar(
                 metros_lineales,
                 ancho,
                 espesor,
+                volumen_real,
                 observaciones,
                 activo
             )
             VALUES (
-                ?, ?, ?, ?, ?, ?, 1
+            ?, ?, ?, ?, ?, ?, ?, 1
             )
             """;
 
@@ -394,6 +414,19 @@ public static void actualizar(
             idProyecto,
             fechaControl
     );
+    double volumenReal = 0;
+
+if (
+        ancho != null
+        && espesor != null
+) {
+
+    volumenReal =
+            metrosLineales
+            * ancho
+            * espesor;
+
+}
 
     String sql = """
             UPDATE control_diario
@@ -408,6 +441,8 @@ public static void actualizar(
                 ancho = ?,
 
                 espesor = ?,
+                
+                volumen_real = ?,
 
                 observaciones = ?
 
@@ -447,20 +482,25 @@ public static void actualizar(
                 ancho
         );
 
-        asignarDecimal(
-                ps,
-                5,
-                espesor
-        );
+       asignarDecimal(
+        ps,
+        5,
+        espesor
+);
 
-        asignarTexto(
-                ps,
-                6,
-                observaciones
-        );
+ps.setDouble(
+        6,
+        volumenReal
+);
+
+asignarTexto(
+        ps,
+        7,
+        observaciones
+);
 
         ps.setInt(
-                7,
+                8,
                 idControl
         );
 

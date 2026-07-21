@@ -209,8 +209,10 @@ public class MaquinariaPage extends JPanel {
                                 "Tipo de máquina",
                                 "Proveedor",
                                 "Propietario",
-                                "Estado",
-                                "Costo hora"
+                                "Tipo de cobro",
+                                "Costo",
+                                "Precio",
+                                "Estado"
                         },
                         0
                 ) {
@@ -232,8 +234,13 @@ public class MaquinariaPage extends JPanel {
                         .getColumnModel()
                         .getColumn(0)
         );
-        
+
+        tablaMaquinaria.setAutoResizeMode(
+                JTable.AUTO_RESIZE_OFF
+        );
+
         tablaMaquinaria.setRowHeight(26);
+
         tablaMaquinaria.setSelectionMode(
                 ListSelectionModel.SINGLE_SELECTION
         );
@@ -245,6 +252,42 @@ public class MaquinariaPage extends JPanel {
                         13
                 )
         );
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(0)
+                .setPreferredWidth(120);
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(1)
+                .setPreferredWidth(240);
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(2)
+                .setPreferredWidth(170);
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(3)
+                .setPreferredWidth(190);
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(4)
+                .setPreferredWidth(190);
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(5)
+                .setPreferredWidth(130);
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(6)
+                .setPreferredWidth(145);
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(7)
+                .setPreferredWidth(145);
+
+        tablaMaquinaria.getColumnModel()
+                .getColumn(8)
+                .setPreferredWidth(120);
 
         return new JScrollPane(
                 tablaMaquinaria
@@ -568,74 +611,162 @@ cargarMaquinaria();
 
     private void cargarMaquinaria() {
 
-    String estado =
-            cmbEstado.getSelectedItem() == null
-                    ? "Todos"
-                    : cmbEstado
-                            .getSelectedItem()
-                            .toString();
+        String estado =
+                cmbEstado.getSelectedItem() == null
+                        ? "Todos"
+                        : cmbEstado
+                                .getSelectedItem()
+                                .toString();
 
-    String tipoMaquinaria =
-            cmbTipoMaquina.getSelectedItem() == null
-                    ? "Todos"
-                    : cmbTipoMaquina
-                            .getSelectedItem()
-                            .toString();
+        String tipoMaquinaria =
+                cmbTipoMaquina.getSelectedItem() == null
+                        ? "Todos"
+                        : cmbTipoMaquina
+                                .getSelectedItem()
+                                .toString();
 
-    String proveedor =
-            txtProveedor.getText().trim();
+        String proveedor =
+                txtProveedor.getText().trim();
 
-    String codigo =
-            txtCodigo.getText().trim();
+        String codigo =
+                txtCodigo.getText().trim();
 
-    try {
+        try {
 
-        List<MaquinariaDAO.MaquinariaResumen> lista =
-                MaquinariaDAO.buscar(
-                        estado,
-                        tipoMaquinaria,
-                        proveedor,
-                        codigo
+            List<MaquinariaDAO.MaquinariaResumen> lista =
+                    MaquinariaDAO.buscar(
+                            estado,
+                            tipoMaquinaria,
+                            proveedor,
+                            codigo
+                    );
+
+            modeloTabla.setRowCount(0);
+
+            for (
+                    MaquinariaDAO.MaquinariaResumen maquinaria
+                            : lista
+            ) {
+
+                MaquinariaDAO.MaquinariaDetalle detalle =
+                        MaquinariaDAO.obtenerPorId(
+                                maquinaria.idMaquinaria()
+                        );
+
+                String tipoCobro =
+                        detalle.tipoCobro() == null
+                                || detalle.tipoCobro().isBlank()
+                                ? "POR_HORA"
+                                : detalle.tipoCobro();
+
+                modeloTabla.addRow(
+                        new Object[]{
+                                maquinaria.idMaquinaria(),
+                                maquinaria.codigo(),
+                                maquinaria.descripcion(),
+                                maquinaria.tipoMaquinaria(),
+                                maquinaria.proveedor(),
+                                maquinaria.propietario(),
+                                formatearTipoCobro(
+                                        tipoCobro
+                                ),
+                                formatearCosto(
+                                        detalle,
+                                        tipoCobro
+                                ),
+                                formatearPrecio(
+                                        detalle,
+                                        tipoCobro
+                                ),
+                                maquinaria.estadoOperativo()
+                        }
                 );
+            }
 
-        modeloTabla.setRowCount(0);
+        } catch (Exception e) {
 
-        for (
-                MaquinariaDAO.MaquinariaResumen maquinaria
-                        : lista
-        ) {
-
-            modeloTabla.addRow(
-                    new Object[]{
-                            maquinaria.idMaquinaria(),
-                            maquinaria.codigo(),
-                            maquinaria.descripcion(),
-                            maquinaria.tipoMaquinaria(),
-                            maquinaria.proveedor(),
-                            maquinaria.propietario(),
-                            maquinaria.estadoOperativo(),
-                            String.format(
-                                    "$%.2f",
-                                    maquinaria
-                                            .costoHoraProveedor()
-                            )
-                    }
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error al cargar la maquinaria:\n"
+        + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
             );
+
+            e.printStackTrace();
         }
-
-    } catch (Exception e) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error al cargar la maquinaria:\n"
-                        + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-        );
-
-        e.printStackTrace();
     }
-}
+
+    private String formatearTipoCobro(
+            String tipoCobro
+    ) {
+
+        return switch (tipoCobro) {
+
+            case "FIJO_DIARIO" ->
+                    "FIJO DIARIO";
+
+            case "FIJO_SERVICIO" ->
+                    "FIJO SERVICIO";
+
+            default ->
+                    "POR HORA";
+        };
+    }
+
+    private String formatearCosto(
+            MaquinariaDAO.MaquinariaDetalle detalle,
+            String tipoCobro
+    ) {
+
+        return switch (tipoCobro) {
+
+            case "FIJO_DIARIO" ->
+                    String.format(
+                            "$%.2f / día",
+                            detalle.costoFijoProveedor()
+                    );
+
+            case "FIJO_SERVICIO" ->
+                    String.format(
+                            "$%.2f / servicio",
+                            detalle.costoFijoProveedor()
+                    );
+
+            default ->
+                    String.format(
+                            "$%.2f / hora",
+                            detalle.costoHoraProveedor()
+                    );
+        };
+    }
+
+    private String formatearPrecio(
+            MaquinariaDAO.MaquinariaDetalle detalle,
+            String tipoCobro
+    ) {
+
+        return switch (tipoCobro) {
+
+            case "FIJO_DIARIO" ->
+                    String.format(
+                            "$%.2f / día",
+                            detalle.precioFijoCliente()
+                    );
+
+            case "FIJO_SERVICIO" ->
+                    String.format(
+                            "$%.2f / servicio",
+                            detalle.precioFijoCliente()
+                    );
+
+            default ->
+                    String.format(
+                            "$%.2f / hora",
+                            detalle.precioHoraCliente()
+                    );
+        };
+    }
 
 
     private Integer obtenerIdSeleccionado() {

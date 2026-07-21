@@ -25,6 +25,8 @@ public class ControlProyeccionPage extends JPanel {
 
     private static final String PANTALLA_CONTROL_DIARIO =
             "CONTROL_DIARIO";
+    private static final String PANTALLA_AVANCE_PROYECTO =
+            "AVANCE_PROYECTO";
 
 
     public ControlProyeccionPage() {
@@ -74,6 +76,12 @@ public class ControlProyeccionPage extends JPanel {
                 ),
                 PANTALLA_CONTROL_DIARIO
     );
+    panelPantallas.add(
+                new AvanceProyectoPage(
+                        this::mostrarPantallaPrincipal
+                ),
+                PANTALLA_AVANCE_PROYECTO
+        );
 
     add(
             panelPantallas,
@@ -140,9 +148,9 @@ public class ControlProyeccionPage extends JPanel {
 
     panelOpciones.add(
             crearTarjeta(
-                    "Dashboard de proyectos",
-                    "Resumen de avance, costos y rentabilidad.",
-                    null
+                "Dashboard de proyectos",
+                "Resumen de avance, costos y rentabilidad.",
+                this::mostrarAvanceProyecto
             )
     );
     panelOpciones.add(
@@ -557,6 +565,13 @@ private void mostrarControlDiario() {
     cardLayout.show(
             panelPantallas,
             PANTALLA_CONTROL_DIARIO
+    );
+}
+private void mostrarAvanceProyecto() {
+
+    cardLayout.show(
+            panelPantallas,
+            PANTALLA_AVANCE_PROYECTO
     );
 }
 }
