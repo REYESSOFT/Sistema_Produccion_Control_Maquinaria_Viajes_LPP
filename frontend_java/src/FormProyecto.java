@@ -33,6 +33,7 @@ public class FormProyecto extends JDialog {
     private JTextField txtEspesor;
     private JTextField txtFactorCompactacion;
     private JTextField txtCantidadContratada;
+    private JTextField txtMetrosLinealesContratados;
     private JTextField txtPrecioUnitario;
 
     private JTextArea txtObservaciones;
@@ -103,7 +104,7 @@ public class FormProyecto extends JDialog {
         JPanel campos =
                 new JPanel(
                         new GridLayout(
-                                16,
+                                17,
                                 2,
                                 10,
                                 8
@@ -155,6 +156,7 @@ public class FormProyecto extends JDialog {
         txtEspesor = new JTextField();
         txtFactorCompactacion = new JTextField();
         txtCantidadContratada = new JTextField();
+        txtMetrosLinealesContratados = new JTextField();
         txtPrecioUnitario = new JTextField();
 
         aplicarFiltroEntero(
@@ -174,12 +176,16 @@ public class FormProyecto extends JDialog {
         );
 
         aplicarFiltroDecimal(
-                txtCantidadContratada
-        );
+        txtCantidadContratada
+);
 
-        aplicarFiltroDecimal(
-                txtPrecioUnitario
-        );
+aplicarFiltroDecimal(
+        txtMetrosLinealesContratados
+);
+
+aplicarFiltroDecimal(
+        txtPrecioUnitario
+);
 
         cmbEstado =
                 new JComboBox<>(
@@ -241,10 +247,13 @@ public class FormProyecto extends JDialog {
         campos.add(txtFactorCompactacion);
 
         campos.add(new JLabel("Cantidad contratada:"));
-        campos.add(txtCantidadContratada);
+campos.add(txtCantidadContratada);
 
-        campos.add(new JLabel("Precio unitario:"));
-        campos.add(txtPrecioUnitario);
+campos.add(new JLabel("Metros lineales contratados:"));
+campos.add(txtMetrosLinealesContratados);
+
+campos.add(new JLabel("Precio unitario:"));
+campos.add(txtPrecioUnitario);
 
         campos.add(new JLabel("Estado:"));
         campos.add(cmbEstado);
@@ -457,11 +466,14 @@ Integer idTipoActividad =
                     txtFactorCompactacion.getText()
             ),
             convertirDecimal(
-                    txtCantidadContratada.getText()
-            ),
-            convertirDecimal(
-                    txtPrecioUnitario.getText()
-            ),
+        txtCantidadContratada.getText()
+),
+convertirDecimal(
+        txtMetrosLinealesContratados.getText()
+),
+convertirDecimal(
+        txtPrecioUnitario.getText()
+),
             cmbEstado
                     .getSelectedItem()
                     .toString(),
@@ -501,11 +513,14 @@ Integer idTipoActividad =
                     txtFactorCompactacion.getText()
             ),
             convertirDecimal(
-                    txtCantidadContratada.getText()
-            ),
-            convertirDecimal(
-                    txtPrecioUnitario.getText()
-            ),
+        txtCantidadContratada.getText()
+),
+convertirDecimal(
+        txtMetrosLinealesContratados.getText()
+),
+convertirDecimal(
+        txtPrecioUnitario.getText()
+),
             cmbEstado
                     .getSelectedItem()
                     .toString(),
@@ -679,18 +694,25 @@ Integer idTipoActividad =
     }
 
     if (!validarDecimalCampo(
-            txtCantidadContratada,
-            "Cantidad contratada"
-    )) {
-        return false;
-    }
+        txtCantidadContratada,
+        "Cantidad contratada"
+)) {
+    return false;
+}
 
-    if (!validarDecimalCampo(
-            txtPrecioUnitario,
-            "Precio unitario"
-    )) {
-        return false;
-    }
+if (!validarDecimalCampo(
+        txtMetrosLinealesContratados,
+        "Metros lineales contratados"
+)) {
+    return false;
+}
+
+if (!validarDecimalCampo(
+        txtPrecioUnitario,
+        "Precio unitario"
+)) {
+    return false;
+}
 
     return true;
 }
@@ -901,16 +923,22 @@ private void cargarDatosEdicion() {
         );
 
         txtCantidadContratada.setText(
-                convertirTexto(
-                        proyecto.cantidadContratada()
-                )
-        );
+        convertirTexto(
+                proyecto.cantidadContratada()
+        )
+);
 
-        txtPrecioUnitario.setText(
-                convertirTexto(
-                        proyecto.precioUnitario()
-                )
-        );
+txtMetrosLinealesContratados.setText(
+        convertirTexto(
+                proyecto.metrosLinealesContratados()
+        )
+);
+
+txtPrecioUnitario.setText(
+        convertirTexto(
+                proyecto.precioUnitario()
+        )
+);
 
         txtObservaciones.setText(
                 proyecto.observaciones()

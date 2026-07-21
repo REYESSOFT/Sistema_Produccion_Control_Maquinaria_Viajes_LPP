@@ -16,10 +16,15 @@ public class ControlProyeccionPage extends JPanel {
     
     private static final String PANTALLA_PROYECTOS =
             "PROYECTOS";
+
     private static final String PANTALLA_ASIGNACION_MAQUINARIA =
             "ASIGNACION_MAQUINARIA";
+
     private static final String PANTALLA_MANTENIMIENTO =
             "MANTENIMIENTO";
+
+    private static final String PANTALLA_CONTROL_DIARIO =
+            "CONTROL_DIARIO";
 
 
     public ControlProyeccionPage() {
@@ -62,6 +67,12 @@ public class ControlProyeccionPage extends JPanel {
     panelPantallas.add(
                 crearPantallaMantenimiento(),
                 PANTALLA_MANTENIMIENTO
+    );
+    panelPantallas.add(
+                new ControlDiarioPage(
+                        this::mostrarPantallaPrincipal
+                ),
+                PANTALLA_CONTROL_DIARIO
     );
 
     add(
@@ -162,7 +173,7 @@ public class ControlProyeccionPage extends JPanel {
             crearTarjeta(
                     "Control diario",
                     "Registrar avance, maquinaria y material.",
-                    null
+                    this::mostrarControlDiario
             )
     );
 
@@ -539,6 +550,13 @@ private void mostrarMantenimiento() {
     cardLayout.show(
             panelPantallas,
             PANTALLA_MANTENIMIENTO
+    );
+}
+private void mostrarControlDiario() {
+
+    cardLayout.show(
+            panelPantallas,
+            PANTALLA_CONTROL_DIARIO
     );
 }
 }

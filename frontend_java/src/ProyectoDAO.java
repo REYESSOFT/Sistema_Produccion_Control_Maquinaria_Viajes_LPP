@@ -84,6 +84,7 @@ public record TipoActividadItem(
         Double espesor,
         Double factorCompactacion,
         Double cantidadContratada,
+        Double metrosLinealesContratados,
         Double precioUnitario,
         String estado,
         String observaciones
@@ -369,6 +370,7 @@ public static ProyectoDetalle obtenerPorId(
                 espesor,
                 factor_compactacion,
                 cantidad_contratada,
+                metros_lineales_contratados,
                 precio_unitario,
                 estado,
                 observaciones
@@ -452,6 +454,10 @@ public static ProyectoDetalle obtenerPorId(
                     ),
                     obtenerDoubleNullable(
                             rs,
+                            "metros_lineales_contratados"
+                    ),
+                    obtenerDoubleNullable(
+                            rs,
                             "precio_unitario"
                     ),
                     rs.getString("estado"),
@@ -478,6 +484,7 @@ public static void actualizar(
         Double espesor,
         Double factorCompactacion,
         Double cantidadContratada,
+        Double metrosLinealesContratados,
         Double precioUnitario,
         String estado,
         String observaciones
@@ -506,10 +513,11 @@ public static void actualizar(
                 espesor = ?,
                 factor_compactacion = ?,
                 cantidad_contratada = ?,
+                metros_lineales_contratados = ?,
                 precio_unitario = ?,
                 estado = ?,
                 observaciones = ?
-            WHERE id_proyecto = ?
+                WHERE id_proyecto = ?
               AND activo = 1
             """;
 
@@ -536,13 +544,18 @@ public static void actualizar(
         asignarDecimal(ps, 12, areaM2);
         asignarDecimal(ps, 13, espesor);
         asignarDecimal(ps, 14, factorCompactacion);
-        asignarDecimal(ps, 15, cantidadContratada);
-        asignarDecimal(ps, 16, precioUnitario);
+asignarDecimal(ps, 15, cantidadContratada);
+asignarDecimal(
+        ps,
+        16,
+        metrosLinealesContratados
+);
+asignarDecimal(ps, 17, precioUnitario);
 
-        ps.setString(17, estado);
-        asignarTexto(ps, 18, observaciones);
+ps.setString(18, estado);
+asignarTexto(ps, 19, observaciones);
 
-        ps.setInt(19, idProyecto);
+ps.setInt(20, idProyecto);
 
         int filas =
                 ps.executeUpdate();
@@ -690,6 +703,7 @@ private static LocalDate obtenerFecha(
             Double espesor,
             Double factorCompactacion,
             Double cantidadContratada,
+            Double metrosLinealesContratados,
             Double precioUnitario,
             String estado,
             String observaciones
@@ -742,9 +756,9 @@ private static LocalDate obtenerFecha(
                     activo
                 )
                 VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, 1
-                )
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, 1
+)
                 """;
 
         try (
@@ -839,32 +853,37 @@ asignarEntero(
                     factorCompactacion
             );
 
-            asignarDecimal(
-                    ps,
-                    15,
-                    cantidadContratada
-            );
+           asignarDecimal(
+        ps,
+        15,
+        cantidadContratada
+);
 
-            asignarDecimal(
-                    ps,
-                    16,
-                    precioUnitario
-            );
+asignarDecimal(
+        ps,
+        16,
+        metrosLinealesContratados
+);
 
-            ps.setString(
-                    17,
-                    estado == null
-                            || estado.isBlank()
-                            ? "PLANIFICADO"
-                            : estado
-            );
+asignarDecimal(
+        ps,
+        17,
+        precioUnitario
+);
 
-            asignarTexto(
-                    ps,
-                    18,
-                    observaciones
-            );
+ps.setString(
+        18,
+        estado == null
+                || estado.isBlank()
+                ? "PLANIFICADO"
+                : estado
+);
 
+asignarTexto(
+        ps,
+        19,
+        observaciones
+);
             int filas =
                     ps.executeUpdate();
 
