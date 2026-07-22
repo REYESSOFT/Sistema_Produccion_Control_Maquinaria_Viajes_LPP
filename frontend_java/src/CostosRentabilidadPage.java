@@ -186,7 +186,8 @@ public class CostosRentabilidadPage extends JPanel {
                                 "ML ejecutados",
                                 "% avance",
                                 "Ingreso",
-                                "Costo",
+                                "Costo maquinaria",
+                                "Costo total",
                                 "Utilidad"
                         },
                         0
@@ -262,10 +263,14 @@ public class CostosRentabilidadPage extends JPanel {
 
         tabla.getColumnModel()
                 .getColumn(7)
-                .setPreferredWidth(130);
+                .setPreferredWidth(150);
 
         tabla.getColumnModel()
                 .getColumn(8)
+                .setPreferredWidth(130);
+
+        tabla.getColumnModel()
+                .getColumn(9)
                 .setPreferredWidth(130);
 
         JScrollPane scroll =
@@ -354,7 +359,11 @@ public class CostosRentabilidadPage extends JPanel {
                                 ),
 
                                 formatearMoneda(
-                                        item.costo()
+                                        item.costoMaquinaria()
+                                ),
+
+                                formatearMoneda(
+                                        item.costoTotal()
                                 ),
 
                                 formatearMoneda(

@@ -353,11 +353,16 @@ if (
                 espesor
         );
 
-        asignarTexto(
-                ps,
-                6,
-                observaciones
-        );
+        ps.setDouble(
+        6,
+        volumenReal
+);
+
+asignarTexto(
+        ps,
+        7,
+        observaciones
+);
 
         int filas =
                 ps.executeUpdate();

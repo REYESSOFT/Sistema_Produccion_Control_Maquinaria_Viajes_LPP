@@ -583,48 +583,59 @@ public class FormControlDiario extends JDialog {
                             txtEspesor.getText()
                     );
 
-            if (idControl == null) {
+           if (idControl == null) {
 
-                ControlDiarioDAO.insertar(
-                        proyecto.idProyecto(),
-                        fechaControl,
-                        metrosLineales,
-                        ancho,
-                        espesor,
-                        txtObservaciones.getText()
-                );
+    this.idControl =
+            ControlDiarioDAO.insertar(
+                    proyecto.idProyecto(),
+                    fechaControl,
+                    metrosLineales,
+                    ancho,
+                    espesor,
+                    txtObservaciones.getText()
+            );
 
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Control Diario guardado correctamente.",
-                        "LPP Smart ERP",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+    JOptionPane.showMessageDialog(
+            this,
+            "Control Diario guardado correctamente.",
+            "LPP Smart ERP",
+            JOptionPane.INFORMATION_MESSAGE
+    );
 
-            } else {
+} else {
 
-                ControlDiarioDAO.actualizar(
-                        idControl,
-                        proyecto.idProyecto(),
-                        fechaControl,
-                        metrosLineales,
-                        ancho,
-                        espesor,
-                        txtObservaciones.getText()
-                );
+    ControlDiarioDAO.actualizar(
+            idControl,
+            proyecto.idProyecto(),
+            fechaControl,
+            metrosLineales,
+            ancho,
+            espesor,
+            txtObservaciones.getText()
+    );
 
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Control Diario actualizado correctamente.",
-                        "LPP Smart ERP",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-            }
+    JOptionPane.showMessageDialog(
+            this,
+            "Control Diario actualizado correctamente.",
+            "LPP Smart ERP",
+            JOptionPane.INFORMATION_MESSAGE
+    );
+}
 
             guardado =
-                    true;
+        true;
 
-            dispose();
+DetalleControlDiarioMaquinariaDialog dialogoMaquinaria =
+        new DetalleControlDiarioMaquinariaDialog(
+                this,
+                idControl
+        );
+
+dialogoMaquinaria.setVisible(
+        true
+);
+
+dispose();
 
         } catch (
                 java.time.format

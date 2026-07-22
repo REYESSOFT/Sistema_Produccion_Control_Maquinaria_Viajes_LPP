@@ -228,14 +228,19 @@ public class ControlDiarioPage extends JPanel {
                 );
 
         JButton btnDetalle =
-                new JButton(
-                        "Detalle"
-                );
+        new JButton(
+                "Detalle"
+        );
 
-        JButton btnEliminar =
-                new JButton(
-                        "Eliminar"
-                );
+JButton btnMaquinaria =
+        new JButton(
+                "Maquinaria utilizada"
+        );
+
+JButton btnEliminar =
+        new JButton(
+                "Eliminar"
+        );
 
         btnNuevo.addActionListener(
                 e -> abrirNuevoControl()
@@ -246,12 +251,16 @@ public class ControlDiarioPage extends JPanel {
         );
 
         btnDetalle.addActionListener(
-                e -> verDetalleControl()
-        );
+        e -> verDetalleControl()
+);
 
-        btnEliminar.addActionListener(
-                e -> eliminarControl()
-        );
+btnMaquinaria.addActionListener(
+        e -> abrirMaquinariaUtilizada()
+);
+
+btnEliminar.addActionListener(
+        e -> eliminarControl()
+);
 
         panel.add(
                 btnNuevo
@@ -262,12 +271,16 @@ public class ControlDiarioPage extends JPanel {
         );
 
         panel.add(
-                btnDetalle
-        );
+        btnDetalle
+);
 
-        panel.add(
-                btnEliminar
-        );
+panel.add(
+        btnMaquinaria
+);
+
+panel.add(
+        btnEliminar
+);
 
         return panel;
     }
@@ -426,6 +439,48 @@ public class ControlDiarioPage extends JPanel {
             );
 
     formulario.setVisible(
+            true
+    );
+}
+private void abrirMaquinariaUtilizada() {
+
+    int filaVista =
+            tabla.getSelectedRow();
+
+    if (filaVista == -1) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Seleccione un Control Diario.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        return;
+    }
+
+    int filaModelo =
+            tabla.convertRowIndexToModel(
+                    filaVista
+            );
+
+    int idControl =
+            Integer.parseInt(
+                    modeloTabla.getValueAt(
+                            filaModelo,
+                            0
+                    ).toString()
+            );
+
+    DetalleControlDiarioMaquinariaDialog dialogo =
+            new DetalleControlDiarioMaquinariaDialog(
+                    SwingUtilities.getWindowAncestor(
+                            this
+                    ),
+                    idControl
+            );
+
+    dialogo.setVisible(
             true
     );
 }

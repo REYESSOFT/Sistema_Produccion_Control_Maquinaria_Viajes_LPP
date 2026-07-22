@@ -41,11 +41,12 @@ public class MenuPrincipal extends JFrame {
         menuLateral.setBackground(new Color(17, 24, 39));
         menuLateral.setPreferredSize(new Dimension(240, 690));
 
-        String[] opciones = {
+       String[] opciones = {
 
                 "Dashboard",
                 "Guías",
-                "Control y Proyección"
+                "Control y Proyección",
+                "Costos y Rentabilidad"
 
         };
 
@@ -104,6 +105,17 @@ public class MenuPrincipal extends JFrame {
 
     panelContenido.add(
             new ControlProyeccionPage(),
+            BorderLayout.CENTER
+    );
+
+} else if (
+        nombreModulo.equals("Costos y Rentabilidad")
+) {
+
+    panelContenido.add(
+            new CostosRentabilidadPage(
+                    () -> mostrarPantalla("Dashboard")
+            ),
             BorderLayout.CENTER
     );
 

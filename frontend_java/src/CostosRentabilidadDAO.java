@@ -15,7 +15,8 @@ public class CostosRentabilidadDAO {
             double metrosEjecutados,
             double porcentajeAvance,
             double ingreso,
-            double costo,
+            double costoMaquinaria,
+            double costoTotal,
             double utilidad
     ) {
     }
@@ -39,30 +40,149 @@ public class CostosRentabilidadDAO {
                     ) AS metros_contratados,
 
                     COALESCE(
-                        SUM(cd.metros_lineales),
+                        p.precio_unitario,
                         0
-                    ) AS metros_ejecutados
+                    ) AS precio_unitario,
+
+                    COALESCE(
+                        avance.metros_ejecutados,
+                        0
+                    ) AS metros_ejecutados,
+
+                    COALESCE(
+                        costos_maquinaria.costo_maquinaria,
+                        0
+                    ) AS costo_maquinaria
 
                 FROM proyectos p
 
                 INNER JOIN empresas e
-                    ON e.id_empresa =
-                       p.id_empresa
+                    ON e.id_empresa = p.id_empresa
 
-                LEFT JOIN control_diario cd
-                    ON cd.id_proyecto =
+                LEFT JOIN (
+                    SELECT
+                        cd.id_proyecto,
+
+                        SUM(
+                            COALESCE(
+                                cd.metros_lineales,
+                                0
+                            )
+                        ) AS metros_ejecutados
+
+                    FROM control_diario cd
+
+                    WHERE cd.activo = 1
+
+                    GROUP BY
+                        cd.id_proyecto
+                ) avance
+                    ON avance.id_proyecto =
                        p.id_proyecto
 
-                   AND cd.activo = 1
+                LEFT JOIN (
+                    SELECT
+                        cd.id_proyecto,
+
+                        SUM(
+                            CASE
+                                WHEN UPPER(
+                                    TRIM(
+                                        COALESCE(
+                                            m.tipo_cobro,
+                                            'POR_HORA'
+                                        )
+                                    )
+                                ) = 'FIJO_DIARIO'
+                                THEN COALESCE(
+                                    m.costo_fijo_proveedor,
+                                    0
+                                )
+
+                                WHEN UPPER(
+                                    TRIM(
+                                        COALESCE(
+                                            m.tipo_cobro,
+                                            'POR_HORA'
+                                        )
+                                    )
+                                ) = 'FIJO_SERVICIO'
+                                THEN
+                                    CASE
+                                        WHEN NOT EXISTS (
+                                            SELECT 1
+                                            FROM control_diario_maquinaria
+                                                 cdm_anterior
+
+                                            INNER JOIN control_diario
+                                                 cd_anterior
+                                                ON cd_anterior.id_control =
+                                                   cdm_anterior.id_control
+                                               AND cd_anterior.activo = 1
+
+                                            WHERE
+                                                cdm_anterior.id_maquinaria =
+                                                cdm.id_maquinaria
+
+                                                AND cdm_anterior.activo = 1
+
+                                                AND cd_anterior.id_proyecto =
+                                                cd.id_proyecto
+
+                                                AND (
+                                                    cd_anterior.fecha_control <
+                                                    cd.fecha_control
+
+                                                    OR (
+                                                        cd_anterior.fecha_control =
+                                                        cd.fecha_control
+
+                                                        AND
+                                                        cdm_anterior
+                                                            .id_control_maquinaria <
+                                                        cdm.id_control_maquinaria
+                                                    )
+                                                )
+                                        )
+                                        THEN COALESCE(
+                                            m.costo_fijo_proveedor,
+                                            0
+                                        )
+                                        ELSE 0
+                                    END
+
+                                ELSE
+                                    COALESCE(
+                                        cdm.horas_trabajadas,
+                                        0
+                                    )
+                                    *
+                                    COALESCE(
+                                        m.costo_hora_proveedor,
+                                        0
+                                    )
+                            END
+                        ) AS costo_maquinaria
+
+                    FROM control_diario_maquinaria cdm
+
+                    INNER JOIN control_diario cd
+                        ON cd.id_control = cdm.id_control
+                       AND cd.activo = 1
+
+                    INNER JOIN maquinaria m
+                        ON m.id_maquinaria = cdm.id_maquinaria
+                       AND m.activo = 1
+
+                    WHERE cdm.activo = 1
+
+                    GROUP BY
+                        cd.id_proyecto
+                ) costos_maquinaria
+                    ON costos_maquinaria.id_proyecto =
+                       p.id_proyecto
 
                 WHERE p.activo = 1
-
-                GROUP BY
-                    p.id_proyecto,
-                    p.codigo_proyecto,
-                    p.descripcion,
-                    e.nombre_empresa,
-                    p.metros_lineales_contratados
 
                 ORDER BY
                     p.codigo_proyecto,
@@ -94,27 +214,41 @@ public class CostosRentabilidadDAO {
                                 "metros_ejecutados"
                         );
 
+                double precioUnitario =
+                        rs.getDouble(
+                                "precio_unitario"
+                        );
+
+                double costoMaquinaria =
+                        rs.getDouble(
+                                "costo_maquinaria"
+                        );
+
                 double porcentajeAvance =
                         calcularPorcentaje(
                                 metrosEjecutados,
                                 metrosContratados
                         );
 
-                /*
-                 * En esta primera etapa todavía no se
-                 * calculan ingresos, costos ni utilidad.
-                 *
-                 * Estos valores permanecerán en cero
-                 * hasta implementar las siguientes fases.
-                 */
                 double ingreso =
-                        0.00;
+                        metrosEjecutados
+                        * precioUnitario;
 
-                double costo =
-                        0.00;
+                /*
+                 * En esta fase el costo total contiene
+                 * únicamente el costo de maquinaria.
+                 *
+                 * Más adelante se agregarán:
+                 * - Material pétreo
+                 * - Transporte
+                 * - Otros costos
+                 */
+                double costoTotal =
+                        costoMaquinaria;
 
                 double utilidad =
-                        ingreso - costo;
+                        ingreso
+                        - costoTotal;
 
                 lista.add(
                         new CostosRentabilidadResumen(
@@ -142,7 +276,9 @@ public class CostosRentabilidadDAO {
 
                                 ingreso,
 
-                                costo,
+                                costoMaquinaria,
+
+                                costoTotal,
 
                                 utilidad
                         )
