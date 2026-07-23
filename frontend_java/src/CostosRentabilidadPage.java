@@ -162,23 +162,31 @@ public class CostosRentabilidadPage extends JPanel {
         modeloTabla =
                 new DefaultTableModel(
                         new String[]{
-                                "ID",
-                                "Código",
-                                "Proyecto",
-                                "Empresa",
-                                "<html><center>Metros Lineales<br>Contratados</center></html>",
-                                "<html><center>Metros Lineales<br>Ejecutados</center></html>",
-                                "<html><center>%<br>avance</center></html>",
-                                "Ingreso",
-                                "<html><center>Costo<br>material</center></html>",
-                                "<html><center>Costo<br>transporte</center></html>",
-                                "<html><center>Costo<br>maquinaria</center></html>",
-                                "<html><center>Costo<br>total</center></html>",
-                                "<html><center>Costo por<br>Metro Lineal</center></html>",
-                                "Utilidad",
-                                "<html><center>Utilidad por<br>Metro Lineal</center></html>",
-                                "<html><center>Rentabilidad<br>%</center></html>"
-                        },
+        "ID",
+        "Código",
+        "Proyecto",
+        "Empresa",
+
+        "<html><center>Metros Lineales<br>Contratados</center></html>",
+        "<html><center>Metros Lineales<br>Ejecutados</center></html>",
+        "<html><center>% avance<br>lineal</center></html>",
+
+        "<html><center>Cantidad<br>contratada</center></html>",
+        "<html><center>Volumen<br>acumulado</center></html>",
+        "<html><center>Costo<br>acumulado</center></html>",
+        "<html><center>% avance<br>físico</center></html>",
+        "<html><center>% avance<br>contractual</center></html>",
+
+        "Ingreso",
+        "<html><center>Costo<br>material</center></html>",
+        "<html><center>Costo<br>transporte</center></html>",
+        "<html><center>Costo<br>maquinaria</center></html>",
+        "<html><center>Costo<br>total</center></html>",
+        "<html><center>Costo por<br>Metro Lineal</center></html>",
+        "Utilidad",
+        "<html><center>Utilidad por<br>Metro Lineal</center></html>",
+        "<html><center>Rentabilidad<br>%</center></html>"
+},
                         0
                 ) {
 
@@ -200,6 +208,10 @@ public class CostosRentabilidadPage extends JPanel {
                 tabla.getColumnModel()
                         .getColumn(0)
         );
+        tabla.removeColumn(
+        tabla.getColumnModel()
+                .getColumn(6)
+);
 
         tabla.setAutoResizeMode(
                 JTable.AUTO_RESIZE_OFF
@@ -229,22 +241,29 @@ public class CostosRentabilidadPage extends JPanel {
         );
 
         int[] anchosColumnas = {
-                110,
-                300,
-                200,
-                125,
-                125,
-                100,
-                130,
-                125,
-                135,
-                135,
-                125,
-                145,
-                130,
-                150,
-                130
-        };
+        110, // Código
+        300, // Proyecto
+        200, // Empresa
+
+        125, // Metros contratados
+        125, // Metros ejecutados
+        105, // Avance lineal
+
+        125, // Volumen acumulado
+        130, // Costo acumulado
+        110, // Avance físico
+        120, // Avance contractual
+
+        130, // Ingreso
+        125, // Costo material
+        135, // Costo transporte
+        135, // Costo maquinaria
+        125, // Costo total
+        145, // Costo por metro
+        130, // Utilidad
+        150, // Utilidad por metro
+        130  // Rentabilidad
+};
 
         for (
                 int i = 0;
@@ -337,6 +356,25 @@ public class CostosRentabilidadPage extends JPanel {
                                 formatearPorcentaje(
                                         item.porcentajeAvance()
                                 ),
+                                formatearNumero(
+        item.cantidadContratada()
+),
+
+formatearNumero(
+        item.volumenAcumulado()
+),
+
+formatearMoneda(
+        item.costoAcumulado()
+),
+
+formatearPorcentaje(
+        item.porcentajeAvanceFisico()
+),
+
+formatearPorcentaje(
+        item.porcentajeAvanceContractual()
+),
 
                                 formatearMoneda(
                                         item.ingreso()

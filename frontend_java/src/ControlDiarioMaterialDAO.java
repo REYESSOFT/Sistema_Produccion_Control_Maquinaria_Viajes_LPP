@@ -311,326 +311,441 @@ public class ControlDiarioMaterialDAO {
         }
     }
 
-    public static int insertar(
-            int idControl,
-            String materialRecibido,
-            String cantera,
-            double cantidadViajes,
-            double volumenRecibido,
-            double costoUnitarioMaterial,
-            double costoUnitarioTransporte,
-            int cantidadVolquetas,
-            double horasVolqueta,
-            String observaciones
-    ) throws Exception {
+   public static int insertar(
+        int idControl,
+        String materialRecibido,
+        String cantera,
+        double cantidadViajes,
+        double volumenRecibido,
+        double costoUnitarioMaterial,
+        double costoUnitarioTransporte,
+        int cantidadVolquetas,
+        double horasVolqueta,
+        String observaciones
+) throws Exception {
 
-        validarDatos(
-                idControl,
-                materialRecibido,
-                cantera,
-                cantidadViajes,
-                volumenRecibido,
-                costoUnitarioMaterial,
-                costoUnitarioTransporte,
-                cantidadVolquetas,
-                horasVolqueta
-        );
+    return insertar(
+            idControl,
+            null,
+            materialRecibido,
+            cantera,
+            null,
+            cantidadViajes,
+            volumenRecibido,
+            costoUnitarioMaterial,
+            costoUnitarioTransporte,
+            cantidadVolquetas,
+            horasVolqueta,
+            observaciones
+    );
+}
 
-        validarDuplicado(
-                idControl,
-                materialRecibido,
-                cantera,
-                0
-        );
+public static int insertar(
+        int idControl,
+        Integer idTarifa,
+        String materialRecibido,
+        String cantera,
+        String destinoSector,
+        double cantidadViajes,
+        double volumenRecibido,
+        double costoUnitarioMaterial,
+        double costoUnitarioTransporte,
+        int cantidadVolquetas,
+        double horasVolqueta,
+        String observaciones
+) throws Exception {
 
-        double costoMaterial =
-                calcularCostoMaterial(
-                        cantidadViajes,
-                        costoUnitarioMaterial
-                );
+    validarDatos(
+            idControl,
+            materialRecibido,
+            cantera,
+            cantidadViajes,
+            volumenRecibido,
+            costoUnitarioMaterial,
+            costoUnitarioTransporte,
+            cantidadVolquetas,
+            horasVolqueta
+    );
 
-        double costoTransporte =
-                calcularCostoTransporte(
-                        cantidadViajes,
-                        costoUnitarioTransporte
-                );
+    validarDuplicado(
+            idControl,
+            materialRecibido,
+            cantera,
+            0
+    );
 
-        String sql = """
-                INSERT INTO control_diario_material (
-                    id_control,
-                    material_recibido,
-                    cantera,
-                    cantidad_viajes,
-                    volumen_recibido,
-                    costo_unitario_material,
-                    costo_unitario_transporte,
-                    costo_material,
-                    costo_transporte,
-                    cantidad_volquetas,
-                    horas_volqueta,
-                    observaciones,
-                    activo
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql,
-                                Statement.RETURN_GENERATED_KEYS
-                        )
-        ) {
-
-            ps.setInt(
-                    1,
-                    idControl
-            );
-
-            ps.setString(
-                    2,
-                    materialRecibido.trim()
-            );
-
-            ps.setString(
-                    3,
-                    cantera.trim()
-            );
-
-            ps.setDouble(
-                    4,
-                    cantidadViajes
-            );
-
-            ps.setDouble(
-                    5,
-                    volumenRecibido
-            );
-
-            ps.setDouble(
-                    6,
+    double costoMaterial =
+            calcularCostoMaterial(
+                    cantidadViajes,
                     costoUnitarioMaterial
             );
 
-            ps.setDouble(
-                    7,
+    double costoTransporte =
+            calcularCostoTransporte(
+                    cantidadViajes,
                     costoUnitarioTransporte
             );
 
-            ps.setDouble(
-                    8,
-                    costoMaterial
+    String sql = """
+            INSERT INTO control_diario_material (
+                id_control,
+                id_tarifa,
+                material_recibido,
+                cantera,
+                destino_sector,
+                cantidad_viajes,
+                volumen_recibido,
+                costo_unitario_material,
+                costo_unitario_transporte,
+                costo_material,
+                costo_transporte,
+                cantidad_volquetas,
+                horas_volqueta,
+                observaciones,
+                activo
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+            """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(
+                            sql,
+                            Statement.RETURN_GENERATED_KEYS
+                    )
+    ) {
+
+        ps.setInt(
+                1,
+                idControl
+        );
+
+        if (
+                idTarifa == null
+                || idTarifa <= 0
+        ) {
+
+            ps.setNull(
+                    2,
+                    Types.INTEGER
             );
 
-            ps.setDouble(
-                    9,
-                    costoTransporte
-            );
+        } else {
 
             ps.setInt(
-                    10,
-                    cantidadVolquetas
+                    2,
+                    idTarifa
             );
-
-            ps.setDouble(
-                    11,
-                    horasVolqueta
-            );
-
-            asignarTexto(
-                    ps,
-                    12,
-                    observaciones
-            );
-
-            int filas =
-                    ps.executeUpdate();
-
-            if (filas == 0) {
-
-                throw new Exception(
-                        "No fue posible guardar el material pétreo."
-                );
-            }
-
-            try (
-                    ResultSet claves =
-                            ps.getGeneratedKeys()
-            ) {
-
-                if (claves.next()) {
-
-                    return claves.getInt(1);
-                }
-            }
         }
 
-        throw new Exception(
-                "El material pétreo fue guardado, "
-                        + "pero no se pudo obtener su ID."
+        ps.setString(
+                3,
+                materialRecibido.trim()
         );
+
+        ps.setString(
+                4,
+                cantera.trim()
+        );
+
+        asignarTexto(
+                ps,
+                5,
+                destinoSector
+        );
+
+        ps.setDouble(
+                6,
+                cantidadViajes
+        );
+
+        ps.setDouble(
+                7,
+                volumenRecibido
+        );
+
+        ps.setDouble(
+                8,
+                costoUnitarioMaterial
+        );
+
+        ps.setDouble(
+                9,
+                costoUnitarioTransporte
+        );
+
+        ps.setDouble(
+                10,
+                costoMaterial
+        );
+
+        ps.setDouble(
+                11,
+                costoTransporte
+        );
+
+        ps.setInt(
+                12,
+                cantidadVolquetas
+        );
+
+        ps.setDouble(
+                13,
+                horasVolqueta
+        );
+
+        asignarTexto(
+                ps,
+                14,
+                observaciones
+        );
+
+        int filas =
+                ps.executeUpdate();
+
+        if (filas == 0) {
+
+            throw new Exception(
+                    "No fue posible guardar el material pétreo."
+            );
+        }
+
+        try (
+                ResultSet claves =
+                        ps.getGeneratedKeys()
+        ) {
+
+            if (claves.next()) {
+
+                return claves.getInt(1);
+            }
+        }
     }
+
+    throw new Exception(
+            "El material pétreo fue guardado, "
+                    + "pero no se pudo obtener su ID."
+    );
+}
 
     public static void actualizar(
-            int idControlMaterial,
-            int idControl,
-            String materialRecibido,
-            String cantera,
-            double cantidadViajes,
-            double volumenRecibido,
-            double costoUnitarioMaterial,
-            double costoUnitarioTransporte,
-            int cantidadVolquetas,
-            double horasVolqueta,
-            String observaciones
-    ) throws Exception {
+        int idControlMaterial,
+        int idControl,
+        String materialRecibido,
+        String cantera,
+        double cantidadViajes,
+        double volumenRecibido,
+        double costoUnitarioMaterial,
+        double costoUnitarioTransporte,
+        int cantidadVolquetas,
+        double horasVolqueta,
+        String observaciones
+) throws Exception {
 
-        validarIdRegistro(
-                idControlMaterial
-        );
+    actualizar(
+            idControlMaterial,
+            idControl,
+            null,
+            materialRecibido,
+            cantera,
+            null,
+            cantidadViajes,
+            volumenRecibido,
+            costoUnitarioMaterial,
+            costoUnitarioTransporte,
+            cantidadVolquetas,
+            horasVolqueta,
+            observaciones
+    );
+}
 
-        validarDatos(
-                idControl,
-                materialRecibido,
-                cantera,
-                cantidadViajes,
-                volumenRecibido,
-                costoUnitarioMaterial,
-                costoUnitarioTransporte,
-                cantidadVolquetas,
-                horasVolqueta
-        );
+public static void actualizar(
+        int idControlMaterial,
+        int idControl,
+        Integer idTarifa,
+        String materialRecibido,
+        String cantera,
+        String destinoSector,
+        double cantidadViajes,
+        double volumenRecibido,
+        double costoUnitarioMaterial,
+        double costoUnitarioTransporte,
+        int cantidadVolquetas,
+        double horasVolqueta,
+        String observaciones
+) throws Exception {
 
-        validarDuplicado(
-                idControl,
-                materialRecibido,
-                cantera,
-                idControlMaterial
-        );
+    validarIdRegistro(
+            idControlMaterial
+    );
 
-        double costoMaterial =
-                calcularCostoMaterial(
-                        cantidadViajes,
-                        costoUnitarioMaterial
-                );
+    validarDatos(
+            idControl,
+            materialRecibido,
+            cantera,
+            cantidadViajes,
+            volumenRecibido,
+            costoUnitarioMaterial,
+            costoUnitarioTransporte,
+            cantidadVolquetas,
+            horasVolqueta
+    );
 
-        double costoTransporte =
-                calcularCostoTransporte(
-                        cantidadViajes,
-                        costoUnitarioTransporte
-                );
+    validarDuplicado(
+            idControl,
+            materialRecibido,
+            cantera,
+            idControlMaterial
+    );
 
-        String sql = """
-                UPDATE control_diario_material
-                SET
-                    material_recibido = ?,
-                    cantera = ?,
-                    cantidad_viajes = ?,
-                    volumen_recibido = ?,
-                    costo_unitario_material = ?,
-                    costo_unitario_transporte = ?,
-                    costo_material = ?,
-                    costo_transporte = ?,
-                    cantidad_volquetas = ?,
-                    horas_volqueta = ?,
-                    observaciones = ?
-
-                WHERE id_control_material = ?
-                  AND id_control = ?
-                  AND activo = 1
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
-        ) {
-
-            ps.setString(
-                    1,
-                    materialRecibido.trim()
-            );
-
-            ps.setString(
-                    2,
-                    cantera.trim()
-            );
-
-            ps.setDouble(
-                    3,
-                    cantidadViajes
-            );
-
-            ps.setDouble(
-                    4,
-                    volumenRecibido
-            );
-
-            ps.setDouble(
-                    5,
+    double costoMaterial =
+            calcularCostoMaterial(
+                    cantidadViajes,
                     costoUnitarioMaterial
             );
 
-            ps.setDouble(
-                    6,
+    double costoTransporte =
+            calcularCostoTransporte(
+                    cantidadViajes,
                     costoUnitarioTransporte
             );
 
-            ps.setDouble(
-                    7,
-                    costoMaterial
+    String sql = """
+            UPDATE control_diario_material
+            SET
+                id_tarifa = ?,
+                material_recibido = ?,
+                cantera = ?,
+                destino_sector = ?,
+                cantidad_viajes = ?,
+                volumen_recibido = ?,
+                costo_unitario_material = ?,
+                costo_unitario_transporte = ?,
+                costo_material = ?,
+                costo_transporte = ?,
+                cantidad_volquetas = ?,
+                horas_volqueta = ?,
+                observaciones = ?
+
+            WHERE id_control_material = ?
+              AND id_control = ?
+              AND activo = 1
+            """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(
+                            sql
+                    )
+    ) {
+
+        if (
+                idTarifa == null
+                || idTarifa <= 0
+        ) {
+
+            ps.setNull(
+                    1,
+                    Types.INTEGER
             );
 
-            ps.setDouble(
-                    8,
-                    costoTransporte
-            );
+        } else {
 
             ps.setInt(
-                    9,
-                    cantidadVolquetas
+                    1,
+                    idTarifa
             );
+        }
 
-            ps.setDouble(
-                    10,
-                    horasVolqueta
+        ps.setString(
+                2,
+                materialRecibido.trim()
+        );
+
+        ps.setString(
+                3,
+                cantera.trim()
+        );
+
+        asignarTexto(
+                ps,
+                4,
+                destinoSector
+        );
+
+        ps.setDouble(
+                5,
+                cantidadViajes
+        );
+
+        ps.setDouble(
+                6,
+                volumenRecibido
+        );
+
+        ps.setDouble(
+                7,
+                costoUnitarioMaterial
+        );
+
+        ps.setDouble(
+                8,
+                costoUnitarioTransporte
+        );
+
+        ps.setDouble(
+                9,
+                costoMaterial
+        );
+
+        ps.setDouble(
+                10,
+                costoTransporte
+        );
+
+        ps.setInt(
+                11,
+                cantidadVolquetas
+        );
+
+        ps.setDouble(
+                12,
+                horasVolqueta
+        );
+
+        asignarTexto(
+                ps,
+                13,
+                observaciones
+        );
+
+        ps.setInt(
+                14,
+                idControlMaterial
+        );
+
+        ps.setInt(
+                15,
+                idControl
+        );
+
+        int filas =
+                ps.executeUpdate();
+
+        if (filas == 0) {
+
+            throw new Exception(
+                    "No fue posible actualizar el material pétreo."
             );
-
-            asignarTexto(
-                    ps,
-                    11,
-                    observaciones
-            );
-
-            ps.setInt(
-                    12,
-                    idControlMaterial
-            );
-
-            ps.setInt(
-                    13,
-                    idControl
-            );
-
-            int filas =
-                    ps.executeUpdate();
-
-            if (filas == 0) {
-
-                throw new Exception(
-                        "No fue posible actualizar el material pétreo."
-                );
-            }
         }
     }
-
+}
     public static void eliminar(
             int idControlMaterial
     ) throws Exception {

@@ -7,24 +7,32 @@ import java.util.List;
 public class CostosRentabilidadDAO {
 
     public record CostosRentabilidadResumen(
-            int idProyecto,
-            String codigoProyecto,
-            String descripcionProyecto,
-            String empresa,
-            double metrosContratados,
-            double metrosEjecutados,
-            double porcentajeAvance,
-            double ingreso,
-            double costoMaterial,
-            double costoTransporte,
-            double costoMaquinaria,
-            double costoTotal,
-            double costoPorMetroLineal,
-            double utilidad,
-            double utilidadPorMetroLineal,
-            double rentabilidad
-    ) {
-    }
+        int idProyecto,
+        String codigoProyecto,
+        String descripcionProyecto,
+        String empresa,
+
+        double metrosContratados,
+        double metrosEjecutados,
+        double porcentajeAvance,
+
+        double cantidadContratada,
+        double volumenAcumulado,
+        double costoAcumulado,
+        double porcentajeAvanceFisico,
+        double porcentajeAvanceContractual,
+
+        double ingreso,
+        double costoMaterial,
+        double costoTransporte,
+        double costoMaquinaria,
+        double costoTotal,
+        double costoPorMetroLineal,
+        double utilidad,
+        double utilidadPorMetroLineal,
+        double rentabilidad
+) {
+}
 
     public static List<CostosRentabilidadResumen>
             obtenerResumen() throws Exception {
@@ -48,17 +56,25 @@ public class CostosRentabilidadDAO {
                         p.precio_unitario,
                         0
                     ) AS precio_unitario,
+                    COALESCE(
+                        p.cantidad_contratada,
+                        0
+                    ) AS cantidad_contratada,
 
                     COALESCE(
                         avance.metros_ejecutados,
                         0
                     ) AS metros_ejecutados,
+                    COALESCE(
+                        costos_material.volumen_acumulado,
+                        0
+                    ) AS volumen_acumulado,
 
                     COALESCE(
                         costos_material.costo_material,
                         0
                     ) AS costo_material,
-
+                    
                     COALESCE(
                         costos_material.costo_transporte,
                         0
@@ -90,28 +106,41 @@ public class CostosRentabilidadDAO {
                     ON avance.id_proyecto = p.id_proyecto
 
                 LEFT JOIN (
-                    SELECT
-                        cd.id_proyecto,
-                        SUM(
-                            COALESCE(
-                                cdm.costo_material,
-                                0
-                            )
-                        ) AS costo_material,
-                        SUM(
-                            COALESCE(
-                                cdm.costo_transporte,
-                                0
-                            )
-                        ) AS costo_transporte
-                    FROM control_diario_material cdm
-                    INNER JOIN control_diario cd
-                        ON cd.id_control = cdm.id_control
-                       AND cd.activo = 1
-                    WHERE cdm.activo = 1
-                    GROUP BY cd.id_proyecto
-                ) costos_material
-                    ON costos_material.id_proyecto = p.id_proyecto
+    SELECT
+        cd.id_proyecto,
+
+        SUM(
+            COALESCE(
+                cdm.volumen_recibido,
+                0
+            )
+        ) AS volumen_acumulado,
+
+        SUM(
+            COALESCE(
+                cdm.costo_material,
+                0
+            )
+        ) AS costo_material,
+
+        SUM(
+            COALESCE(
+                cdm.costo_transporte,
+                0
+            )
+        ) AS costo_transporte
+
+    FROM control_diario_material cdm
+
+    INNER JOIN control_diario cd
+        ON cd.id_control = cdm.id_control
+       AND cd.activo = 1
+
+    WHERE cdm.activo = 1
+
+    GROUP BY cd.id_proyecto
+) costos_material
+    ON costos_material.id_proyecto = p.id_proyecto
 
                 LEFT JOIN (
                     SELECT
@@ -228,6 +257,11 @@ public class CostosRentabilidadDAO {
 
                 double precioUnitario =
                         rs.getDouble("precio_unitario");
+                double cantidadContratada =
+                        rs.getDouble("cantidad_contratada");
+
+                double volumenAcumulado =
+                        rs.getDouble("volumen_acumulado");
 
                 double costoMaterial =
                         rs.getDouble("costo_material");
@@ -247,6 +281,25 @@ public class CostosRentabilidadDAO {
                 double ingreso =
                         metrosEjecutados
                         * precioUnitario;
+                double costoAcumulado =
+        costoMaterial
+        + costoTransporte;
+
+double porcentajeAvanceFisico =
+        calcularPorcentaje(
+                volumenAcumulado,
+                cantidadContratada
+        );
+
+double valorTotalContratado =
+        metrosContratados
+        * precioUnitario;
+
+double porcentajeAvanceContractual =
+        calcularPorcentaje(
+                costoAcumulado,
+                valorTotalContratado
+        );
 
                 double costoTotal =
                         costoMaterial
@@ -277,23 +330,31 @@ public class CostosRentabilidadDAO {
 
                 lista.add(
                         new CostosRentabilidadResumen(
-                                rs.getInt("id_proyecto"),
-                                rs.getString("codigo_proyecto"),
-                                rs.getString("descripcion"),
-                                rs.getString("empresa"),
-                                metrosContratados,
-                                metrosEjecutados,
-                                porcentajeAvance,
-                                ingreso,
-                                costoMaterial,
-                                costoTransporte,
-                                costoMaquinaria,
-                                costoTotal,
-                                costoPorMetroLineal,
-                                utilidad,
-                                utilidadPorMetroLineal,
-                                rentabilidad
-                        )
+        rs.getInt("id_proyecto"),
+        rs.getString("codigo_proyecto"),
+        rs.getString("descripcion"),
+        rs.getString("empresa"),
+
+        metrosContratados,
+        metrosEjecutados,
+        porcentajeAvance,
+
+        cantidadContratada,
+        volumenAcumulado,
+        costoAcumulado,
+        porcentajeAvanceFisico,
+        porcentajeAvanceContractual,
+
+        ingreso,
+        costoMaterial,
+        costoTransporte,
+        costoMaquinaria,
+        costoTotal,
+        costoPorMetroLineal,
+        utilidad,
+        utilidadPorMetroLineal,
+        rentabilidad
+)
                 );
             }
         }

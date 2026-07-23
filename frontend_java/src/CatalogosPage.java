@@ -24,6 +24,8 @@ public class CatalogosPage extends JPanel {
             "TIPOS_ACTIVIDAD";
     private static final String PANTALLA_ENTIDADES =
             "ENTIDADES";
+    private static final String PANTALLA_CANTERAS_MATERIALES =
+            "CANTERAS_MATERIALES";
 
     public CatalogosPage(
             Runnable accionVolverModulo
@@ -81,6 +83,12 @@ public class CatalogosPage extends JPanel {
                         this::mostrarCatalogos
                 ),
                 PANTALLA_ENTIDADES
+        );
+        panelPantallas.add(
+                new CatalogoCanteraMaterialPage(
+                        this::mostrarCatalogos
+                ),
+                PANTALLA_CANTERAS_MATERIALES
         );
 
         add(
@@ -245,31 +253,14 @@ public class CatalogosPage extends JPanel {
     );
 
     panelOpciones.add(
-            crearTarjeta(
-                    "Canteras y materiales",
-                    "Catálogo de canteras y tipos "
-                            + "de material pétreo.",
-                    null
-            )
-    );
+        crearTarjeta(
+                "Canteras y Material Petreo",
+                "Administrar canteras, materiales "
+        + "y tarifas de material pétreo.",
+                this::mostrarCanterasMateriales
+        )
+);
 
-    panelOpciones.add(
-            crearTarjeta(
-                    "Tarifas de material",
-                    "Costo por metro cúbico según "
-                            + "cantera y material.",
-                    null
-            )
-    );
-
-    panelOpciones.add(
-            crearTarjeta(
-                    "Tarifas de transporte",
-                    "Costo por viaje según cantera, "
-                            + "sector y destino.",
-                    null
-            )
-    );
 
     /*
      * Altura mínima de cada fila de tarjetas.
@@ -526,6 +517,13 @@ private void mostrarEntidades() {
     cardLayout.show(
             panelPantallas,
             PANTALLA_ENTIDADES
+    );
+}
+private void mostrarCanterasMateriales() {
+
+    cardLayout.show(
+            panelPantallas,
+            PANTALLA_CANTERAS_MATERIALES
     );
 }
 

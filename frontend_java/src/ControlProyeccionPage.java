@@ -28,6 +28,9 @@ public class ControlProyeccionPage extends JPanel {
     private static final String PANTALLA_AVANCE_PROYECTO =
             "AVANCE_PROYECTO";
 
+    private static final String PANTALLA_COSTOS_RENTABILIDAD =
+        "COSTOS_RENTABILIDAD";
+
 
     public ControlProyeccionPage() {
 
@@ -82,7 +85,13 @@ public class ControlProyeccionPage extends JPanel {
                 ),
                 PANTALLA_AVANCE_PROYECTO
         );
-
+    panelPantallas.add(
+        new CostosRentabilidadPage(
+                this::mostrarPantallaPrincipal
+        ),
+        PANTALLA_COSTOS_RENTABILIDAD
+);
+   
     add(
             panelPantallas,
             BorderLayout.CENTER
@@ -194,12 +203,12 @@ public class ControlProyeccionPage extends JPanel {
     );
 
     panelOpciones.add(
-            crearTarjeta(
-                    "Costos y rentabilidad",
-                    "Comparar proyección contra ejecución real.",
-                    null
-            )
-    );
+        crearTarjeta(
+                "Costos y rentabilidad",
+                "Comparar proyección contra ejecución real.",
+                this::mostrarCostosRentabilidad
+        )
+);
 
     panelOpciones.add(
             crearTarjeta(
@@ -572,6 +581,13 @@ private void mostrarAvanceProyecto() {
     cardLayout.show(
             panelPantallas,
             PANTALLA_AVANCE_PROYECTO
+    );
+}
+private void mostrarCostosRentabilidad() {
+
+    cardLayout.show(
+            panelPantallas,
+            PANTALLA_COSTOS_RENTABILIDAD
     );
 }
 }

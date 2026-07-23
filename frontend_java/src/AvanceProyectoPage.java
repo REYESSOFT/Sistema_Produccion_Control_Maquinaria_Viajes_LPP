@@ -319,6 +319,15 @@ encabezado.add(
         tabla.setSelectionMode(
                 ListSelectionModel.SINGLE_SELECTION
         );
+        tabla.getSelectionModel().addListSelectionListener(
+        e -> {
+
+            if (!e.getValueIsAdjusting()) {
+
+                actualizarIndicadoresSeleccion();
+            }
+        }
+);
         tabla.addMouseListener(
         new java.awt.event.MouseAdapter() {
 
@@ -634,6 +643,7 @@ scroll.setVerticalScrollBarPolicy(
         throws Exception {
 
     modelo.setRowCount(0);
+    tabla.clearSelection();
 
     listaAvances =
         AvanceProyectoDAO.obtenerAvances();
@@ -720,6 +730,98 @@ String.format(
 
     }
 
+}
+
+private void actualizarIndicadoresSeleccion() {
+
+    int filaVista =
+            tabla.getSelectedRow();
+
+    /*
+     * Si no existe una fila seleccionada,
+     * volvemos a mostrar el resumen global.
+     */
+    if (filaVista < 0) {
+
+        try {
+
+            cargarResumen();
+
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error al cargar el resumen general:\n"
+                            + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+
+        return;
+    }
+
+    int filaModelo =
+            tabla.convertRowIndexToModel(
+                    filaVista
+            );
+
+    if (
+            listaAvances == null
+            || filaModelo < 0
+            || filaModelo >= listaAvances.size()
+    ) {
+
+        return;
+    }
+
+    AvanceProyectoDAO.AvanceProyectoResumen proyecto =
+            listaAvances.get(
+                    filaModelo
+            );
+
+    double metrosContratados =
+            proyecto.metrosLinealesContratados();
+
+    double metrosEjecutados =
+            proyecto.metrosLinealesAcumulados();
+
+    double porcentajeAvance =
+            metrosContratados > 0
+                    ? (
+                            metrosEjecutados
+                            / metrosContratados
+                      ) * 100.00
+                    : 0.00;
+
+    /*
+     * Al seleccionar una fila, el resumen representa
+     * solamente un proyecto.
+     */
+    lblProyectosActivos.setText(
+            "1"
+    );
+
+    lblMlContratados.setText(
+            String.format(
+                    "%,.2f",
+                    metrosContratados
+            )
+    );
+
+    lblMlEjecutados.setText(
+            String.format(
+                    "%,.2f",
+                    metrosEjecutados
+            )
+    );
+
+    lblAvanceGeneral.setText(
+            String.format(
+                    "%.2f %%",
+                    porcentajeAvance
+            )
+    );
 }
 private String formatearFecha(
         LocalDate fecha

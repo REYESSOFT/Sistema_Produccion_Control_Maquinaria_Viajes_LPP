@@ -87,7 +87,7 @@ public class ControlDiarioMaquinariaDAO {
                    AND m.activo = 1
                 WHERE cd.id_control = ?
                   AND cd.activo = 1
-                ORDER BY codigo, m.descripcion
+                ORDER BY codigo, descripcion
                 """;
 
         List<MaquinariaItem> lista =
@@ -241,7 +241,7 @@ public class ControlDiarioMaquinariaDAO {
 
                 ORDER BY
                     codigo,
-                    m.descripcion
+                    descripcion
                 """;
 
         List<ControlMaquinariaResumen> lista =
