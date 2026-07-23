@@ -635,6 +635,16 @@ dialogoMaquinaria.setVisible(
         true
 );
 
+DetalleControlDiarioMaterialDialog dialogoMaterial =
+        new DetalleControlDiarioMaterialDialog(
+                this,
+                idControl
+        );
+
+dialogoMaterial.setVisible(
+        true
+);
+
 dispose();
 
         } catch (

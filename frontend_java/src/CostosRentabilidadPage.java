@@ -73,18 +73,12 @@ public class CostosRentabilidadPage extends JPanel {
                         )
                 );
 
-        panel.setOpaque(
-                false
-        );
+        panel.setOpaque(false);
 
         JButton btnVolver =
-                new JButton(
-                        "← Volver"
-                );
+                new JButton("← Volver");
 
-        btnVolver.setFocusPainted(
-                false
-        );
+        btnVolver.setFocusPainted(false);
 
         btnVolver.addActionListener(
                 e -> accionVolver.run()
@@ -142,23 +136,13 @@ public class CostosRentabilidadPage extends JPanel {
                 )
         );
 
-        panelTitulos.setOpaque(
-                false
-        );
+        panelTitulos.setOpaque(false);
 
+        panelTitulos.add(titulo);
         panelTitulos.add(
-                titulo
+                Box.createVerticalStrut(4)
         );
-
-        panelTitulos.add(
-                Box.createVerticalStrut(
-                        4
-                )
-        );
-
-        panelTitulos.add(
-                subtitulo
-        );
+        panelTitulos.add(subtitulo);
 
         panel.add(
                 btnVolver,
@@ -182,13 +166,18 @@ public class CostosRentabilidadPage extends JPanel {
                                 "Código",
                                 "Proyecto",
                                 "Empresa",
-                                "ML contratados",
-                                "ML ejecutados",
-                                "% avance",
+                                "<html><center>Metros Lineales<br>Contratados</center></html>",
+                                "<html><center>Metros Lineales<br>Ejecutados</center></html>",
+                                "<html><center>%<br>avance</center></html>",
                                 "Ingreso",
-                                "Costo maquinaria",
-                                "Costo total",
-                                "Utilidad"
+                                "<html><center>Costo<br>material</center></html>",
+                                "<html><center>Costo<br>transporte</center></html>",
+                                "<html><center>Costo<br>maquinaria</center></html>",
+                                "<html><center>Costo<br>total</center></html>",
+                                "<html><center>Costo por<br>Metro Lineal</center></html>",
+                                "Utilidad",
+                                "<html><center>Utilidad por<br>Metro Lineal</center></html>",
+                                "<html><center>Rentabilidad<br>%</center></html>"
                         },
                         0
                 ) {
@@ -198,7 +187,6 @@ public class CostosRentabilidadPage extends JPanel {
                             int fila,
                             int columna
                     ) {
-
                         return false;
                     }
                 };
@@ -217,9 +205,7 @@ public class CostosRentabilidadPage extends JPanel {
                 JTable.AUTO_RESIZE_OFF
         );
 
-        tabla.setRowHeight(
-                28
-        );
+        tabla.setRowHeight(28);
 
         tabla.setSelectionMode(
                 ListSelectionModel.SINGLE_SELECTION
@@ -233,50 +219,57 @@ public class CostosRentabilidadPage extends JPanel {
                 )
         );
 
-        tabla.getColumnModel()
-                .getColumn(0)
-                .setPreferredWidth(110);
+        tabla.getTableHeader().setPreferredSize(
+                new Dimension(
+                        tabla.getTableHeader()
+                                .getPreferredSize()
+                                .width,
+                        44
+                )
+        );
 
-        tabla.getColumnModel()
-                .getColumn(1)
-                .setPreferredWidth(300);
+        int[] anchosColumnas = {
+                110,
+                300,
+                200,
+                125,
+                125,
+                100,
+                130,
+                125,
+                135,
+                135,
+                125,
+                145,
+                130,
+                150,
+                130
+        };
 
-        tabla.getColumnModel()
-                .getColumn(2)
-                .setPreferredWidth(200);
-
-        tabla.getColumnModel()
-                .getColumn(3)
-                .setPreferredWidth(140);
-
-        tabla.getColumnModel()
-                .getColumn(4)
-                .setPreferredWidth(140);
-
-        tabla.getColumnModel()
-                .getColumn(5)
-                .setPreferredWidth(110);
-
-        tabla.getColumnModel()
-                .getColumn(6)
-                .setPreferredWidth(130);
-
-        tabla.getColumnModel()
-                .getColumn(7)
-                .setPreferredWidth(150);
-
-        tabla.getColumnModel()
-                .getColumn(8)
-                .setPreferredWidth(130);
-
-        tabla.getColumnModel()
-                .getColumn(9)
-                .setPreferredWidth(130);
+        for (
+                int i = 0;
+                i < anchosColumnas.length;
+                i++
+        ) {
+            tabla.getColumnModel()
+                    .getColumn(i)
+                    .setPreferredWidth(
+                            anchosColumnas[i]
+                    );
+        }
 
         JScrollPane scroll =
                 new JScrollPane(
                         tabla
                 );
+
+        scroll.setHorizontalScrollBarPolicy(
+                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS
+        );
+
+        scroll.setVerticalScrollBarPolicy(
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+        );
 
         scroll.setBorder(
                 BorderFactory.createTitledBorder(
@@ -296,9 +289,7 @@ public class CostosRentabilidadPage extends JPanel {
                         )
                 );
 
-        panel.setOpaque(
-                false
-        );
+        panel.setOpaque(false);
 
         JButton btnActualizar =
                 new JButton(
@@ -309,9 +300,7 @@ public class CostosRentabilidadPage extends JPanel {
                 e -> cargarDatos()
         );
 
-        panel.add(
-                btnActualizar
-        );
+        panel.add(btnActualizar);
 
         return panel;
     }
@@ -323,9 +312,7 @@ public class CostosRentabilidadPage extends JPanel {
             List<CostosRentabilidadDAO.CostosRentabilidadResumen> lista =
                     CostosRentabilidadDAO.obtenerResumen();
 
-            modeloTabla.setRowCount(
-                    0
-            );
+            modeloTabla.setRowCount(0);
 
             for (
                     CostosRentabilidadDAO.CostosRentabilidadResumen item
@@ -335,11 +322,8 @@ public class CostosRentabilidadPage extends JPanel {
                 modeloTabla.addRow(
                         new Object[]{
                                 item.idProyecto(),
-
                                 item.codigoProyecto(),
-
                                 item.descripcionProyecto(),
-
                                 item.empresa(),
 
                                 formatearNumero(
@@ -359,6 +343,14 @@ public class CostosRentabilidadPage extends JPanel {
                                 ),
 
                                 formatearMoneda(
+                                        item.costoMaterial()
+                                ),
+
+                                formatearMoneda(
+                                        item.costoTransporte()
+                                ),
+
+                                formatearMoneda(
                                         item.costoMaquinaria()
                                 ),
 
@@ -367,7 +359,19 @@ public class CostosRentabilidadPage extends JPanel {
                                 ),
 
                                 formatearMoneda(
+                                        item.costoPorMetroLineal()
+                                ),
+
+                                formatearMoneda(
                                         item.utilidad()
+                                ),
+
+                                formatearMoneda(
+                                        item.utilidadPorMetroLineal()
+                                ),
+
+                                formatearPorcentaje(
+                                        item.rentabilidad()
                                 )
                         }
                 );
@@ -390,7 +394,6 @@ public class CostosRentabilidadPage extends JPanel {
     private String formatearNumero(
             double valor
     ) {
-
         return String.format(
                 "%,.2f",
                 valor
@@ -400,7 +403,6 @@ public class CostosRentabilidadPage extends JPanel {
     private String formatearPorcentaje(
             double valor
     ) {
-
         return String.format(
                 "%.2f %%",
                 valor
@@ -410,7 +412,6 @@ public class CostosRentabilidadPage extends JPanel {
     private String formatearMoneda(
             double valor
     ) {
-
         return String.format(
                 "$%,.2f",
                 valor

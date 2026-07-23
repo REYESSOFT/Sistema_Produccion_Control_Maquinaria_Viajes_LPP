@@ -15,9 +15,14 @@ public class CostosRentabilidadDAO {
             double metrosEjecutados,
             double porcentajeAvance,
             double ingreso,
+            double costoMaterial,
+            double costoTransporte,
             double costoMaquinaria,
             double costoTotal,
-            double utilidad
+            double costoPorMetroLineal,
+            double utilidad,
+            double utilidadPorMetroLineal,
+            double rentabilidad
     ) {
     }
 
@@ -50,6 +55,16 @@ public class CostosRentabilidadDAO {
                     ) AS metros_ejecutados,
 
                     COALESCE(
+                        costos_material.costo_material,
+                        0
+                    ) AS costo_material,
+
+                    COALESCE(
+                        costos_material.costo_transporte,
+                        0
+                    ) AS costo_transporte,
+
+                    COALESCE(
                         costos_maquinaria.costo_maquinaria,
                         0
                     ) AS costo_maquinaria
@@ -62,28 +77,45 @@ public class CostosRentabilidadDAO {
                 LEFT JOIN (
                     SELECT
                         cd.id_proyecto,
-
                         SUM(
                             COALESCE(
                                 cd.metros_lineales,
                                 0
                             )
                         ) AS metros_ejecutados
-
                     FROM control_diario cd
-
                     WHERE cd.activo = 1
-
-                    GROUP BY
-                        cd.id_proyecto
+                    GROUP BY cd.id_proyecto
                 ) avance
-                    ON avance.id_proyecto =
-                       p.id_proyecto
+                    ON avance.id_proyecto = p.id_proyecto
 
                 LEFT JOIN (
                     SELECT
                         cd.id_proyecto,
+                        SUM(
+                            COALESCE(
+                                cdm.costo_material,
+                                0
+                            )
+                        ) AS costo_material,
+                        SUM(
+                            COALESCE(
+                                cdm.costo_transporte,
+                                0
+                            )
+                        ) AS costo_transporte
+                    FROM control_diario_material cdm
+                    INNER JOIN control_diario cd
+                        ON cd.id_control = cdm.id_control
+                       AND cd.activo = 1
+                    WHERE cdm.activo = 1
+                    GROUP BY cd.id_proyecto
+                ) costos_material
+                    ON costos_material.id_proyecto = p.id_proyecto
 
+                LEFT JOIN (
+                    SELECT
+                        cd.id_proyecto,
                         SUM(
                             CASE
                                 WHEN UPPER(
@@ -113,30 +145,23 @@ public class CostosRentabilidadDAO {
                                             SELECT 1
                                             FROM control_diario_maquinaria
                                                  cdm_anterior
-
                                             INNER JOIN control_diario
                                                  cd_anterior
                                                 ON cd_anterior.id_control =
                                                    cdm_anterior.id_control
                                                AND cd_anterior.activo = 1
-
                                             WHERE
                                                 cdm_anterior.id_maquinaria =
                                                 cdm.id_maquinaria
-
                                                 AND cdm_anterior.activo = 1
-
                                                 AND cd_anterior.id_proyecto =
                                                 cd.id_proyecto
-
                                                 AND (
                                                     cd_anterior.fecha_control <
                                                     cd.fecha_control
-
                                                     OR (
                                                         cd_anterior.fecha_control =
                                                         cd.fecha_control
-
                                                         AND
                                                         cdm_anterior
                                                             .id_control_maquinaria <
@@ -163,24 +188,17 @@ public class CostosRentabilidadDAO {
                                     )
                             END
                         ) AS costo_maquinaria
-
                     FROM control_diario_maquinaria cdm
-
                     INNER JOIN control_diario cd
                         ON cd.id_control = cdm.id_control
                        AND cd.activo = 1
-
                     INNER JOIN maquinaria m
                         ON m.id_maquinaria = cdm.id_maquinaria
                        AND m.activo = 1
-
                     WHERE cdm.activo = 1
-
-                    GROUP BY
-                        cd.id_proyecto
+                    GROUP BY cd.id_proyecto
                 ) costos_maquinaria
-                    ON costos_maquinaria.id_proyecto =
-                       p.id_proyecto
+                    ON costos_maquinaria.id_proyecto = p.id_proyecto
 
                 WHERE p.activo = 1
 
@@ -194,9 +212,7 @@ public class CostosRentabilidadDAO {
                         ConexionDB.obtenerConexion();
 
                 PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        );
+                        conexion.prepareStatement(sql);
 
                 ResultSet rs =
                         ps.executeQuery()
@@ -205,24 +221,22 @@ public class CostosRentabilidadDAO {
             while (rs.next()) {
 
                 double metrosContratados =
-                        rs.getDouble(
-                                "metros_contratados"
-                        );
+                        rs.getDouble("metros_contratados");
 
                 double metrosEjecutados =
-                        rs.getDouble(
-                                "metros_ejecutados"
-                        );
+                        rs.getDouble("metros_ejecutados");
 
                 double precioUnitario =
-                        rs.getDouble(
-                                "precio_unitario"
-                        );
+                        rs.getDouble("precio_unitario");
+
+                double costoMaterial =
+                        rs.getDouble("costo_material");
+
+                double costoTransporte =
+                        rs.getDouble("costo_transporte");
 
                 double costoMaquinaria =
-                        rs.getDouble(
-                                "costo_maquinaria"
-                        );
+                        rs.getDouble("costo_maquinaria");
 
                 double porcentajeAvance =
                         calcularPorcentaje(
@@ -234,53 +248,51 @@ public class CostosRentabilidadDAO {
                         metrosEjecutados
                         * precioUnitario;
 
-                /*
-                 * En esta fase el costo total contiene
-                 * únicamente el costo de maquinaria.
-                 *
-                 * Más adelante se agregarán:
-                 * - Material pétreo
-                 * - Transporte
-                 * - Otros costos
-                 */
                 double costoTotal =
-                        costoMaquinaria;
+                        costoMaterial
+                        + costoTransporte
+                        + costoMaquinaria;
+
+                double costoPorMetroLineal =
+                        calcularValorPorMetro(
+                                costoTotal,
+                                metrosEjecutados
+                        );
 
                 double utilidad =
                         ingreso
                         - costoTotal;
 
+                double utilidadPorMetroLineal =
+                        calcularValorPorMetro(
+                                utilidad,
+                                metrosEjecutados
+                        );
+
+                double rentabilidad =
+                        calcularPorcentaje(
+                                utilidad,
+                                ingreso
+                        );
+
                 lista.add(
                         new CostosRentabilidadResumen(
-                                rs.getInt(
-                                        "id_proyecto"
-                                ),
-
-                                rs.getString(
-                                        "codigo_proyecto"
-                                ),
-
-                                rs.getString(
-                                        "descripcion"
-                                ),
-
-                                rs.getString(
-                                        "empresa"
-                                ),
-
+                                rs.getInt("id_proyecto"),
+                                rs.getString("codigo_proyecto"),
+                                rs.getString("descripcion"),
+                                rs.getString("empresa"),
                                 metrosContratados,
-
                                 metrosEjecutados,
-
                                 porcentajeAvance,
-
                                 ingreso,
-
+                                costoMaterial,
+                                costoTransporte,
                                 costoMaquinaria,
-
                                 costoTotal,
-
-                                utilidad
+                                costoPorMetroLineal,
+                                utilidad,
+                                utilidadPorMetroLineal,
+                                rentabilidad
                         )
                 );
             }
@@ -290,17 +302,29 @@ public class CostosRentabilidadDAO {
     }
 
     private static double calcularPorcentaje(
-            double ejecutado,
-            double contratado
+            double valor,
+            double base
     ) {
 
-        if (contratado <= 0) {
-
+        if (base <= 0) {
             return 0.00;
         }
 
-        return ejecutado
+        return valor
                 * 100.00
-                / contratado;
+                / base;
+    }
+
+    private static double calcularValorPorMetro(
+            double valor,
+            double metrosEjecutados
+    ) {
+
+        if (metrosEjecutados <= 0) {
+            return 0.00;
+        }
+
+        return valor
+                / metrosEjecutados;
     }
 }

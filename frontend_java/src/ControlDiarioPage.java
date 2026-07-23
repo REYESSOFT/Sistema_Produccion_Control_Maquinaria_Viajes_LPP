@@ -237,6 +237,11 @@ JButton btnMaquinaria =
                 "Maquinaria utilizada"
         );
 
+JButton btnMaterial =
+        new JButton(
+                "Material pétreo"
+        );
+
 JButton btnEliminar =
         new JButton(
                 "Eliminar"
@@ -258,6 +263,10 @@ btnMaquinaria.addActionListener(
         e -> abrirMaquinariaUtilizada()
 );
 
+btnMaterial.addActionListener(
+        e -> abrirMaterialPetreo()
+);
+
 btnEliminar.addActionListener(
         e -> eliminarControl()
 );
@@ -276,6 +285,10 @@ btnEliminar.addActionListener(
 
 panel.add(
         btnMaquinaria
+);
+
+panel.add(
+        btnMaterial
 );
 
 panel.add(
@@ -474,6 +487,48 @@ private void abrirMaquinariaUtilizada() {
 
     DetalleControlDiarioMaquinariaDialog dialogo =
             new DetalleControlDiarioMaquinariaDialog(
+                    SwingUtilities.getWindowAncestor(
+                            this
+                    ),
+                    idControl
+            );
+
+    dialogo.setVisible(
+            true
+    );
+}
+private void abrirMaterialPetreo() {
+
+    int filaVista =
+            tabla.getSelectedRow();
+
+    if (filaVista == -1) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Seleccione un Control Diario.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        return;
+    }
+
+    int filaModelo =
+            tabla.convertRowIndexToModel(
+                    filaVista
+            );
+
+    int idControl =
+            Integer.parseInt(
+                    modeloTabla.getValueAt(
+                            filaModelo,
+                            0
+                    ).toString()
+            );
+
+    DetalleControlDiarioMaterialDialog dialogo =
+            new DetalleControlDiarioMaterialDialog(
                     SwingUtilities.getWindowAncestor(
                             this
                     ),
