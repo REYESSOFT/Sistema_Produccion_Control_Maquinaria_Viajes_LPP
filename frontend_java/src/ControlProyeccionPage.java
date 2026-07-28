@@ -236,7 +236,7 @@ public class ControlProyeccionPage extends JPanel {
     panelOpciones.setPreferredSize(
         new Dimension(
                 1500,
-                650
+                520
         )
 );
 
@@ -252,7 +252,7 @@ scrollOpciones.setHorizontalScrollBarPolicy(
 );
 
 scrollOpciones.setVerticalScrollBarPolicy(
-        JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+    JScrollPane.VERTICAL_SCROLLBAR_NEVER
 );
 
 scrollOpciones.getHorizontalScrollBar()
