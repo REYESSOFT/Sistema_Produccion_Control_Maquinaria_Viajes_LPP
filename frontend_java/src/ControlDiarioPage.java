@@ -346,20 +346,38 @@ panel.add(
                 );
     }
 
-    private void abrirNuevoControl() {
+   private void abrirNuevoControl() {
 
-        FormControlDiario formulario =
-                new FormControlDiario(
-                        SwingUtilities
-                                .getWindowAncestor(this)
-                );
+    Window ventanaPadre =
+            SwingUtilities.getWindowAncestor(this);
 
-        formulario.setVisible(
-                true
-        );
+    SelectorGuiasAprobadasDialog selector =
+            new SelectorGuiasAprobadasDialog(
+                    ventanaPadre
+            );
 
-        cargarControles();
+    selector.setVisible(true);
+
+    SelectorGuiasAprobadasDAO.GuiaAprobadaItem guia =
+            selector.getGuiaSeleccionada();
+
+    if (guia == null) {
+        return;
     }
+
+    FormControlDiario formulario =
+            new FormControlDiario(
+                    ventanaPadre
+            );
+
+    formulario.cargarDesdeGuia(
+            guia
+    );
+
+    formulario.setVisible(true);
+
+    cargarControles();
+}
 
 
     private void editarControl() {

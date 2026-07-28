@@ -36,6 +36,7 @@ public class FormControlDiario extends JDialog {
     private final boolean modoDetalle;
 
     private boolean guardado;
+    private SelectorGuiasAprobadasDAO.GuiaAprobadaItem guiaSeleccionada;
 
     /*
      * NUEVO
@@ -520,6 +521,62 @@ public class FormControlDiario extends JDialog {
             }
         }
     }
+    public void cargarDesdeGuia(
+        SelectorGuiasAprobadasDAO.GuiaAprobadaItem guia
+) {
+
+    this.guiaSeleccionada = guia;
+
+    if (guia == null) {
+        return;
+    }
+
+    if (guia.fecha() != null) {
+        txtFecha.setText(
+                guia.fecha().toString()
+        );
+    }
+
+    txtObservaciones.setText(
+            """
+            Guía: %s
+            Empresa: %s
+            Tipo: %s
+            Proyecto: %s
+            Sector: %s
+            Material: %s
+            Chofer: %s
+            Placa: %s
+            m³: %.2f
+            """.formatted(
+                    guia.numeroGuia(),
+                    guia.empresa(),
+                    guia.tipoGuia(),
+                    guia.proyectoReferencia(),
+                    guia.sector(),
+                    guia.material(),
+                    guia.choferOperador(),
+                    guia.placa(),
+                    guia.m3()
+            )
+    );
+
+    for (int i = 0; i < cmbProyecto.getItemCount(); i++) {
+
+        ControlDiarioDAO.ProyectoItem proyecto =
+                cmbProyecto.getItemAt(i);
+
+        String texto = proyecto.toString().toUpperCase();
+
+        if (texto.contains(
+                guia.proyectoReferencia().toUpperCase()
+        )) {
+
+            cmbProyecto.setSelectedIndex(i);
+            break;
+        }
+    }
+}
 
     private void guardarControl() {
 
@@ -586,14 +643,17 @@ public class FormControlDiario extends JDialog {
            if (idControl == null) {
 
     this.idControl =
-            ControlDiarioDAO.insertar(
-                    proyecto.idProyecto(),
-                    fechaControl,
-                    metrosLineales,
-                    ancho,
-                    espesor,
-                    txtObservaciones.getText()
-            );
+        ControlDiarioDAO.insertar(
+                guiaSeleccionada == null
+                        ? null
+                        : guiaSeleccionada.idGuia(),
+                proyecto.idProyecto(),
+                fechaControl,
+                metrosLineales,
+                ancho,
+                espesor,
+                txtObservaciones.getText()
+        );
 
     JOptionPane.showMessageDialog(
             this,

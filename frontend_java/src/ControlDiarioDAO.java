@@ -259,6 +259,7 @@ rs.getString(
 
 }
 public static int insertar(
+        Integer idGuia,
         int idProyecto,
         LocalDate fechaControl,
         double metrosLineales,
@@ -301,18 +302,19 @@ if (
 
     String sql = """
             INSERT INTO control_diario (
-                id_proyecto,
-                fecha_control,
-                metros_lineales,
-                ancho,
-                espesor,
-                volumen_real,
-                observaciones,
-                activo
-            )
-            VALUES (
-            ?, ?, ?, ?, ?, ?, ?, 1
-            )
+    id_guia,
+    id_proyecto,
+    fecha_control,
+    metros_lineales,
+    ancho,
+    espesor,
+    volumen_real,
+    observaciones,
+    activo
+)
+VALUES (
+    ?, ?, ?, ?, ?, ?, ?, ?, 1
+)
             """;
 
     try (
@@ -326,41 +328,56 @@ if (
                     )
     ) {
 
-        ps.setInt(
-                1,
-                idProyecto
-        );
+        if (idGuia == null) {
 
-        ps.setDate(
-                2,
-                Date.valueOf(fechaControl)
-        );
+    ps.setNull(
+            1,
+            java.sql.Types.INTEGER
+    );
 
-        ps.setDouble(
-                3,
-                metrosLineales
-        );
+} else {
 
-        asignarDecimal(
-                ps,
-                4,
-                ancho
-        );
+    ps.setInt(
+            1,
+            idGuia
+    );
+}
 
-        asignarDecimal(
-                ps,
-                5,
-                espesor
-        );
+ps.setInt(
+        2,
+        idProyecto
+);
 
-        ps.setDouble(
+ps.setDate(
+        3,
+        Date.valueOf(fechaControl)
+);
+
+ps.setDouble(
+        4,
+        metrosLineales
+);
+
+asignarDecimal(
+        ps,
+        5,
+        ancho
+);
+
+asignarDecimal(
+        ps,
         6,
+        espesor
+);
+
+ps.setDouble(
+        7,
         volumenReal
 );
 
 asignarTexto(
         ps,
-        7,
+        8,
         observaciones
 );
 

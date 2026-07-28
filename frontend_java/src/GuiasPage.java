@@ -11,8 +11,11 @@ public class GuiasPage extends JPanel {
     private JComboBox<String> cboTipoGuia;
     private JTextField txtNumeroGuia;
     private JTable tablaGuias;
+    private Usuario usuarioActual;
 
     public GuiasPage() {
+
+        usuarioActual = SesionUsuario.getUsuarioActual();
 
         setLayout(new BorderLayout(15, 15));
         setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
@@ -53,6 +56,17 @@ public class GuiasPage extends JPanel {
                 "EQUIPOS PRO",
                 "DEVIALTRANSPORT"
         });
+        if (
+        usuarioActual != null
+        && usuarioActual.esDigitadorGuias()
+        && usuarioActual.getNombreEmpresa() != null
+) {
+
+    cboEmpresa.setSelectedItem(
+            usuarioActual.getNombreEmpresa()
+    );
+    cboEmpresa.setEnabled(false);
+}
 
         cboTipoGuia = new JComboBox<>(new String[]{
                 "Todas",
@@ -61,6 +75,28 @@ public class GuiasPage extends JPanel {
                 "Control Trabajo Volquetas",
                 "Guía Despacho de Material"
         });
+        if (
+        usuarioActual != null
+        && usuarioActual.esDigitadorGuias()
+        && usuarioActual.getIdEmpresa() != null
+) {
+
+    cboTipoGuia.removeAllItems();
+    cboTipoGuia.addItem("Todas");
+
+    if (usuarioActual.getIdEmpresa() == 2) {
+
+        // César - DEVIALTRANSPORT
+        cboTipoGuia.addItem("Control Trabajo Volquetas");
+        cboTipoGuia.addItem("Guía Despacho de Material");
+
+    } else if (usuarioActual.getIdEmpresa() == 1) {
+
+        // Jeny - EQUIPOS PRO
+        cboTipoGuia.addItem("Guía Producción Volquetas");
+        cboTipoGuia.addItem("Guía Trabajo Diario Maquinaria");
+    }
+}
 
         txtNumeroGuia = new JTextField(12);
 
@@ -187,24 +223,37 @@ public class GuiasPage extends JPanel {
 
     private void abrirSelectorGuia() {
 
-        String[] empresas = {
-                "EQUIPOS PRO",
-                "DEVIALTRANSPORT"
-        };
+        String empresa;
 
-        String empresa = (String) JOptionPane.showInputDialog(
-                this,
-                "Seleccione la empresa:",
-                "Nueva Guía",
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                empresas,
-                empresas[0]
-        );
+if (
+        usuarioActual != null
+        && usuarioActual.esDigitadorGuias()
+        && usuarioActual.getNombreEmpresa() != null
+) {
 
-        if (empresa == null) {
-            return;
-        }
+    empresa = usuarioActual.getNombreEmpresa();
+
+} else {
+
+    String[] empresas = {
+            "EQUIPOS PRO",
+            "DEVIALTRANSPORT"
+    };
+
+    empresa = (String) JOptionPane.showInputDialog(
+            this,
+            "Seleccione la empresa:",
+            "Nueva Guía",
+            JOptionPane.PLAIN_MESSAGE,
+            null,
+            empresas,
+            empresas[0]
+    );
+
+    if (empresa == null) {
+        return;
+    }
+}
 
         String[] tipos;
 
@@ -309,62 +358,105 @@ public class GuiasPage extends JPanel {
 
     private void cargarGuiasDesdeMySQL() {
 
-        DefaultTableModel modelo =
-                (DefaultTableModel) tablaGuias.getModel();
+    DefaultTableModel modelo =
+            (DefaultTableModel) tablaGuias.getModel();
 
-        modelo.setRowCount(0);
+    modelo.setRowCount(0);
 
-        String sql = """
-                SELECT
-                        e.nombre_empresa,
-                        g.tipo_guia,
-                        g.numero_guia,
-                        DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
-                        COALESCE(g.chofer_operador, '') AS chofer_operador,
-                        COALESCE(g.placa, '') AS placa,
-                        COALESCE(g.m3, 0) AS m3,
-                        g.estado
-                FROM guias g
-                INNER JOIN empresas e
-                        ON e.id_empresa = g.id_empresa
-                ORDER BY g.id_guia DESC
-                """;
+    boolean limitarPorEmpresa =
+            usuarioActual != null
+            && usuarioActual.esDigitadorGuias()
+            && usuarioActual.getNombreEmpresa() != null;
+
+    StringBuilder sql = new StringBuilder("""
+            SELECT
+                    e.nombre_empresa,
+                    g.tipo_guia,
+                    g.numero_guia,
+                    DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
+                    COALESCE(g.chofer_operador, '') AS chofer_operador,
+                    COALESCE(g.placa, '') AS placa,
+                    COALESCE(g.m3, 0) AS m3,
+                    g.estado
+            FROM guias g
+            INNER JOIN empresas e
+                    ON e.id_empresa = g.id_empresa
+            WHERE 1 = 1
+            """);
+
+    if (limitarPorEmpresa) {
+        sql.append(" AND e.nombre_empresa = ? ");
+    }
+
+    sql.append(" ORDER BY g.id_guia DESC ");
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement statement =
+                    conexion.prepareStatement(
+                            sql.toString()
+                    )
+    ) {
+
+        if (limitarPorEmpresa) {
+
+            statement.setString(
+                    1,
+                    usuarioActual.getNombreEmpresa()
+            );
+        }
 
         try (
-                Connection conexion = ConexionDB.obtenerConexion();
-                 PreparedStatement statement =
-                        conexion.prepareStatement(sql);
                 ResultSet resultado =
                         statement.executeQuery()
         ) {
 
-                while (resultado.next()) {
+            while (resultado.next()) {
 
                 modelo.addRow(new Object[]{
-                        resultado.getString("nombre_empresa"),
-                        resultado.getString("tipo_guia"),
-                        resultado.getString("numero_guia"),
-                        resultado.getString("fecha"),
-                        resultado.getString("chofer_operador"),
-                        resultado.getString("placa"),
-                        resultado.getDouble("m3"),
-                        resultado.getString("estado")
+                        resultado.getString(
+                                "nombre_empresa"
+                        ),
+                        resultado.getString(
+                                "tipo_guia"
+                        ),
+                        resultado.getString(
+                                "numero_guia"
+                        ),
+                        resultado.getString(
+                                "fecha"
+                        ),
+                        resultado.getString(
+                                "chofer_operador"
+                        ),
+                        resultado.getString(
+                                "placa"
+                        ),
+                        resultado.getDouble(
+                                "m3"
+                        ),
+                        resultado.getString(
+                                "estado"
+                        )
                 });
-                }
-
-        } catch (Exception e) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Error al cargar las guías:\n"
-                        + e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-
-                e.printStackTrace();
+            }
         }
+
+    } catch (Exception e) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar las guías:\n"
+                        + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+        e.printStackTrace();
     }
+}
 
     
 
@@ -790,9 +882,6 @@ public class GuiasPage extends JPanel {
                 );
 
                 cargarGuiasDesdeMySQL();
-
-
-
 
                 } else {
 

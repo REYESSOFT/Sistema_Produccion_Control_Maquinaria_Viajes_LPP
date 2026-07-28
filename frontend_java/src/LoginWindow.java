@@ -57,25 +57,69 @@ public class LoginWindow extends JFrame {
 
     private void validar() {
 
-        String usuario = txtUsuario.getText();
-        String clave = new String(txtClave.getPassword());
+    String nombreUsuario =
+            txtUsuario.getText().trim();
 
-        if(usuario.equals("admin") && clave.equals("123")){
+    String clave =
+            new String(txtClave.getPassword());
 
-            MenuPrincipal menu = new MenuPrincipal();
-            menu.setVisible(true);
+    if (nombreUsuario.isEmpty()) {
 
-            dispose();
+        JOptionPane.showMessageDialog(
+                this,
+                "Ingrese el usuario.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
 
-        }else{
+        txtUsuario.requestFocus();
+        return;
+    }
 
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Usuario o contraseña incorrectos."
+    if (clave.isEmpty()) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Ingrese la contraseña.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        txtClave.requestFocus();
+        return;
+    }
+
+    UsuarioDAO usuarioDAO =
+            new UsuarioDAO();
+
+    Usuario usuarioAutenticado =
+            usuarioDAO.autenticar(
+                    nombreUsuario,
+                    clave
             );
 
-        }
+    if (usuarioAutenticado == null) {
 
+        JOptionPane.showMessageDialog(
+                this,
+                "Usuario o contraseña incorrectos.",
+                "Acceso denegado",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+        txtClave.setText("");
+        txtClave.requestFocus();
+        return;
     }
+
+    SesionUsuario.iniciarSesion(usuarioAutenticado);
+
+MenuPrincipal menu =
+        new MenuPrincipal();
+
+menu.setVisible(true);
+
+dispose();
+}
 
 }
