@@ -9,26 +9,32 @@ import java.util.List;
 public class CatalogoCanteraMaterialDAO {
 
     public record TarifaResumen(
-            int idTarifa,
-            String cantera,
-            String material,
-            String destinoSector,
-            double costoUnitarioMaterial,
-            double costoUnitarioTransporte,
-            boolean activo
-    ) {
-    }
+        int idTarifa,
+        String cantera,
+        String material,
+        double costoUnitarioMaterial,
+        boolean activo
+) {
+}
 
-    public record TarifaDetalle(
-            int idTarifa,
-            String cantera,
-            String material,
-            String destinoSector,
-            double costoUnitarioMaterial,
-            double costoUnitarioTransporte,
-            boolean activo
-    ) {
-    }
+public record TarifaDetalle(
+        int idTarifa,
+        String cantera,
+        String material,
+        double costoUnitarioMaterial,
+        boolean activo
+) {
+}
+public record TarifaOperacion(
+        int idTarifaMaterial,
+        int idTarifaTransporte,
+        String cantera,
+        String material,
+        String destinoSector,
+        double costoUnitarioMaterial,
+        double costoUnitarioTransporte
+) {
+}
 
     public record CatalogoItem(
             int id,
@@ -41,30 +47,24 @@ public class CatalogoCanteraMaterialDAO {
     }
 
     public static List<TarifaResumen> buscar(
-            String cantera,
-            String material,
-            String destinoSector,
-            String estado
-    ) throws Exception {
+        String cantera,
+        String material,
+        String estado
+) throws Exception {
 
         StringBuilder sql = new StringBuilder(
                 """
                 SELECT
-                    id_tarifa,
-                    cantera,
-                    material,
-                    destino_sector,
-                    COALESCE(
-                        costo_unitario_material,
-                        0
-                    ) AS costo_unitario_material,
-                    COALESCE(
-                        costo_unitario_transporte,
-                        0
-                    ) AS costo_unitario_transporte,
-                    activo
+    id_tarifa,
+    cantera,
+    material,
+    COALESCE(
+        costo_unitario_material,
+        0
+    ) AS costo_unitario_material,
+    activo
 
-                FROM catalogo_cantera_material
+FROM catalogo_cantera_material
 
                 WHERE 1 = 1
                 """
@@ -72,6 +72,25 @@ public class CatalogoCanteraMaterialDAO {
 
         List<Object> parametros =
                 new ArrayList<>();
+        Usuario usuarioActual =
+        SesionUsuario.getUsuarioActual();
+
+Integer idEmpresaSesion =
+        usuarioActual == null
+                ? null
+                : usuarioActual.getIdEmpresa();
+
+if (idEmpresaSesion != null) {
+
+    sql.append(
+            """
+
+            AND id_empresa = ?
+            """
+    );
+
+    parametros.add(idEmpresaSesion);
+}
 
         if (
                 cantera != null
@@ -114,26 +133,6 @@ public class CatalogoCanteraMaterialDAO {
         }
 
         if (
-                destinoSector != null
-                && !destinoSector.isBlank()
-        ) {
-
-            sql.append(
-                    """
-                    
-                    AND UPPER(TRIM(destino_sector))
-                        LIKE UPPER(?)
-                    """
-            );
-
-            parametros.add(
-                    "%"
-                    + destinoSector.trim()
-                    + "%"
-            );
-        }
-
-        if (
                 estado != null
                 && estado.equalsIgnoreCase("ACTIVO")
         ) {
@@ -162,10 +161,9 @@ public class CatalogoCanteraMaterialDAO {
                 """
                 
                 ORDER BY
-                    cantera,
-                    material,
-                    destino_sector,
-                    id_tarifa
+    cantera,
+    material,
+    id_tarifa
                 """
         );
 
@@ -202,35 +200,13 @@ public class CatalogoCanteraMaterialDAO {
                 while (rs.next()) {
 
                     lista.add(
-                            new TarifaResumen(
-                                    rs.getInt(
-                                            "id_tarifa"
-                                    ),
-
-                                    rs.getString(
-                                            "cantera"
-                                    ),
-
-                                    rs.getString(
-                                            "material"
-                                    ),
-
-                                    rs.getString(
-                                            "destino_sector"
-                                    ),
-
-                                    rs.getDouble(
-                                            "costo_unitario_material"
-                                    ),
-
-                                    rs.getDouble(
-                                            "costo_unitario_transporte"
-                                    ),
-
-                                    rs.getBoolean(
-                                            "activo"
-                                    )
-                            )
+                           new TarifaResumen(
+    rs.getInt("id_tarifa"),
+    rs.getString("cantera"),
+    rs.getString("material"),
+    rs.getDouble("costo_unitario_material"),
+    rs.getBoolean("activo")
+)
                     );
                 }
             }
@@ -243,7 +219,6 @@ public class CatalogoCanteraMaterialDAO {
             throws Exception {
 
         return buscar(
-                "",
                 "",
                 "",
                 "ACTIVO"
@@ -261,25 +236,21 @@ public class CatalogoCanteraMaterialDAO {
         String sql =
                 """
                 SELECT
-                    id_tarifa,
-                    cantera,
-                    material,
-                    destino_sector,
-                    COALESCE(
-                        costo_unitario_material,
-                        0
-                    ) AS costo_unitario_material,
-                    COALESCE(
-                        costo_unitario_transporte,
-                        0
-                    ) AS costo_unitario_transporte,
-                    activo
+    id_tarifa,
+    cantera,
+    material,
+    COALESCE(
+        costo_unitario_material,
+        0
+    ) AS costo_unitario_material,
+    activo
 
-                FROM catalogo_cantera_material
+FROM catalogo_cantera_material
 
                 WHERE id_tarifa = ?
+  AND id_empresa = ?
 
-                LIMIT 1
+LIMIT 1
                 """;
 
         try (
@@ -292,11 +263,28 @@ public class CatalogoCanteraMaterialDAO {
                         )
         ) {
 
-            ps.setInt(
-                    1,
-                    idTarifa
-            );
+            Usuario usuarioActual =
+        SesionUsuario.getUsuarioActual();
 
+if (
+        usuarioActual == null
+        || usuarioActual.getIdEmpresa() == null
+) {
+
+    throw new Exception(
+            "No se pudo determinar la empresa del usuario."
+    );
+}
+
+ps.setInt(
+        1,
+        idTarifa
+);
+
+ps.setInt(
+        2,
+        usuarioActual.getIdEmpresa()
+);
             try (
                     ResultSet rs =
                             ps.executeQuery()
@@ -309,73 +297,74 @@ public class CatalogoCanteraMaterialDAO {
                     );
                 }
 
-                return new TarifaDetalle(
-                        rs.getInt(
-                                "id_tarifa"
-                        ),
+               return new TarifaDetalle(
+        rs.getInt(
+                "id_tarifa"
+        ),
 
-                        rs.getString(
-                                "cantera"
-                        ),
+        rs.getString(
+                "cantera"
+        ),
 
-                        rs.getString(
-                                "material"
-                        ),
+        rs.getString(
+                "material"
+        ),
 
-                        rs.getString(
-                                "destino_sector"
-                        ),
+        rs.getDouble(
+                "costo_unitario_material"
+        ),
 
-                        rs.getDouble(
-                                "costo_unitario_material"
-                        ),
-
-                        rs.getDouble(
-                                "costo_unitario_transporte"
-                        ),
-
-                        rs.getBoolean(
-                                "activo"
-                        )
-                );
+        rs.getBoolean(
+                "activo"
+        )
+);
             }
         }
     }
 
-    public static int insertar(
-            String cantera,
-            String material,
-            String destinoSector,
-            double costoUnitarioMaterial,
-            double costoUnitarioTransporte
-    ) throws Exception {
+     public static int insertar(
+        String cantera,
+        String material,
+        double costoUnitarioMaterial
+) throws Exception {
 
         validarDatos(
-                cantera,
-                material,
-                destinoSector,
-                costoUnitarioMaterial,
-                costoUnitarioTransporte
-        );
+        cantera,
+        material,
+        costoUnitarioMaterial
+);
+        Usuario usuarioActual =
+        SesionUsuario.getUsuarioActual();
+
+if (
+        usuarioActual == null
+        || usuarioActual.getIdEmpresa() == null
+) {
+
+    throw new Exception(
+            "No se pudo determinar la empresa del usuario."
+    );
+}
+
+int idEmpresa =
+        usuarioActual.getIdEmpresa();
 
         validarDuplicado(
-                cantera,
-                material,
-                destinoSector,
-                0
-        );
+        cantera,
+        material,
+        0
+);
 
         String sql =
                 """
                 INSERT INTO catalogo_cantera_material (
-                    cantera,
-                    material,
-                    destino_sector,
-                    costo_unitario_material,
-                    costo_unitario_transporte,
-                    activo
-                )
-                VALUES (?, ?, ?, ?, ?, 1)
+    id_empresa,
+    cantera,
+    material,
+    costo_unitario_material,
+    activo
+)
+VALUES (?, ?, ?, ?, 1)
                 """;
 
         try (
@@ -389,30 +378,10 @@ public class CatalogoCanteraMaterialDAO {
                         )
         ) {
 
-            ps.setString(
-                    1,
-                    cantera.trim()
-            );
-
-            ps.setString(
-                    2,
-                    material.trim()
-            );
-
-            ps.setString(
-                    3,
-                    destinoSector.trim()
-            );
-
-            ps.setDouble(
-                    4,
-                    costoUnitarioMaterial
-            );
-
-            ps.setDouble(
-                    5,
-                    costoUnitarioTransporte
-            );
+           ps.setInt(1, idEmpresa);
+           ps.setString(2, cantera.trim());
+           ps.setString(3, material.trim());
+           ps.setDouble(4, costoUnitarioMaterial);
 
             int filas =
                     ps.executeUpdate();
@@ -442,45 +411,39 @@ public class CatalogoCanteraMaterialDAO {
         );
     }
 
-    public static void actualizar(
-            int idTarifa,
-            String cantera,
-            String material,
-            String destinoSector,
-            double costoUnitarioMaterial,
-            double costoUnitarioTransporte
-    ) throws Exception {
+     public static void actualizar(
+        int idTarifa,
+        String cantera,
+        String material,
+        double costoUnitarioMaterial
+) throws Exception {
 
         validarIdTarifa(
                 idTarifa
         );
 
         validarDatos(
-                cantera,
-                material,
-                destinoSector,
-                costoUnitarioMaterial,
-                costoUnitarioTransporte
-        );
+        cantera,
+        material,
+        costoUnitarioMaterial
+);
 
         validarDuplicado(
-                cantera,
-                material,
-                destinoSector,
-                idTarifa
-        );
+        cantera,
+        material,
+        idTarifa
+);
 
         String sql =
                 """
-                UPDATE catalogo_cantera_material
-                SET
-                    cantera = ?,
-                    material = ?,
-                    destino_sector = ?,
-                    costo_unitario_material = ?,
-                    costo_unitario_transporte = ?
+               UPDATE catalogo_cantera_material
+SET
+    cantera = ?,
+    material = ?,
+    costo_unitario_material = ?
 
-                WHERE id_tarifa = ?
+WHERE id_tarifa = ?
+  AND id_empresa = ?
                 """;
 
         try (
@@ -492,36 +455,43 @@ public class CatalogoCanteraMaterialDAO {
                                 sql
                         )
         ) {
+        Usuario usuarioActual =
+        SesionUsuario.getUsuarioActual();
 
-            ps.setString(
-                    1,
-                    cantera.trim()
-            );
+if (
+        usuarioActual == null
+        || usuarioActual.getIdEmpresa() == null
+) {
 
-            ps.setString(
-                    2,
-                    material.trim()
-            );
+    throw new Exception(
+            "No se pudo determinar la empresa del usuario."
+    );
+}
 
-            ps.setString(
-                    3,
-                    destinoSector.trim()
-            );
+          ps.setString(
+        1,
+        cantera.trim()
+);
 
-            ps.setDouble(
-                    4,
-                    costoUnitarioMaterial
-            );
+ps.setString(
+        2,
+        material.trim()
+);
 
-            ps.setDouble(
-                    5,
-                    costoUnitarioTransporte
-            );
+ps.setDouble(
+        3,
+        costoUnitarioMaterial
+);
 
-            ps.setInt(
-                    6,
-                    idTarifa
-            );
+ps.setInt(
+        4,
+        idTarifa
+);
+
+ps.setInt(
+        5,
+        usuarioActual.getIdEmpresa()
+);
 
             int filas =
                     ps.executeUpdate();
@@ -546,9 +516,10 @@ public class CatalogoCanteraMaterialDAO {
         String sql =
                 """
                 UPDATE catalogo_cantera_material
-                SET activo = 0
-                WHERE id_tarifa = ?
-                  AND activo = 1
+SET activo = 0
+WHERE id_tarifa = ?
+  AND id_empresa = ?
+  AND activo = 1
                 """;
 
         try (
@@ -560,11 +531,28 @@ public class CatalogoCanteraMaterialDAO {
                                 sql
                         )
         ) {
+                Usuario usuarioActual =
+        SesionUsuario.getUsuarioActual();
 
-            ps.setInt(
-                    1,
-                    idTarifa
-            );
+if (
+        usuarioActual == null
+        || usuarioActual.getIdEmpresa() == null
+) {
+
+    throw new Exception(
+            "No se pudo determinar la empresa del usuario."
+    );
+}
+
+           ps.setInt(
+        1,
+        idTarifa
+);
+
+ps.setInt(
+        2,
+        usuarioActual.getIdEmpresa()
+);
 
             int filas =
                     ps.executeUpdate();
@@ -580,93 +568,96 @@ public class CatalogoCanteraMaterialDAO {
     }
 
     public static void reactivar(
-            int idTarifa
-    ) throws Exception {
+        int idTarifa
+) throws Exception {
 
-        validarIdTarifa(
+    validarIdTarifa(
+            idTarifa
+    );
+
+    String sql =
+            """
+            UPDATE catalogo_cantera_material
+            SET activo = 1
+            WHERE id_tarifa = ?
+              AND id_empresa = ?
+              AND activo = 0
+            """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(
+                            sql
+                    )
+    ) {
+
+        Usuario usuarioActual =
+                SesionUsuario.getUsuarioActual();
+
+        if (
+                usuarioActual == null
+                || usuarioActual.getIdEmpresa() == null
+        ) {
+
+            throw new Exception(
+                    "No se pudo determinar la empresa del usuario."
+            );
+        }
+
+        ps.setInt(
+                1,
                 idTarifa
         );
 
-        String sql =
-                """
-                UPDATE catalogo_cantera_material
-                SET activo = 1
-                WHERE id_tarifa = ?
-                  AND activo = 0
-                """;
+        ps.setInt(
+                2,
+                usuarioActual.getIdEmpresa()
+        );
 
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
+        int filas =
+                ps.executeUpdate();
 
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
-        ) {
+        if (filas == 0) {
 
-            ps.setInt(
-                    1,
-                    idTarifa
+            throw new Exception(
+                    "No fue posible reactivar la tarifa. "
+                            + "Puede que ya esté activa."
             );
-
-            int filas =
-                    ps.executeUpdate();
-
-            if (filas == 0) {
-
-                throw new Exception(
-                        "No fue posible reactivar la tarifa. "
-                        + "Puede que ya esté activa."
-                );
-            }
         }
     }
+}
 
-    public static List<String> obtenerCanterasActivas()
-            throws Exception {
-
-        String sql =
-                """
-                SELECT DISTINCT
-                    cantera
-
-                FROM catalogo_cantera_material
-
-                WHERE activo = 1
-
-                ORDER BY cantera
-                """;
-
-        return obtenerListaTexto(
-                sql
-        );
-    }
-
-    public static List<String> obtenerMaterialesPorCantera(
-            String cantera
+    public static List<String> obtenerCanterasActivas(
+            int idControl
     ) throws Exception {
 
-        if (
-                cantera == null
-                || cantera.isBlank()
-        ) {
-
-            return new ArrayList<>();
+        if (idControl <= 0) {
+            throw new Exception(
+                    "El Control Diario seleccionado no es válido."
+            );
         }
 
         String sql =
                 """
                 SELECT DISTINCT
-                    material
+                    cm.cantera
 
-                FROM catalogo_cantera_material
+                FROM control_diario cd
 
-                WHERE activo = 1
-                  AND UPPER(TRIM(cantera)) =
-                      UPPER(TRIM(?))
+                INNER JOIN proyectos p
+                    ON p.id_proyecto = cd.id_proyecto
 
-                ORDER BY material
+                INNER JOIN catalogo_cantera_material cm
+                    ON cm.id_empresa = p.id_empresa
+                   AND cm.activo = 1
+
+                WHERE cd.id_control = ?
+                  AND cd.activo = 1
+
+                ORDER BY cm.cantera
                 """;
 
         List<String> lista =
@@ -677,13 +668,89 @@ public class CatalogoCanteraMaterialDAO {
                         ConexionDB.obtenerConexion();
 
                 PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
+                        conexion.prepareStatement(sql)
         ) {
 
-            ps.setString(
+            ps.setInt(
                     1,
+                    idControl
+            );
+
+            try (
+                    ResultSet rs =
+                            ps.executeQuery()
+            ) {
+
+                while (rs.next()) {
+
+                    lista.add(
+                            rs.getString("cantera")
+                    );
+                }
+            }
+        }
+
+        return lista;
+    }
+
+    public static List<String> obtenerMaterialesPorCantera(
+            int idControl,
+            String cantera
+    ) throws Exception {
+
+        if (idControl <= 0) {
+            throw new Exception(
+                    "El Control Diario seleccionado no es válido."
+            );
+        }
+
+        if (
+                cantera == null
+                || cantera.isBlank()
+        ) {
+            return new ArrayList<>();
+        }
+
+        String sql =
+                """
+                SELECT DISTINCT
+                    cm.material
+
+                FROM control_diario cd
+
+                INNER JOIN proyectos p
+                    ON p.id_proyecto = cd.id_proyecto
+
+                INNER JOIN catalogo_cantera_material cm
+                    ON cm.id_empresa = p.id_empresa
+                   AND cm.activo = 1
+
+                WHERE cd.id_control = ?
+                  AND cd.activo = 1
+                  AND UPPER(TRIM(cm.cantera)) =
+                      UPPER(TRIM(?))
+
+                ORDER BY cm.material
+                """;
+
+        List<String> lista =
+                new ArrayList<>();
+
+        try (
+                Connection conexion =
+                        ConexionDB.obtenerConexion();
+
+                PreparedStatement ps =
+                        conexion.prepareStatement(sql)
+        ) {
+
+            ps.setInt(
+                    1,
+                    idControl
+            );
+
+            ps.setString(
+                    2,
                     cantera.trim()
             );
 
@@ -695,9 +762,7 @@ public class CatalogoCanteraMaterialDAO {
                 while (rs.next()) {
 
                     lista.add(
-                            rs.getString(
-                                    "material"
-                            )
+                            rs.getString("material")
                     );
                 }
             }
@@ -707,34 +772,33 @@ public class CatalogoCanteraMaterialDAO {
     }
 
     public static List<String> obtenerDestinos(
-            String cantera,
-            String material
+            int idControl
     ) throws Exception {
 
-        if (
-                cantera == null
-                || cantera.isBlank()
-                || material == null
-                || material.isBlank()
-        ) {
-
-            return new ArrayList<>();
+        if (idControl <= 0) {
+            throw new Exception(
+                    "El Control Diario seleccionado no es válido."
+            );
         }
 
         String sql =
                 """
                 SELECT DISTINCT
-                    destino_sector
+                    dt.destino_sector
 
-                FROM catalogo_cantera_material
+                FROM control_diario cd
 
-                WHERE activo = 1
-                  AND UPPER(TRIM(cantera)) =
-                      UPPER(TRIM(?))
-                  AND UPPER(TRIM(material)) =
-                      UPPER(TRIM(?))
+                INNER JOIN proyectos p
+                    ON p.id_proyecto = cd.id_proyecto
 
-                ORDER BY destino_sector
+                INNER JOIN catalogo_destino_tarifa dt
+                    ON dt.id_empresa = p.id_empresa
+                   AND dt.activo = 1
+
+                WHERE cd.id_control = ?
+                  AND cd.activo = 1
+
+                ORDER BY dt.destino_sector
                 """;
 
         List<String> lista =
@@ -745,19 +809,12 @@ public class CatalogoCanteraMaterialDAO {
                         ConexionDB.obtenerConexion();
 
                 PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
+                        conexion.prepareStatement(sql)
         ) {
 
-            ps.setString(
+            ps.setInt(
                     1,
-                    cantera.trim()
-            );
-
-            ps.setString(
-                    2,
-                    material.trim()
+                    idControl
             );
 
             try (
@@ -768,9 +825,7 @@ public class CatalogoCanteraMaterialDAO {
                 while (rs.next()) {
 
                     lista.add(
-                            rs.getString(
-                                    "destino_sector"
-                            )
+                            rs.getString("destino_sector")
                     );
                 }
             }
@@ -779,121 +834,127 @@ public class CatalogoCanteraMaterialDAO {
         return lista;
     }
 
-    public static TarifaDetalle obtenerTarifaActiva(
-            String cantera,
-            String material,
-            String destinoSector
-    ) throws Exception {
+    public static TarifaOperacion obtenerTarifaActiva(
+        int idControl,
+        String cantera,
+        String material,
+        String destinoSector
+) throws Exception {
 
-        validarTexto(
-                cantera,
-                "la cantera"
+    validarTexto(cantera, "la cantera");
+    validarTexto(material, "el material");
+    validarTexto(destinoSector, "el destino o sector");
+
+    if (idControl <= 0) {
+        throw new Exception(
+                "El Control Diario seleccionado no es válido."
+        );
+    }
+
+    String sql =
+            """
+            SELECT
+                cm.id_tarifa AS id_tarifa_material,
+                dt.id_destino_tarifa AS id_tarifa_transporte,
+                cm.cantera,
+                cm.material,
+                dt.destino_sector,
+                cm.costo_unitario_material,
+                dt.costo_unitario_transporte
+
+            FROM control_diario cd
+
+            INNER JOIN proyectos p
+                ON p.id_proyecto = cd.id_proyecto
+
+            INNER JOIN catalogo_cantera_material cm
+                ON cm.id_empresa = p.id_empresa
+               AND cm.activo = 1
+               AND UPPER(TRIM(cm.cantera)) =
+                   UPPER(TRIM(?))
+               AND UPPER(TRIM(cm.material)) =
+                   UPPER(TRIM(?))
+
+            INNER JOIN catalogo_destino_tarifa dt
+                ON dt.id_empresa = p.id_empresa
+               AND dt.activo = 1
+               AND UPPER(TRIM(dt.destino_sector)) =
+                   UPPER(TRIM(?))
+
+            WHERE cd.id_control = ?
+              AND cd.activo = 1
+
+            LIMIT 1
+            """;
+
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
+
+            PreparedStatement ps =
+                    conexion.prepareStatement(sql)
+    ) {
+
+        ps.setString(
+                1,
+                cantera.trim()
         );
 
-        validarTexto(
-                material,
-                "el material"
+        ps.setString(
+                2,
+                material.trim()
         );
 
-        validarTexto(
-                destinoSector,
-                "el destino o sector"
+        ps.setString(
+                3,
+                destinoSector.trim()
         );
 
-        String sql =
-                """
-                SELECT
-                    id_tarifa,
-                    cantera,
-                    material,
-                    destino_sector,
-                    costo_unitario_material,
-                    costo_unitario_transporte,
-                    activo
-
-                FROM catalogo_cantera_material
-
-                WHERE activo = 1
-                  AND UPPER(TRIM(cantera)) =
-                      UPPER(TRIM(?))
-                  AND UPPER(TRIM(material)) =
-                      UPPER(TRIM(?))
-                  AND UPPER(TRIM(destino_sector)) =
-                      UPPER(TRIM(?))
-
-                LIMIT 1
-                """;
+        ps.setInt(
+                4,
+                idControl
+        );
 
         try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
+                ResultSet rs =
+                        ps.executeQuery()
         ) {
 
-            ps.setString(
-                    1,
-                    cantera.trim()
-            );
+            if (!rs.next()) {
 
-            ps.setString(
-                    2,
-                    material.trim()
-            );
-
-            ps.setString(
-                    3,
-                    destinoSector.trim()
-            );
-
-            try (
-                    ResultSet rs =
-                            ps.executeQuery()
-            ) {
-
-                if (!rs.next()) {
-
-                    throw new Exception(
-                            "No se encontró una tarifa activa "
-                            + "para la cantera, material y destino seleccionados."
-                    );
-                }
-
-                return new TarifaDetalle(
-                        rs.getInt(
-                                "id_tarifa"
-                        ),
-
-                        rs.getString(
-                                "cantera"
-                        ),
-
-                        rs.getString(
-                                "material"
-                        ),
-
-                        rs.getString(
-                                "destino_sector"
-                        ),
-
-                        rs.getDouble(
-                                "costo_unitario_material"
-                        ),
-
-                        rs.getDouble(
-                                "costo_unitario_transporte"
-                        ),
-
-                        rs.getBoolean(
-                                "activo"
-                        )
+                throw new Exception(
+                        "No se encontró una tarifa activa para la empresa "
+                                + "del proyecto, cantera, material y destino "
+                                + "seleccionados."
                 );
             }
+
+            return new TarifaOperacion(
+                    rs.getInt(
+                            "id_tarifa_material"
+                    ),
+                    rs.getInt(
+                            "id_tarifa_transporte"
+                    ),
+                    rs.getString(
+                            "cantera"
+                    ),
+                    rs.getString(
+                            "material"
+                    ),
+                    rs.getString(
+                            "destino_sector"
+                    ),
+                    rs.getDouble(
+                            "costo_unitario_material"
+                    ),
+                    rs.getDouble(
+                            "costo_unitario_transporte"
+                    )
+            );
         }
     }
+}
 
     private static List<String> obtenerListaTexto(
             String sql
@@ -927,114 +988,106 @@ public class CatalogoCanteraMaterialDAO {
     }
 
     private static void validarDatos(
-            String cantera,
-            String material,
-            String destinoSector,
-            double costoUnitarioMaterial,
-            double costoUnitarioTransporte
-    ) throws Exception {
+        String cantera,
+        String material,
+        double costoUnitarioMaterial
+) throws Exception {
 
-        validarTexto(
-                cantera,
-                "la cantera"
+    validarTexto(
+            cantera,
+            "la cantera"
+    );
+
+    validarTexto(
+            material,
+            "el material"
+    );
+
+    if (costoUnitarioMaterial < 0) {
+
+        throw new Exception(
+                "El costo unitario del material no puede ser negativo."
         );
-
-        validarTexto(
-                material,
-                "el material"
-        );
-
-        validarTexto(
-                destinoSector,
-                "el destino o sector"
-        );
-
-        if (costoUnitarioMaterial < 0) {
-
-            throw new Exception(
-                    "El costo unitario del material "
-                    + "no puede ser negativo."
-            );
-        }
-
-        if (costoUnitarioTransporte < 0) {
-
-            throw new Exception(
-                    "El costo unitario del transporte "
-                    + "no puede ser negativo."
-            );
-        }
     }
+}
 
     private static void validarDuplicado(
-            String cantera,
-            String material,
-            String destinoSector,
-            int idExcluir
-    ) throws Exception {
+        String cantera,
+        String material,
+        int idExcluir
+) throws Exception {
 
-        String sql =
-                """
-                SELECT id_tarifa
+    String sql =
+            """
+            SELECT id_tarifa
 
-                FROM catalogo_cantera_material
+            FROM catalogo_cantera_material
 
-                WHERE UPPER(TRIM(cantera)) =
-                      UPPER(TRIM(?))
-                  AND UPPER(TRIM(material)) =
-                      UPPER(TRIM(?))
-                  AND UPPER(TRIM(destino_sector)) =
-                      UPPER(TRIM(?))
-                  AND id_tarifa <> ?
+            WHERE id_empresa = ?
+              AND UPPER(TRIM(cantera)) =
+                  UPPER(TRIM(?))
+              AND UPPER(TRIM(material)) =
+                  UPPER(TRIM(?))
+              AND id_tarifa <> ?
 
-                LIMIT 1
-                """;
+            LIMIT 1
+            """;
 
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
+    try (
+            Connection conexion =
+                    ConexionDB.obtenerConexion();
 
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
+            PreparedStatement ps =
+                    conexion.prepareStatement(sql)
+    ) {
+
+        Usuario usuarioActual =
+                SesionUsuario.getUsuarioActual();
+
+        if (
+                usuarioActual == null
+                || usuarioActual.getIdEmpresa() == null
         ) {
 
-            ps.setString(
-                    1,
-                    cantera.trim()
+            throw new Exception(
+                    "No se pudo determinar la empresa del usuario."
             );
+        }
 
-            ps.setString(
-                    2,
-                    material.trim()
-            );
+        ps.setInt(
+                1,
+                usuarioActual.getIdEmpresa()
+        );
 
-            ps.setString(
-                    3,
-                    destinoSector.trim()
-            );
+        ps.setString(
+                2,
+                cantera.trim()
+        );
 
-            ps.setInt(
-                    4,
-                    idExcluir
-            );
+        ps.setString(
+                3,
+                material.trim()
+        );
 
-            try (
-                    ResultSet rs =
-                            ps.executeQuery()
-            ) {
+        ps.setInt(
+                4,
+                idExcluir
+        );
 
-                if (rs.next()) {
+        try (
+                ResultSet rs =
+                        ps.executeQuery()
+        ) {
 
-                    throw new Exception(
-                            "Ya existe una tarifa registrada "
-                            + "para esa cantera, material y destino."
-                    );
-                }
+            if (rs.next()) {
+
+                throw new Exception(
+                        "Ya existe una tarifa registrada para esa cantera y material."
+                );
             }
         }
     }
+}
 
     private static void validarTexto(
             String valor,

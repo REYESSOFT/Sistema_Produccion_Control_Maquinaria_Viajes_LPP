@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -6,6 +7,9 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.time.LocalDate;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -15,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
 
 public class FormControlDiario extends JDialog {
 
@@ -26,8 +31,17 @@ public class FormControlDiario extends JDialog {
     private final JTextField txtMetrosLineales;
     private final JTextField txtAncho;
     private final JTextField txtEspesor;
+    private final JLabel lblNumeroGuia;
+private final JLabel lblEmpresaGuia;
+private final JLabel lblTipoGuia;
+private final JLabel lblProyectoGuia;
+private final JLabel lblSectorGuia;
+private final JLabel lblMaterialGuia;
+private final JLabel lblChoferGuia;
+private final JLabel lblPlacaGuia;
+private final JLabel lblM3Guia;
 
-    private final JTextArea txtObservaciones;
+private final JTextArea txtObservaciones;
 
     private final JButton btnGuardar;
     private final JButton btnCancelar;
@@ -100,8 +114,8 @@ public class FormControlDiario extends JDialog {
                 false;
 
         setSize(
-                650,
-                500
+                780,
+                680
         );
 
         setDefaultCloseOperation(
@@ -120,226 +134,494 @@ public class FormControlDiario extends JDialog {
         );
 
         /*
-         * PANEL FORMULARIO
-         */
-        JPanel panelFormulario =
-                new JPanel(
-                        new GridBagLayout()
-                );
+ * PANEL FORMULARIO
+ */
+JPanel panelFormulario =
+        new JPanel();
 
-        panelFormulario.setBorder(
-                javax.swing.BorderFactory
-                        .createEmptyBorder(
-                                15,
-                                15,
-                                15,
-                                15
-                        )
-        );
-
-        GridBagConstraints gbc =
-                new GridBagConstraints();
-
-        gbc.insets =
-                new Insets(
-                        8,
-                        8,
-                        8,
-                        8
-                );
-
-        gbc.fill =
-                GridBagConstraints.HORIZONTAL;
-
-        gbc.anchor =
-                GridBagConstraints.WEST;
-
-        /*
-         * PROYECTO
-         */
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-
-        panelFormulario.add(
-                new JLabel(
-                        "Proyecto:"
-                ),
-                gbc
-        );
-
-        cmbProyecto =
-                new JComboBox<>();
-
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-
-        panelFormulario.add(
-                cmbProyecto,
-                gbc
-        );
-
-        /*
-         * FECHA
-         */
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-
-        panelFormulario.add(
-                new JLabel(
-                        "Fecha (AAAA-MM-DD):"
-                ),
-                gbc
-        );
-
-        txtFecha =
-                new JTextField();
-
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.weightx = 1;
-
-        panelFormulario.add(
-                txtFecha,
-                gbc
-        );
-
-        /*
-         * METROS LINEALES
-         */
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 0;
-
-        panelFormulario.add(
-                new JLabel(
-                        "Metros lineales:"
-                ),
-                gbc
-        );
-
-        txtMetrosLineales =
-                new JTextField();
-
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.weightx = 1;
-
-        panelFormulario.add(
-                txtMetrosLineales,
-                gbc
-        );
-
-        /*
-         * ANCHO
-         */
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.weightx = 0;
-
-        panelFormulario.add(
-                new JLabel(
-                        "Ancho:"
-                ),
-                gbc
-        );
-
-        txtAncho =
-                new JTextField();
-
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        gbc.weightx = 1;
-
-        panelFormulario.add(
-                txtAncho,
-                gbc
-        );
-
-        /*
-         * ESPESOR
-         */
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.weightx = 0;
-
-        panelFormulario.add(
-                new JLabel(
-                        "Espesor:"
-                ),
-                gbc
-        );
-
-        txtEspesor =
-                new JTextField();
-
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        gbc.weightx = 1;
-
-        panelFormulario.add(
-                txtEspesor,
-                gbc
-        );
-
-        /*
-         * OBSERVACIONES
-         */
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.fill =
-                GridBagConstraints.HORIZONTAL;
-        gbc.anchor =
-                GridBagConstraints.NORTHWEST;
-
-        panelFormulario.add(
-                new JLabel(
-                        "Observaciones:"
-                ),
-                gbc
-        );
-
-        txtObservaciones =
-                new JTextArea(
-                        5,
-                        30
-                );
-
-        txtObservaciones.setLineWrap(
-                true
-        );
-
-        txtObservaciones.setWrapStyleWord(
-                true
-        );
-
-        JScrollPane scrollObservaciones =
-                new JScrollPane(
-                        txtObservaciones
-                );
-
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill =
-                GridBagConstraints.BOTH;
-
-        panelFormulario.add(
-                scrollObservaciones,
-                gbc
-        );
-
-        add(
+panelFormulario.setLayout(
+        new BoxLayout(
                 panelFormulario,
-                BorderLayout.CENTER
+                BoxLayout.Y_AXIS
+        )
+);
+
+panelFormulario.setBorder(
+        BorderFactory.createEmptyBorder(
+                15,
+                15,
+                15,
+                15
+        )
+);
+
+/*
+ * DATOS PROVENIENTES DE LA GUÍA
+ */
+JPanel panelDatosGuia =
+        new JPanel(
+                new GridBagLayout()
         );
 
+panelDatosGuia.setBorder(
+        BorderFactory.createTitledBorder(
+                "Datos provenientes de la guía"
+        )
+);
+
+GridBagConstraints gbcGuia =
+        new GridBagConstraints();
+
+gbcGuia.insets =
+        new Insets(
+                6,
+                8,
+                6,
+                8
+        );
+
+gbcGuia.fill =
+        GridBagConstraints.HORIZONTAL;
+
+gbcGuia.anchor =
+        GridBagConstraints.WEST;
+
+/*
+ * PROYECTO
+ */
+gbcGuia.gridx = 0;
+gbcGuia.gridy = 0;
+gbcGuia.weightx = 0;
+
+panelDatosGuia.add(
+        new JLabel("Proyecto:"),
+        gbcGuia
+);
+
+cmbProyecto =
+        new JComboBox<>();
+
+gbcGuia.gridx = 1;
+gbcGuia.gridy = 0;
+gbcGuia.weightx = 1;
+
+panelDatosGuia.add(
+        cmbProyecto,
+        gbcGuia
+);
+
+/*
+ * FECHA
+ */
+gbcGuia.gridx = 0;
+gbcGuia.gridy = 1;
+gbcGuia.weightx = 0;
+
+panelDatosGuia.add(
+        new JLabel("Fecha (AAAA-MM-DD):"),
+        gbcGuia
+);
+
+txtFecha =
+        new JTextField();
+
+gbcGuia.gridx = 1;
+gbcGuia.gridy = 1;
+gbcGuia.weightx = 1;
+
+panelDatosGuia.add(
+        txtFecha,
+        gbcGuia
+);
+
+/*
+/*
+ * INFORMACIÓN ESTRUCTURADA DE LA GUÍA
+ */
+JPanel panelFichaGuia =
+        new JPanel(
+                new GridBagLayout()
+        );
+
+GridBagConstraints gbcFicha =
+        new GridBagConstraints();
+
+gbcFicha.insets =
+        new Insets(
+                4,
+                8,
+                4,
+                8
+        );
+
+gbcFicha.anchor =
+        GridBagConstraints.WEST;
+
+gbcFicha.fill =
+        GridBagConstraints.HORIZONTAL;
+
+/*
+ * COLUMNA IZQUIERDA
+ */
+gbcFicha.gridx = 0;
+gbcFicha.gridy = 0;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("N° Guía:"),
+        gbcFicha
+);
+
+lblNumeroGuia =
+        new JLabel("-");
+
+gbcFicha.gridx = 1;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblNumeroGuia,
+        gbcFicha
+);
+
+gbcFicha.gridx = 0;
+gbcFicha.gridy = 1;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("Empresa:"),
+        gbcFicha
+);
+
+lblEmpresaGuia =
+        new JLabel("-");
+
+gbcFicha.gridx = 1;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblEmpresaGuia,
+        gbcFicha
+);
+
+gbcFicha.gridx = 0;
+gbcFicha.gridy = 2;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("Tipo de guía:"),
+        gbcFicha
+);
+
+lblTipoGuia =
+        new JLabel("-");
+
+gbcFicha.gridx = 1;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblTipoGuia,
+        gbcFicha
+);
+
+gbcFicha.gridx = 0;
+gbcFicha.gridy = 3;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("Proyecto referencia:"),
+        gbcFicha
+);
+
+lblProyectoGuia =
+        new JLabel("-");
+
+gbcFicha.gridx = 1;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblProyectoGuia,
+        gbcFicha
+);
+
+gbcFicha.gridx = 0;
+gbcFicha.gridy = 4;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("Sector:"),
+        gbcFicha
+);
+
+lblSectorGuia =
+        new JLabel("-");
+
+gbcFicha.gridx = 1;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblSectorGuia,
+        gbcFicha
+);
+
+/*
+ * COLUMNA DERECHA
+ */
+gbcFicha.gridx = 2;
+gbcFicha.gridy = 0;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("Material:"),
+        gbcFicha
+);
+
+lblMaterialGuia =
+        new JLabel("-");
+
+gbcFicha.gridx = 3;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblMaterialGuia,
+        gbcFicha
+);
+
+gbcFicha.gridx = 2;
+gbcFicha.gridy = 1;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("Chofer:"),
+        gbcFicha
+);
+
+lblChoferGuia =
+        new JLabel("-");
+
+gbcFicha.gridx = 3;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblChoferGuia,
+        gbcFicha
+);
+
+gbcFicha.gridx = 2;
+gbcFicha.gridy = 2;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("Placa:"),
+        gbcFicha
+);
+
+lblPlacaGuia =
+        new JLabel("-");
+
+gbcFicha.gridx = 3;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblPlacaGuia,
+        gbcFicha
+);
+
+gbcFicha.gridx = 2;
+gbcFicha.gridy = 3;
+gbcFicha.weightx = 0;
+
+panelFichaGuia.add(
+        new JLabel("m³ transportados:"),
+        gbcFicha
+);
+
+lblM3Guia =
+        new JLabel("-");
+
+gbcFicha.gridx = 3;
+gbcFicha.weightx = 1;
+
+panelFichaGuia.add(
+        lblM3Guia,
+        gbcFicha
+);
+
+/*
+ * AGREGAR FICHA AL PANEL DE GUÍA
+ */
+gbcGuia.gridx = 0;
+gbcGuia.gridy = 2;
+gbcGuia.gridwidth = 2;
+gbcGuia.weightx = 1;
+gbcGuia.weighty = 1;
+gbcGuia.fill =
+        GridBagConstraints.BOTH;
+
+panelDatosGuia.add(
+        panelFichaGuia,
+        gbcGuia
+);
+
+/*
+ * DATOS DEL CONTROL DIARIO
+ */
+JPanel panelControlDiario =
+        new JPanel(
+                new GridBagLayout()
+        );
+
+panelControlDiario.setBorder(
+        BorderFactory.createTitledBorder(
+                "Datos que debe completar Daniela"
+        )
+);
+
+GridBagConstraints gbcControl =
+        new GridBagConstraints();
+
+gbcControl.insets =
+        new Insets(
+                6,
+                8,
+                6,
+                8
+        );
+
+gbcControl.fill =
+        GridBagConstraints.HORIZONTAL;
+
+gbcControl.anchor =
+        GridBagConstraints.WEST;
+
+/*
+ * METROS LINEALES
+ */
+gbcControl.gridx = 0;
+gbcControl.gridy = 0;
+gbcControl.weightx = 0;
+
+panelControlDiario.add(
+        new JLabel("Metros lineales:"),
+        gbcControl
+);
+
+txtMetrosLineales =
+        new JTextField();
+
+gbcControl.gridx = 1;
+gbcControl.gridy = 0;
+gbcControl.weightx = 1;
+
+panelControlDiario.add(
+        txtMetrosLineales,
+        gbcControl
+);
+
+/*
+ * ANCHO
+ */
+gbcControl.gridx = 0;
+gbcControl.gridy = 1;
+gbcControl.weightx = 0;
+
+panelControlDiario.add(
+        new JLabel("Ancho:"),
+        gbcControl
+);
+
+txtAncho =
+        new JTextField();
+
+gbcControl.gridx = 1;
+gbcControl.gridy = 1;
+gbcControl.weightx = 1;
+
+panelControlDiario.add(
+        txtAncho,
+        gbcControl
+);
+
+/*
+ * ESPESOR
+ */
+gbcControl.gridx = 0;
+gbcControl.gridy = 2;
+gbcControl.weightx = 0;
+
+panelControlDiario.add(
+        new JLabel("Espesor:"),
+        gbcControl
+);
+
+txtEspesor =
+        new JTextField();
+
+gbcControl.gridx = 1;
+gbcControl.gridy = 2;
+gbcControl.weightx = 1;
+
+panelControlDiario.add(
+        txtEspesor,
+        gbcControl
+);
+
+/*
+ * OBSERVACIONES ADICIONALES
+ */
+gbcControl.gridx = 0;
+gbcControl.gridy = 3;
+gbcControl.weightx = 0;
+gbcControl.weighty = 0;
+gbcControl.anchor =
+        GridBagConstraints.NORTHWEST;
+
+panelControlDiario.add(
+        new JLabel("Observaciones adicionales:"),
+        gbcControl
+);
+
+txtObservaciones =
+        new JTextArea(
+                4,
+                35
+        );
+
+txtObservaciones.setLineWrap(true);
+txtObservaciones.setWrapStyleWord(true);
+
+JScrollPane scrollObservaciones =
+        new JScrollPane(
+                txtObservaciones
+        );
+
+gbcControl.gridx = 1;
+gbcControl.gridy = 3;
+gbcControl.weightx = 1;
+gbcControl.weighty = 1;
+gbcControl.fill =
+        GridBagConstraints.BOTH;
+
+panelControlDiario.add(
+        scrollObservaciones,
+        gbcControl
+);
+
+panelFormulario.add(
+        panelDatosGuia
+);
+
+panelFormulario.add(
+        Box.createVerticalStrut(12)
+);
+
+panelFormulario.add(
+        panelControlDiario
+);
+
+add(
+        panelFormulario,
+        BorderLayout.CENTER
+);
         /*
          * BOTONES
          */
@@ -537,29 +819,44 @@ public class FormControlDiario extends JDialog {
         );
     }
 
-    txtObservaciones.setText(
-            """
-            Guía: %s
-            Empresa: %s
-            Tipo: %s
-            Proyecto: %s
-            Sector: %s
-            Material: %s
-            Chofer: %s
-            Placa: %s
-            m³: %.2f
-            """.formatted(
-                    guia.numeroGuia(),
-                    guia.empresa(),
-                    guia.tipoGuia(),
-                    guia.proyectoReferencia(),
-                    guia.sector(),
-                    guia.material(),
-                    guia.choferOperador(),
-                    guia.placa(),
-                    guia.m3()
-            )
-    );
+    lblNumeroGuia.setText(
+        guia.numeroGuia()
+);
+
+lblEmpresaGuia.setText(
+        guia.empresa()
+);
+
+lblTipoGuia.setText(
+        guia.tipoGuia()
+);
+
+lblProyectoGuia.setText(
+        guia.proyectoReferencia()
+);
+
+lblSectorGuia.setText(
+        guia.sector()
+);
+
+lblMaterialGuia.setText(
+        guia.material()
+);
+
+lblChoferGuia.setText(
+        guia.choferOperador()
+);
+
+lblPlacaGuia.setText(
+        guia.placa()
+);
+
+lblM3Guia.setText(
+        String.format(
+                "%.2f m³",
+                guia.m3()
+        )
+);
 
     for (int i = 0; i < cmbProyecto.getItemCount(); i++) {
 
@@ -568,7 +865,7 @@ public class FormControlDiario extends JDialog {
 
         String texto = proyecto.toString().toUpperCase();
 
-        if (texto.contains(
+               if (texto.contains(
                 guia.proyectoReferencia().toUpperCase()
         )) {
 
@@ -576,6 +873,20 @@ public class FormControlDiario extends JDialog {
             break;
         }
     }
+
+    ControlDiarioContexto.establecerGuia(
+            guia.idGuia(),
+            guia.numeroGuia(),
+            guia.fecha() == null ? "" : guia.fecha().toString(),
+            guia.empresa(),
+            guia.tipoGuia(),
+            guia.proyectoReferencia(),
+            guia.sector(),
+            guia.material(),
+            guia.choferOperador(),
+            guia.placa(),
+            guia.m3()
+    );
 }
 
     private void guardarControl() {

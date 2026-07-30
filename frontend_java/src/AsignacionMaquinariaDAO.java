@@ -154,7 +154,10 @@ public class AsignacionMaquinariaDAO {
                         'Sin propietario'
                     ) AS propietario,
 
-                    NULL AS tarifa_referencia
+                    COALESCE(
+    m.costo_hora_proveedor,
+    0
+) AS tarifa_referencia
 
                 FROM maquinaria m
 

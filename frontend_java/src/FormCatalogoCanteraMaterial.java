@@ -19,9 +19,7 @@ public class FormCatalogoCanteraMaterial extends JDialog {
 
     private final JTextField txtCantera;
     private final JTextField txtMaterial;
-    private final JTextField txtDestinoSector;
     private final JTextField txtCostoUnitarioMaterial;
-    private final JTextField txtCostoUnitarioTransporte;
 
     private final JButton btnGuardar;
     private final JButton btnCancelar;
@@ -170,32 +168,6 @@ public class FormCatalogoCanteraMaterial extends JDialog {
         );
 
         /*
-         * DESTINO / SECTOR
-         */
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 0;
-
-        panelFormulario.add(
-                new JLabel(
-                        "Destino / sector:"
-                ),
-                gbc
-        );
-
-        txtDestinoSector =
-                new JTextField();
-
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.weightx = 1;
-
-        panelFormulario.add(
-                txtDestinoSector,
-                gbc
-        );
-
-        /*
          * COSTO UNITARIO MATERIAL
          */
         gbc.gridx = 0;
@@ -218,32 +190,6 @@ public class FormCatalogoCanteraMaterial extends JDialog {
 
         panelFormulario.add(
                 txtCostoUnitarioMaterial,
-                gbc
-        );
-
-        /*
-         * COSTO UNITARIO TRANSPORTE
-         */
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.weightx = 0;
-
-        panelFormulario.add(
-                new JLabel(
-                        "Costo unitario transporte:"
-                ),
-                gbc
-        );
-
-        txtCostoUnitarioTransporte =
-                new JTextField();
-
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        gbc.weightx = 1;
-
-        panelFormulario.add(
-                txtCostoUnitarioTransporte,
                 gbc
         );
 
@@ -300,9 +246,6 @@ public class FormCatalogoCanteraMaterial extends JDialog {
                     "0"
             );
 
-            txtCostoUnitarioTransporte.setText(
-                    "0"
-            );
         }
 
         /*
@@ -334,19 +277,9 @@ public class FormCatalogoCanteraMaterial extends JDialog {
                     detalle.material()
             );
 
-            txtDestinoSector.setText(
-                    detalle.destinoSector()
-            );
-
             txtCostoUnitarioMaterial.setText(
                     formatearNumeroEdicion(
                             detalle.costoUnitarioMaterial()
-                    )
-            );
-
-            txtCostoUnitarioTransporte.setText(
-                    formatearNumeroEdicion(
-                            detalle.costoUnitarioTransporte()
                     )
             );
 
@@ -380,21 +313,10 @@ public class FormCatalogoCanteraMaterial extends JDialog {
                             .getText()
                             .trim();
 
-            String destinoSector =
-                    txtDestinoSector
-                            .getText()
-                            .trim();
-
             double costoUnitarioMaterial =
                     convertirDoubleObligatorio(
                             txtCostoUnitarioMaterial.getText(),
                             "el costo unitario del material"
-                    );
-
-            double costoUnitarioTransporte =
-                    convertirDoubleObligatorio(
-                            txtCostoUnitarioTransporte.getText(),
-                            "el costo unitario del transporte"
                     );
 
             if (cantera.isBlank()) {
@@ -411,21 +333,12 @@ public class FormCatalogoCanteraMaterial extends JDialog {
                 );
             }
 
-            if (destinoSector.isBlank()) {
-
-                throw new Exception(
-                        "Debe ingresar el destino o sector."
-                );
-            }
-
             if (idTarifa == null) {
 
                 CatalogoCanteraMaterialDAO.insertar(
                         cantera,
                         material,
-                        destinoSector,
-                        costoUnitarioMaterial,
-                        costoUnitarioTransporte
+                        costoUnitarioMaterial
                 );
 
                 JOptionPane.showMessageDialog(
@@ -441,9 +354,7 @@ public class FormCatalogoCanteraMaterial extends JDialog {
                         idTarifa,
                         cantera,
                         material,
-                        destinoSector,
-                        costoUnitarioMaterial,
-                        costoUnitarioTransporte
+                        costoUnitarioMaterial
                 );
 
                 JOptionPane.showMessageDialog(

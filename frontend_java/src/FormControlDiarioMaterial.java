@@ -47,6 +47,9 @@ public class FormControlDiarioMaterial extends JDialog {
     private boolean cargandoCombos;
     private boolean guardado;
 
+    private String materialDesdeGuia;
+    private String sectorDesdeGuia;
+
     /*
      * NUEVO
      */
@@ -96,6 +99,10 @@ public class FormControlDiarioMaterial extends JDialog {
 
         this.guardado =
                 false;
+        this.materialDesdeGuia =
+        "";
+        this.sectorDesdeGuia =
+        "";
 
         setSize(
                 760,
@@ -664,12 +671,16 @@ public class FormControlDiarioMaterial extends JDialog {
          * CARGA INICIAL
          */
         inicializarValoresNumericos();
-        cargarCanteras();
+cargarCanteras();
 
-        if (this.idControlMaterial != null) {
+if (this.idControlMaterial != null) {
 
-            cargarRegistro();
-        }
+    cargarRegistro();
+
+} else {
+
+    cargarDatosDesdeGuia();
+}
     }
 
     private void inicializarValoresNumericos() {
@@ -710,8 +721,8 @@ public class FormControlDiarioMaterial extends JDialog {
             cmbCantera.addItem("");
 
             List<String> canteras =
-                    CatalogoCanteraMaterialDAO
-                            .obtenerCanterasActivas();
+        CatalogoCanteraMaterialDAO
+                .obtenerCanterasActivas(idControl);
 
             for (String cantera : canteras) {
 
@@ -773,10 +784,11 @@ public class FormControlDiarioMaterial extends JDialog {
             }
 
             List<String> materiales =
-                    CatalogoCanteraMaterialDAO
-                            .obtenerMaterialesPorCantera(
-                                    cantera
-                            );
+        CatalogoCanteraMaterialDAO
+                .obtenerMaterialesPorCantera(
+                        idControl,
+                        cantera
+                );
 
             for (String material : materiales) {
 
@@ -784,6 +796,20 @@ public class FormControlDiarioMaterial extends JDialog {
                         material
                 );
             }
+            if (!materialDesdeGuia.isBlank()) {
+
+    for (int i = 0; i < cmbMaterial.getItemCount(); i++) {
+
+        String item = cmbMaterial.getItemAt(i);
+
+        if (item != null
+                && item.equalsIgnoreCase(materialDesdeGuia)) {
+
+            cmbMaterial.setSelectedIndex(i);
+            break;
+        }
+    }
+}
 
         } catch (Exception ex) {
 
@@ -806,135 +832,157 @@ public class FormControlDiarioMaterial extends JDialog {
 
     private void cargarDestinosPorMaterial() {
 
-        String cantera =
-                obtenerTextoSeleccionado(
-                        cmbCantera
-                );
-
-        String material =
-                obtenerTextoSeleccionado(
-                        cmbMaterial
-                );
-
-        cargandoCombos =
-                true;
-
-        try {
-
-            cmbDestinoSector.removeAllItems();
-            cmbDestinoSector.addItem("");
-
-            limpiarTarifaSeleccionada();
-
-            if (
-                    cantera.isBlank()
-                    || material.isBlank()
-            ) {
-
-                return;
-            }
-
-            List<String> destinos =
-                    CatalogoCanteraMaterialDAO.obtenerDestinos(
-                            cantera,
-                            material
-                    );
-
-            for (String destino : destinos) {
-
-                cmbDestinoSector.addItem(
-                        destino
-                );
-            }
-
-        } catch (Exception ex) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error al cargar los destinos o sectores:\n"
-                            + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
+    String cantera =
+            obtenerTextoSeleccionado(
+                    cmbCantera
             );
 
-            ex.printStackTrace();
+    String material =
+            obtenerTextoSeleccionado(
+                    cmbMaterial
+            );
 
-        } finally {
+    cargandoCombos =
+            true;
 
-            cargandoCombos =
-                    false;
-        }
-    }
+    try {
 
-    private void cargarTarifaSeleccionada() {
+        cmbDestinoSector.removeAllItems();
+        cmbDestinoSector.addItem("");
 
-        String cantera =
-                obtenerTextoSeleccionado(
-                        cmbCantera
-                );
-
-        String material =
-                obtenerTextoSeleccionado(
-                        cmbMaterial
-                );
-
-        String destinoSector =
-                obtenerTextoSeleccionado(
-                        cmbDestinoSector
-                );
+        limpiarTarifaSeleccionada();
 
         if (
                 cantera.isBlank()
                 || material.isBlank()
-                || destinoSector.isBlank()
         ) {
 
-            limpiarTarifaSeleccionada();
             return;
         }
 
-        try {
+        List<String> destinos =
+        CatalogoCanteraMaterialDAO.obtenerDestinos(idControl);
 
-            CatalogoCanteraMaterialDAO.TarifaDetalle tarifa =
-                    CatalogoCanteraMaterialDAO.obtenerTarifaActiva(
-                            cantera,
-                            material,
-                            destinoSector
-                    );
+        for (String destino : destinos) {
 
-            idTarifaSeleccionada =
-                    tarifa.idTarifa();
-
-            txtCostoUnitarioMaterial.setText(
-                    formatearNumeroEdicion(
-                            tarifa.costoUnitarioMaterial()
-                    )
+            cmbDestinoSector.addItem(
+                    destino
             );
-
-            txtCostoUnitarioTransporte.setText(
-                    formatearNumeroEdicion(
-                            tarifa.costoUnitarioTransporte()
-                    )
-            );
-
-            calcularYMostrarCostosSilencioso();
-
-        } catch (Exception ex) {
-
-            limpiarTarifaSeleccionada();
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error al obtener la tarifa:\n"
-                            + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-
-            ex.printStackTrace();
         }
+
+        if (!sectorDesdeGuia.isBlank()) {
+
+            for (
+                    int i = 0;
+                    i < cmbDestinoSector.getItemCount();
+                    i++
+            ) {
+
+                String item =
+                        cmbDestinoSector.getItemAt(i);
+
+                if (
+                        item != null
+                        && item.equalsIgnoreCase(
+                                sectorDesdeGuia
+                        )
+                ) {
+
+                    cmbDestinoSector.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+
+    } catch (Exception ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar los destinos o sectores:\n"
+                        + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+        ex.printStackTrace();
+
+    } finally {
+
+        cargandoCombos =
+                false;
+    }
+}
+
+    private void cargarTarifaSeleccionada() {
+
+    String cantera =
+            obtenerTextoSeleccionado(
+                    cmbCantera
+            );
+
+    String material =
+            obtenerTextoSeleccionado(
+                    cmbMaterial
+            );
+
+    String destinoSector =
+            obtenerTextoSeleccionado(
+                    cmbDestinoSector
+            );
+
+    if (
+            cantera.isBlank()
+            || material.isBlank()
+            || destinoSector.isBlank()
+    ) {
+
+        limpiarTarifaSeleccionada();
+        return;
     }
 
+    try {
+
+        CatalogoCanteraMaterialDAO.TarifaOperacion tarifa =
+        
+                CatalogoCanteraMaterialDAO.obtenerTarifaActiva(
+        idControl,
+        cantera,
+        material,
+        destinoSector
+);
+
+        idTarifaSeleccionada =
+                tarifa.idTarifaMaterial();
+
+        txtCostoUnitarioMaterial.setText(
+                formatearNumeroEdicion(
+                        tarifa.costoUnitarioMaterial()
+                )
+        );
+
+        txtCostoUnitarioTransporte.setText(
+                formatearNumeroEdicion(
+                        tarifa.costoUnitarioTransporte()
+                )
+        );
+
+        calcularYMostrarCostosSilencioso();
+
+    } catch (Exception ex) {
+
+        limpiarTarifaSeleccionada();
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error al obtener la tarifa:\n"
+                        + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+        ex.printStackTrace();
+    }
+}
     private void cargarRegistro() {
 
         try {
@@ -997,6 +1045,46 @@ public class FormControlDiarioMaterial extends JDialog {
             dispose();
         }
     }
+    private void cargarDatosDesdeGuia() {
+
+    if (!ControlDiarioContexto.tieneGuiaSeleccionada()) {
+
+        return;
+    }
+
+    materialDesdeGuia =
+            ControlDiarioContexto
+                    .getMaterial();
+    sectorDesdeGuia =
+        ControlDiarioContexto
+                .getSector();
+
+    txtVolumenRecibido.setText(
+            formatearNumeroEdicion(
+                    ControlDiarioContexto
+                            .getVolumenM3()
+
+            )
+    );
+
+
+    if (
+            materialDesdeGuia == null
+            || materialDesdeGuia.isBlank()
+    ) {
+
+        materialDesdeGuia =
+                "";
+    }
+    if (
+        sectorDesdeGuia == null
+        || sectorDesdeGuia.isBlank()
+) {
+
+    sectorDesdeGuia =
+            "";
+}
+}
 
     private void seleccionarTarifaParaEdicion(
             ControlDiarioMaterialDAO.ControlMaterialDetalle detalle
@@ -1028,9 +1116,10 @@ public class FormControlDiarioMaterial extends JDialog {
             for (
                     String material
                     : CatalogoCanteraMaterialDAO
-                            .obtenerMaterialesPorCantera(
-                                    canteraRegistro
-                            )
+        .obtenerMaterialesPorCantera(
+                idControl,
+                canteraRegistro
+        )
             ) {
 
                 cmbMaterial.addItem(
@@ -1047,36 +1136,41 @@ public class FormControlDiarioMaterial extends JDialog {
             cmbDestinoSector.addItem("");
 
             List<CatalogoCanteraMaterialDAO.TarifaResumen> tarifas =
-                    CatalogoCanteraMaterialDAO.buscar(
-                            canteraRegistro,
-                            materialRegistro,
-                            "",
-                            "ACTIVO"
-                    );
+        CatalogoCanteraMaterialDAO.buscar(
+                canteraRegistro,
+                materialRegistro,
+                "ACTIVO"
+        );
 
             CatalogoCanteraMaterialDAO.TarifaResumen coincidencia =
-                    buscarTarifaCoincidente(
-                            tarifas,
-                            detalle.costoUnitarioMaterial(),
-                            detalle.costoUnitarioTransporte()
-                    );
+        buscarTarifaCoincidente(
+                tarifas,
+                detalle.costoUnitarioMaterial()
+        );
 
-            for (
-                    CatalogoCanteraMaterialDAO.TarifaResumen tarifa
-                    : tarifas
-            ) {
+            try {
 
-                agregarItemSiNoExiste(
-                        cmbDestinoSector,
-                        tarifa.destinoSector()
-                );
-            }
+    for (
+            String destino
+            : CatalogoCanteraMaterialDAO.obtenerDestinos(idControl)
+    ) {
+
+        agregarItemSiNoExiste(
+                cmbDestinoSector,
+                destino
+        );
+    }
+
+} catch (Exception ex) {
+
+    ex.printStackTrace();
+}
 
             if (coincidencia != null) {
 
                 cmbDestinoSector.setSelectedItem(
-                        coincidencia.destinoSector()
-                );
+        detalle.destinoSector()
+);
 
                 idTarifaSeleccionada =
                         coincidencia.idTarifa();
@@ -1122,43 +1216,33 @@ public class FormControlDiarioMaterial extends JDialog {
         }
     }
 
-    private CatalogoCanteraMaterialDAO.TarifaResumen buscarTarifaCoincidente(
-            List<CatalogoCanteraMaterialDAO.TarifaResumen> tarifas,
-            double costoMaterial,
-            double costoTransporte
+   private CatalogoCanteraMaterialDAO.TarifaResumen buscarTarifaCoincidente(
+        List<CatalogoCanteraMaterialDAO.TarifaResumen> tarifas,
+        double costoMaterial
+) {
+
+    final double tolerancia =
+            0.0001;
+
+    for (
+            CatalogoCanteraMaterialDAO.TarifaResumen tarifa
+            : tarifas
     ) {
 
-        final double tolerancia =
-                0.0001;
+        boolean coincideMaterial =
+                Math.abs(
+                        tarifa.costoUnitarioMaterial()
+                                - costoMaterial
+                ) <= tolerancia;
 
-        for (
-                CatalogoCanteraMaterialDAO.TarifaResumen tarifa
-                : tarifas
-        ) {
+        if (coincideMaterial) {
 
-            boolean coincideMaterial =
-                    Math.abs(
-                            tarifa.costoUnitarioMaterial()
-                                    - costoMaterial
-                    ) <= tolerancia;
-
-            boolean coincideTransporte =
-                    Math.abs(
-                            tarifa.costoUnitarioTransporte()
-                                    - costoTransporte
-                    ) <= tolerancia;
-
-            if (
-                    coincideMaterial
-                    && coincideTransporte
-            ) {
-
-                return tarifa;
-            }
+            return tarifa;
         }
-
-        return null;
     }
+
+    return null;
+}
 
     private void calcularYMostrarCostos() {
 

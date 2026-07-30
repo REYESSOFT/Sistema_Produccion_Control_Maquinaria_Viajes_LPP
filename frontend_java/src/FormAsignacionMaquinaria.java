@@ -360,23 +360,34 @@ public FormAsignacionMaquinaria(
 
     private void completarDatosMaquinaria() {
 
-        AsignacionMaquinariaDAO.MaquinariaItem maquinaria =
-                (AsignacionMaquinariaDAO.MaquinariaItem)
-                        cmbMaquinaria.getSelectedItem();
+    AsignacionMaquinariaDAO.MaquinariaItem maquinaria =
+            (AsignacionMaquinariaDAO.MaquinariaItem)
+                    cmbMaquinaria.getSelectedItem();
 
-        if (maquinaria == null) {
+    if (maquinaria == null) {
 
-            txtPropietario.setText("");
-            txtTarifa.setText("");
-            return;
-        }
-
-        txtPropietario.setText(
-                maquinaria.propietario()
-        );
-
+        txtPropietario.setText("");
         txtTarifa.setText("");
+        return;
     }
+
+    txtPropietario.setText(
+            maquinaria.propietario()
+    );
+
+    Double tarifaReferencia =
+            maquinaria.tarifaReferencia();
+
+    txtTarifa.setText(
+            tarifaReferencia == null
+                    ? ""
+                    : String.format(
+                            java.util.Locale.US,
+                            "%.2f",
+                            tarifaReferencia
+                    )
+    );
+}
 
     private void guardarAsignacion() {
 

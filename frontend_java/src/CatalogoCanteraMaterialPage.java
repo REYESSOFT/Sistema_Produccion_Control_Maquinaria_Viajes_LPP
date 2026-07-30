@@ -26,7 +26,6 @@ public class CatalogoCanteraMaterialPage extends JPanel {
 
     private JTextField txtCantera;
     private JTextField txtMaterial;
-    private JTextField txtDestinoSector;
     private JComboBox<String> cmbEstado;
 
     private JTable tablaTarifas;
@@ -158,7 +157,7 @@ public class CatalogoCanteraMaterialPage extends JPanel {
                 new JPanel(
                         new GridLayout(
                                 2,
-                                5,
+                                4,
                                 10,
                                 8
                         )
@@ -174,9 +173,6 @@ public class CatalogoCanteraMaterialPage extends JPanel {
                 new JTextField();
 
         txtMaterial =
-                new JTextField();
-
-        txtDestinoSector =
                 new JTextField();
 
         cmbEstado =
@@ -211,12 +207,6 @@ public class CatalogoCanteraMaterialPage extends JPanel {
 
         panelFiltros.add(
                 new JLabel(
-                        "Destino / sector:"
-                )
-        );
-
-        panelFiltros.add(
-                new JLabel(
                         "Estado:"
                 )
         );
@@ -231,10 +221,6 @@ public class CatalogoCanteraMaterialPage extends JPanel {
 
         panelFiltros.add(
                 txtMaterial
-        );
-
-        panelFiltros.add(
-                txtDestinoSector
         );
 
         panelFiltros.add(
@@ -258,14 +244,12 @@ public class CatalogoCanteraMaterialPage extends JPanel {
         modeloTabla =
                 new DefaultTableModel(
                         new String[]{
-                                "ID",
-                                "Cantera",
-                                "Tipo de material",
-                                "Destino / sector",
-                                "Costo unitario material",
-                                "Costo unitario transporte",
-                                "Estado"
-                        },
+        "ID",
+        "Cantera",
+        "Tipo de material",
+        "Costo unitario material",
+        "Estado"
+},
                         0
                 ) {
 
@@ -328,56 +312,32 @@ public class CatalogoCanteraMaterialPage extends JPanel {
                 );
 
         /*
-         * Después de ocultar ID:
-         *
-         * 0 = Cantera
-         * 1 = Material
-         * 2 = Destino
-         * 3 = Costo material
-         * 4 = Costo transporte
-         * 5 = Estado
-         */
+ * Después de ocultar ID:
+ *
+ * 0 = Cantera
+ * 1 = Material
+ * 2 = Costo material
+ * 3 = Estado
+ */
         tablaTarifas
-                .getColumnModel()
-                .getColumn(0)
-                .setPreferredWidth(
-                        220
-                );
+        .getColumnModel()
+        .getColumn(0)
+        .setPreferredWidth(220);
 
-        tablaTarifas
-                .getColumnModel()
-                .getColumn(1)
-                .setPreferredWidth(
-                        220
-                );
+tablaTarifas
+        .getColumnModel()
+        .getColumn(1)
+        .setPreferredWidth(220);
 
-        tablaTarifas
-                .getColumnModel()
-                .getColumn(2)
-                .setPreferredWidth(
-                        220
-                );
+tablaTarifas
+        .getColumnModel()
+        .getColumn(2)
+        .setPreferredWidth(180);
 
-        tablaTarifas
-                .getColumnModel()
-                .getColumn(3)
-                .setPreferredWidth(
-                        180
-                );
-
-        tablaTarifas
-                .getColumnModel()
-                .getColumn(4)
-                .setPreferredWidth(
-                        190
-                );
-
-        tablaTarifas
-                .getColumnModel()
-                .getColumn(5)
-                .setPreferredWidth(
-                        110
-                );
+tablaTarifas
+        .getColumnModel()
+        .getColumn(3)
+        .setPreferredWidth(110);
 
         JScrollPane scroll =
                 new JScrollPane(
@@ -496,13 +456,6 @@ public class CatalogoCanteraMaterialPage extends JPanel {
                                 .getText()
                                 .trim();
 
-        String destinoSector =
-                txtDestinoSector == null
-                        ? ""
-                        : txtDestinoSector
-                                .getText()
-                                .trim();
-
         String estado =
                 cmbEstado == null
                 || cmbEstado.getSelectedItem() == null
@@ -517,7 +470,6 @@ public class CatalogoCanteraMaterialPage extends JPanel {
                     CatalogoCanteraMaterialDAO.buscar(
                             cantera,
                             material,
-                            destinoSector,
                             estado
                     );
 
@@ -531,22 +483,18 @@ public class CatalogoCanteraMaterialPage extends JPanel {
             ) {
 
                 modeloTabla.addRow(
-                        new Object[]{
-                                tarifa.idTarifa(),
-                                tarifa.cantera(),
-                                tarifa.material(),
-                                tarifa.destinoSector(),
-                                formatearMoneda(
-                                        tarifa.costoUnitarioMaterial()
-                                ),
-                                formatearMoneda(
-                                        tarifa.costoUnitarioTransporte()
-                                ),
-                                tarifa.activo()
-                                        ? "ACTIVO"
-                                        : "INACTIVO"
-                        }
-                );
+        new Object[]{
+                tarifa.idTarifa(),
+                tarifa.cantera(),
+                tarifa.material(),
+                formatearMoneda(
+                        tarifa.costoUnitarioMaterial()
+                ),
+                tarifa.activo()
+                        ? "ACTIVO"
+                        : "INACTIVO"
+        }
+);
             }
 
         } catch (Exception e) {
@@ -841,9 +789,9 @@ public class CatalogoCanteraMaterialPage extends JPanel {
 
         Object valor =
                 modeloTabla.getValueAt(
-                        filaModelo,
-                        6
-                );
+        filaModelo,
+        4
+);
 
         return valor == null
                 ? null

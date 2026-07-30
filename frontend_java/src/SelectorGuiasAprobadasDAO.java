@@ -35,14 +35,23 @@ public class SelectorGuiasAprobadasDAO {
                     g.numero_guia,
 
                     COALESCE(
-                        NULLIF(TRIM(proyectos.proyecto), ''),
-                        NULLIF(TRIM(g.destino), ''),
-                        NULLIF(TRIM(g.sector), ''),
-                        'SIN PROYECTO DEFINIDO'
-                    ) AS proyecto_referencia,
+    NULLIF(TRIM(detalles.proyecto), ''),
+    NULLIF(TRIM(g.destino), ''),
+    NULLIF(TRIM(g.sector), ''),
+    'SIN PROYECTO DEFINIDO'
+) AS proyecto_referencia,
 
-                    COALESCE(g.sector, '') AS sector,
-                    COALESCE(g.material, '') AS material,
+COALESCE(
+    NULLIF(TRIM(detalles.sector), ''),
+    NULLIF(TRIM(g.sector), ''),
+    ''
+) AS sector,
+
+COALESCE(
+    NULLIF(TRIM(detalles.material), ''),
+    NULLIF(TRIM(g.material), ''),
+    ''
+) AS material,
                     COALESCE(g.chofer_operador, '') AS chofer_operador,
                     COALESCE(g.placa, '') AS placa,
                     COALESCE(g.m3, 0) AS m3
@@ -53,23 +62,32 @@ public class SelectorGuiasAprobadasDAO {
                     ON e.id_empresa = g.id_empresa
 
                 LEFT JOIN (
-                    SELECT
-                        id_guia,
+    SELECT
+        id_guia,
 
-                        GROUP_CONCAT(
-                            DISTINCT TRIM(proyecto)
-                            ORDER BY TRIM(proyecto)
-                            SEPARATOR ', '
-                        ) AS proyecto
+        GROUP_CONCAT(
+            DISTINCT NULLIF(TRIM(proyecto), '')
+            ORDER BY TRIM(proyecto)
+            SEPARATOR ', '
+        ) AS proyecto,
 
-                    FROM guia_produccion_detalle
+        GROUP_CONCAT(
+            DISTINCT NULLIF(TRIM(sector), '')
+            ORDER BY TRIM(sector)
+            SEPARATOR ', '
+        ) AS sector,
 
-                    WHERE proyecto IS NOT NULL
-                      AND TRIM(proyecto) <> ''
+        GROUP_CONCAT(
+            DISTINCT NULLIF(TRIM(material), '')
+            ORDER BY TRIM(material)
+            SEPARATOR ', '
+        ) AS material
 
-                    GROUP BY id_guia
-                ) proyectos
-                    ON proyectos.id_guia = g.id_guia
+    FROM guia_produccion_detalle
+
+    GROUP BY id_guia
+) detalles
+    ON detalles.id_guia = g.id_guia
 
                 WHERE g.estado = 'APROBADO'
 

@@ -27,21 +27,22 @@ public class ControlDiarioMaterialDAO {
     }
 
     public record ControlMaterialDetalle(
-            int idControlMaterial,
-            int idControl,
-            String materialRecibido,
-            String cantera,
-            double cantidadViajes,
-            double volumenRecibido,
-            double costoUnitarioMaterial,
-            double costoUnitarioTransporte,
-            double costoMaterial,
-            double costoTransporte,
-            int cantidadVolquetas,
-            double horasVolqueta,
-            String observaciones
-    ) {
-    }
+        int idControlMaterial,
+        int idControl,
+        String materialRecibido,
+        String cantera,
+        String destinoSector,
+        double cantidadViajes,
+        double volumenRecibido,
+        double costoUnitarioMaterial,
+        double costoUnitarioTransporte,
+        double costoMaterial,
+        double costoTransporte,
+        int cantidadVolquetas,
+        double horasVolqueta,
+        String observaciones
+) {
+}
 
     public static List<ControlMaterialResumen> obtenerPorControl(
             int idControl
@@ -200,6 +201,8 @@ public class ControlDiarioMaterialDAO {
                     id_control,
                     material_recibido,
                     cantera,
+                    COALESCE(destino_sector, '')
+    AS destino_sector,
                     COALESCE(cantidad_viajes, 0)
                         AS cantidad_viajes,
                     COALESCE(volumen_recibido, 0)
@@ -270,6 +273,7 @@ public class ControlDiarioMaterialDAO {
                         rs.getString(
                                 "cantera"
                         ),
+                        rs.getString("destino_sector"),
 
                         rs.getDouble(
                                 "cantidad_viajes"

@@ -734,32 +734,33 @@ private static LocalDate obtenerFecha(
         );
 
         String sql = """
-                INSERT INTO proyectos (
-                    codigo_proyecto,
-                    descripcion,
-                    id_empresa,
-                    id_sector,
-                    id_piscina,
-                    orden_compra,
-                    id_tipo_actividad,
-                    fecha_inicio,
-                    fecha_fin_estimada,
-                    fecha_fin_real,
-                    dias_estimados,
-                    area_m2,
-                    espesor,
-                    factor_compactacion,
-                    cantidad_contratada,
-                    precio_unitario,
-                    estado,
-                    observaciones,
-                    activo
-                )
-                VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, 1
-)
-                """;
+        INSERT INTO proyectos (
+            codigo_proyecto,
+            descripcion,
+            id_empresa,
+            id_sector,
+            id_piscina,
+            orden_compra,
+            id_tipo_actividad,
+            fecha_inicio,
+            fecha_fin_estimada,
+            fecha_fin_real,
+            dias_estimados,
+            area_m2,
+            espesor,
+            factor_compactacion,
+            cantidad_contratada,
+            metros_lineales_contratados,
+            precio_unitario,
+            estado,
+            observaciones,
+            activo
+        )
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, 1
+        )
+        """;
 
         try (
                 Connection conexion =
