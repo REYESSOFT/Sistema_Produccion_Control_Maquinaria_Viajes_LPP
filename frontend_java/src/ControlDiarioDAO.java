@@ -47,67 +47,7 @@ public class ControlDiarioDAO {
     public static List<ControlDiarioResumen>
         obtenerControles() throws Exception {
 
-    String sql = """
-            SELECT
-                c.id_control,
-
-                CONCAT(
-                    p.codigo_proyecto,
-                    ' - ',
-                    p.descripcion
-                ) AS proyecto,
-
-                c.fecha_control,
-                c.metros_lineales
-
-            FROM control_diario c
-
-            INNER JOIN proyectos p
-                ON p.id_proyecto = c.id_proyecto
-
-            WHERE c.activo = 1
-
-            ORDER BY
-                c.fecha_control DESC,
-                c.id_control DESC
-            """;
-
-    List<ControlDiarioResumen> controles =
-            new ArrayList<>();
-
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement ps =
-                    conexion.prepareStatement(sql);
-
-            ResultSet rs =
-                    ps.executeQuery()
-    ) {
-
-        while (rs.next()) {
-
-            Date fechaSql =
-                    rs.getDate("fecha_control");
-
-            LocalDate fecha =
-                    fechaSql == null
-                            ? null
-                            : fechaSql.toLocalDate();
-
-            controles.add(
-                    new ControlDiarioResumen(
-                            rs.getInt("id_control"),
-                            rs.getString("proyecto"),
-                            fecha,
-                            rs.getDouble("metros_lineales")
-                    )
-            );
-        }
-    }
-
-    return controles;
+    return ControlDiarioAPI.obtenerResumen();
 }
 public static List<ProyectoItem>
         obtenerProyectosActivos() throws Exception {
@@ -159,106 +99,11 @@ public static ControlDiarioDetalle obtenerPorId(
         int idControl
 ) throws Exception {
 
-    String sql = """
-            SELECT
-                id_control,
-                id_proyecto,
-                fecha_control,
-                metros_lineales,
-                ancho,
-                espesor,
-                volumen_real,
-                COALESCE(
-                    observaciones,
-                    ''
-                ) AS observaciones
-
-            FROM control_diario
-
-            WHERE id_control = ?
-
-              AND activo = 1
-
-            LIMIT 1
-            """;
-
-    try (
-
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement ps =
-                    conexion.prepareStatement(sql)
-
-    ) {
-
-        ps.setInt(
-                1,
-                idControl
-        );
-
-        try (
-
-                ResultSet rs =
-                        ps.executeQuery()
-
-        ) {
-
-            if (!rs.next()) {
-
-                throw new Exception(
-                        "No se encontró el Control Diario."
-                );
-
-            }
-
-            Date fechaSql =
-                    rs.getDate(
-                            "fecha_control"
-                    );
-
-            return new ControlDiarioDetalle(
-
-                    rs.getInt(
-                            "id_control"
-                    ),
-
-                    rs.getInt(
-                            "id_proyecto"
-                    ),
-
-                    fechaSql == null
-                            ? null
-                            : fechaSql.toLocalDate(),
-
-                    rs.getDouble(
-                            "metros_lineales"
-                    ),
-
-                    rs.getObject("ancho") == null
-                            ? null
-                            : rs.getDouble("ancho"),
-
-                    rs.getObject("espesor") == null
-        ? null
-        : rs.getDouble("espesor"),
-
-rs.getObject("volumen_real") == null
-        ? null
-        : rs.getDouble("volumen_real"),
-
-rs.getString(
-        "observaciones"
-)
-
-            );
-
-        }
-
-    }
-
+    return ControlDiarioAPI.obtenerPorId(
+            idControl
+    );
 }
-public static int insertar(
+    public static int insertar(
         Integer idGuia,
         int idProyecto,
         LocalDate fechaControl,
@@ -268,144 +113,14 @@ public static int insertar(
         String observaciones
 ) throws Exception {
 
-    validarDatos(
+    return ControlDiarioAPI.crearControlDiario(
+            idGuia,
             idProyecto,
             fechaControl,
             metrosLineales,
             ancho,
-            espesor
-    );
-
-    validarControlDuplicado(
-            idProyecto,
-            fechaControl,
-            0
-    );
-
-    validarMaquinariaEnOtroProyecto(
-            idProyecto,
-            fechaControl
-    );
-    double volumenReal = 0;
-
-if (
-        ancho != null
-        && espesor != null
-) {
-
-    volumenReal =
-            metrosLineales
-            * ancho
-            * espesor;
-
-}
-
-    String sql = """
-            INSERT INTO control_diario (
-    id_guia,
-    id_proyecto,
-    fecha_control,
-    metros_lineales,
-    ancho,
-    espesor,
-    volumen_real,
-    observaciones,
-    activo
-)
-VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, 1
-)
-            """;
-
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement ps =
-                    conexion.prepareStatement(
-                            sql,
-                            Statement.RETURN_GENERATED_KEYS
-                    )
-    ) {
-
-        if (idGuia == null) {
-
-    ps.setNull(
-            1,
-            java.sql.Types.INTEGER
-    );
-
-} else {
-
-    ps.setInt(
-            1,
-            idGuia
-    );
-}
-
-ps.setInt(
-        2,
-        idProyecto
-);
-
-ps.setDate(
-        3,
-        Date.valueOf(fechaControl)
-);
-
-ps.setDouble(
-        4,
-        metrosLineales
-);
-
-asignarDecimal(
-        ps,
-        5,
-        ancho
-);
-
-asignarDecimal(
-        ps,
-        6,
-        espesor
-);
-
-ps.setDouble(
-        7,
-        volumenReal
-);
-
-asignarTexto(
-        ps,
-        8,
-        observaciones
-);
-
-        int filas =
-                ps.executeUpdate();
-
-        if (filas == 0) {
-
-            throw new Exception(
-                    "No fue posible guardar el Control Diario."
-            );
-        }
-
-        try (
-                ResultSet claves =
-                        ps.getGeneratedKeys()
-        ) {
-
-            if (claves.next()) {
-
-                return claves.getInt(1);
-            }
-        }
-    }
-
-    throw new Exception(
-            "El Control Diario fue guardado, "
-                    + "pero no se pudo obtener su ID."
+            espesor,
+            observaciones
     );
 }
 public static void actualizar(
@@ -418,170 +133,23 @@ public static void actualizar(
         String observaciones
 ) throws Exception {
 
-    validarDatos(
+    ControlDiarioAPI.actualizarControlDiario(
+            idControl,
             idProyecto,
             fechaControl,
             metrosLineales,
             ancho,
-            espesor
+            espesor,
+            observaciones
     );
-
-    validarControlDuplicado(
-            idProyecto,
-            fechaControl,
-            idControl
-    );
-
-    validarMaquinariaEnOtroProyecto(
-            idProyecto,
-            fechaControl
-    );
-    double volumenReal = 0;
-
-if (
-        ancho != null
-        && espesor != null
-) {
-
-    volumenReal =
-            metrosLineales
-            * ancho
-            * espesor;
-
-}
-
-    String sql = """
-            UPDATE control_diario
-            SET
-
-                id_proyecto = ?,
-
-                fecha_control = ?,
-
-                metros_lineales = ?,
-
-                ancho = ?,
-
-                espesor = ?,
-                
-                volumen_real = ?,
-
-                observaciones = ?
-
-            WHERE id_control = ?
-
-              AND activo = 1
-            """;
-
-    try (
-
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement ps =
-                    conexion.prepareStatement(sql)
-
-    ) {
-
-        ps.setInt(
-                1,
-                idProyecto
-        );
-
-        ps.setDate(
-                2,
-                Date.valueOf(fechaControl)
-        );
-
-        ps.setDouble(
-                3,
-                metrosLineales
-        );
-
-        asignarDecimal(
-                ps,
-                4,
-                ancho
-        );
-
-       asignarDecimal(
-        ps,
-        5,
-        espesor
-);
-
-ps.setDouble(
-        6,
-        volumenReal
-);
-
-asignarTexto(
-        ps,
-        7,
-        observaciones
-);
-
-        ps.setInt(
-                8,
-                idControl
-        );
-
-        int filas =
-                ps.executeUpdate();
-
-        if (filas == 0) {
-
-            throw new Exception(
-                    "No fue posible actualizar el Control Diario."
-            );
-
-        }
-
-    }
-
 }
 public static void eliminar(
         int idControl
 ) throws Exception {
 
-    if (idControl <= 0) {
-
-        throw new Exception(
-                "El Control Diario seleccionado no es válido."
-        );
-    }
-
-    String sql = """
-            UPDATE control_diario
-            SET activo = 0
-            WHERE id_control = ?
-              AND activo = 1
-            """;
-
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement ps =
-                    conexion.prepareStatement(sql)
-    ) {
-
-        ps.setInt(
-                1,
-                idControl
-        );
-
-        int filas =
-                ps.executeUpdate();
-
-        if (filas == 0) {
-
-            throw new Exception(
-                    "No fue posible eliminar el Control Diario. "
-                            + "Puede que ya haya sido eliminado."
-            );
-        }
-    }
+    ControlDiarioAPI.eliminarControlDiario(
+            idControl
+    );
 }
 private static void validarDatos(
         int idProyecto,
