@@ -56,240 +56,78 @@ public class MaquinariaDAO {
     }
 
     public static List<MaquinariaResumen> buscar(
-            String estado,
-            String tipoMaquinaria,
-            String proveedor,
-            String codigo
-    ) throws Exception {
+        String estado,
+        String tipoMaquinaria,
+        String proveedor,
+        String codigo
+) throws Exception {
 
-        List<MaquinariaResumen> resultados =
-                new ArrayList<>();
+    List<MaquinariaResumen> lista =
+            MaquinariaAPI.obtenerResumen();
 
-        StringBuilder sql =
-                new StringBuilder(
-                        """
-                        SELECT
-                            m.id_maquinaria,
+    List<MaquinariaResumen> filtrados =
+            new ArrayList<>();
 
-                            COALESCE(
-                                NULLIF(m.codigo_actual, ''),
-                                NULLIF(m.codigo_interno, ''),
-                                NULLIF(m.codigo_placa, ''),
-                                ''
-                            ) AS codigo_mostrar,
-
-                            m.descripcion,
-
-                            tm.nombre AS tipo_maquinaria,
-
-                            COALESCE(
-                                proveedor.nombre,
-                                ''
-                            ) AS proveedor,
-
-                            COALESCE(
-                                propietario.nombre,
-                                ''
-                            ) AS propietario,
-
-                            m.estado_operativo,
-
-                            COALESCE(
-                                m.costo_hora_proveedor,
-                                0
-                            ) AS costo_hora_proveedor
-
-                        FROM maquinaria m
-
-                        INNER JOIN tipos_maquinaria tm
-                            ON tm.id_tipo_maquinaria =
-                               m.id_tipo_maquinaria
-
-                        LEFT JOIN entidades_maquinaria proveedor
-                            ON proveedor.id_entidad =
-                               m.id_proveedor
-
-                        LEFT JOIN entidades_maquinaria propietario
-                            ON propietario.id_entidad =
-                               m.id_propietario
-
-                        WHERE m.activo = 1
-                        """
-                );
-
-        List<Object> parametros =
-                new ArrayList<>();
+    for (MaquinariaResumen item : lista) {
 
         if (
                 estado != null
-                        && !estado.isBlank()
-                        && !estado.equalsIgnoreCase(
-                                "Todos"
-                        )
+                && !estado.isBlank()
+                && !estado.equalsIgnoreCase("Todos")
+                && !item.estadoOperativo()
+                        .equalsIgnoreCase(estado)
         ) {
-
-            sql.append(
-                    " AND m.estado_operativo = ? "
-            );
-
-            parametros.add(
-                    estado
-            );
+            continue;
         }
 
         if (
                 tipoMaquinaria != null
-                        && !tipoMaquinaria.isBlank()
-                        && !tipoMaquinaria.equalsIgnoreCase(
-                                "Todos"
-                        )
+                && !tipoMaquinaria.isBlank()
+                && !tipoMaquinaria.equalsIgnoreCase("Todos")
+                && !item.tipoMaquinaria()
+                        .equalsIgnoreCase(tipoMaquinaria)
         ) {
-
-            sql.append(
-                    " AND tm.nombre = ? "
-            );
-
-            parametros.add(
-                    tipoMaquinaria
-            );
+            continue;
         }
 
         if (
                 proveedor != null
-                        && !proveedor.isBlank()
+                && !proveedor.isBlank()
+                && !item.proveedor()
+                        .toUpperCase()
+                        .contains(
+                                proveedor.trim().toUpperCase()
+                        )
         ) {
-
-            sql.append(
-                    """
-                     AND proveedor.nombre LIKE ?
-                    """
-            );
-
-            parametros.add(
-                    "%"
-                            + proveedor.trim()
-                            + "%"
-            );
+            continue;
         }
 
         if (
                 codigo != null
-                        && !codigo.isBlank()
+                && !codigo.isBlank()
         ) {
-
-            sql.append(
-                    """
-                     AND (
-                            m.codigo_actual LIKE ?
-                         OR m.codigo_interno LIKE ?
-                         OR m.codigo_placa LIKE ?
-                         OR m.descripcion LIKE ?
-                     )
-                    """
-            );
 
             String criterio =
-                    "%"
-                            + codigo.trim()
-                            + "%";
+                    codigo.trim().toUpperCase();
 
-            parametros.add(
-                    criterio
-            );
+            boolean coincide =
+                    item.codigo()
+                            .toUpperCase()
+                            .contains(criterio)
+                    || item.descripcion()
+                            .toUpperCase()
+                            .contains(criterio);
 
-            parametros.add(
-                    criterio
-            );
-
-            parametros.add(
-                    criterio
-            );
-
-            parametros.add(
-                    criterio
-            );
-        }
-
-        sql.append(
-                """
-                 ORDER BY
-                    tm.nombre,
-                    codigo_mostrar,
-                    m.descripcion
-                """
-        );
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql.toString()
-                        )
-        ) {
-
-            for (
-                    int i = 0;
-                    i < parametros.size();
-                    i++
-            ) {
-
-                ps.setObject(
-                        i + 1,
-                        parametros.get(i)
-                );
-            }
-
-            try (
-                    ResultSet rs =
-                            ps.executeQuery()
-            ) {
-
-                while (rs.next()) {
-
-                    resultados.add(
-                            new MaquinariaResumen(
-                                    rs.getInt(
-                                            "id_maquinaria"
-                                    ),
-
-                                    rs.getString(
-                                            "codigo_mostrar"
-                                    ),
-
-                                    rs.getString(
-                                            "descripcion"
-                                    ),
-
-                                    rs.getString(
-                                            "tipo_maquinaria"
-                                    ),
-
-                                    rs.getString(
-                                            "proveedor"
-                                    ),
-
-                                    rs.getString(
-                                            "propietario"
-                                    ),
-
-                                    rs.getString(
-                                            "estado_operativo"
-                                    ),
-
-                                    rs.getDouble(
-                                            "costo_hora_proveedor"
-                                    )
-                            )
-                    );
-                }
+            if (!coincide) {
+                continue;
             }
         }
 
-        return resultados;
+        filtrados.add(item);
     }
 
+    return filtrados;
+}
     public static List<MaquinariaResumen>
             obtenerTodas() throws Exception {
 
@@ -302,284 +140,165 @@ public class MaquinariaDAO {
     }
 
     public static MaquinariaDetalle obtenerPorId(
-            int idMaquinaria
-    ) throws Exception {
+        int idMaquinaria
+) throws Exception {
 
-        String sql = """
-                SELECT
-                    m.id_maquinaria,
-
-                    COALESCE(
-                        m.codigo_interno,
-                        ''
-                    ) AS codigo_interno,
-
-                    COALESCE(
-                        m.codigo_actual,
-                        ''
-                    ) AS codigo_actual,
-
-                    COALESCE(
-                        m.codigo_placa,
-                        ''
-                    ) AS codigo_placa,
-
-                    m.descripcion,
-
-                    m.id_tipo_maquinaria,
-
-                    tm.nombre AS tipo_maquinaria,
-
-                    COALESCE(
-                        m.modelo,
-                        ''
-                    ) AS modelo,
-
-                    COALESCE(
-                        m.serie_maquina,
-                        ''
-                    ) AS serie_maquina,
-
-                    COALESCE(
-                        m.serie_actual,
-                        ''
-                    ) AS serie_actual,
-
-                    m.horometro_actual,
-
-                    m.horometro_confirmado,
-
-                    m.id_proveedor,
-
-                    COALESCE(
-                        proveedor.nombre,
-                        ''
-                    ) AS proveedor,
-
-                    m.id_propietario,
-
-                    COALESCE(
-                        propietario.nombre,
-                        ''
-                    ) AS propietario,
-
-                    m.tipo_propiedad,
-
-                    m.estado_operativo,
-
-                    COALESCE(
-                        m.tipo_cobro,
-                        'POR_HORA'
-                    ) AS tipo_cobro,
-
-                    COALESCE(
-                        m.costo_hora_proveedor,
-                        0
-                    ) AS costo_hora_proveedor,
-
-                    COALESCE(
-                        m.costo_fijo_proveedor,
-                        0
-                    ) AS costo_fijo_proveedor,
-
-                    COALESCE(
-                        m.precio_hora_cliente,
-                        0
-                    ) AS precio_hora_cliente,
-
-                    COALESCE(
-                        m.precio_fijo_cliente,
-                        0
-                    ) AS precio_fijo_cliente,
-
-                    COALESCE(
-                        m.observaciones,
-                        ''
-                    ) AS observaciones,
-
-                    m.activo
-
-                FROM maquinaria m
-
-                INNER JOIN tipos_maquinaria tm
-                    ON tm.id_tipo_maquinaria =
-                       m.id_tipo_maquinaria
-
-                LEFT JOIN entidades_maquinaria proveedor
-                    ON proveedor.id_entidad =
-                       m.id_proveedor
-
-                LEFT JOIN entidades_maquinaria propietario
-                    ON propietario.id_entidad =
-                       m.id_propietario
-
-                WHERE m.id_maquinaria = ?
-
-                LIMIT 1
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
-        ) {
-
-            ps.setInt(
-                    1,
-                    idMaquinaria
+    String respuestaJson =
+            ConexionAPI.get(
+                    "/api/maquinarias/"
+                            + idMaquinaria
             );
 
-            try (
-                    ResultSet rs =
-                            ps.executeQuery()
-            ) {
+    com.google.gson.JsonObject respuesta =
+            com.google.gson.JsonParser
+                    .parseString(respuestaJson)
+                    .getAsJsonObject();
 
-                if (!rs.next()) {
+    if (
+            respuesta == null
+            || !respuesta.has("exito")
+            || !respuesta.get("exito").getAsBoolean()
+    ) {
 
-                    throw new Exception(
-                            "No se encontró la maquinaria."
-                    );
-                }
-
-                Object horometroObjeto =
-                        rs.getObject(
-                                "horometro_actual"
-                        );
-
-                Double horometro =
-                        horometroObjeto == null
-                                ? null
-                                : rs.getDouble(
-                                        "horometro_actual"
-                                );
-
-                Object proveedorObjeto =
-                        rs.getObject(
-                                "id_proveedor"
-                        );
-
-                Integer idProveedor =
-                        proveedorObjeto == null
-                                ? null
-                                : rs.getInt(
-                                        "id_proveedor"
-                                );
-
-                Object propietarioObjeto =
-                        rs.getObject(
-                                "id_propietario"
-                        );
-
-                Integer idPropietario =
-                        propietarioObjeto == null
-                                ? null
-                                : rs.getInt(
-                                        "id_propietario"
-                                );
-
-                return new MaquinariaDetalle(
-                        rs.getInt(
-                                "id_maquinaria"
-                        ),
-
-                        rs.getString(
-                                "codigo_interno"
-                        ),
-
-                        rs.getString(
-                                "codigo_actual"
-                        ),
-
-                        rs.getString(
-                                "codigo_placa"
-                        ),
-
-                        rs.getString(
-                                "descripcion"
-                        ),
-
-                        rs.getInt(
-                                "id_tipo_maquinaria"
-                        ),
-
-                        rs.getString(
-                                "tipo_maquinaria"
-                        ),
-
-                        rs.getString(
-                                "modelo"
-                        ),
-
-                        rs.getString(
-                                "serie_maquina"
-                        ),
-
-                        rs.getString(
-                                "serie_actual"
-                        ),
-
-                        horometro,
-
-                        rs.getBoolean(
-                                "horometro_confirmado"
-                        ),
-
-                        idProveedor,
-
-                        rs.getString(
-                                "proveedor"
-                        ),
-
-                        idPropietario,
-
-                        rs.getString(
-                                "propietario"
-                        ),
-
-                        rs.getString(
-                                "tipo_propiedad"
-                        ),
-
-                        rs.getString(
-                                "estado_operativo"
-                        ),
-
-                        rs.getString(
-                                "tipo_cobro"
-                        ),
-
-                        rs.getDouble(
-                                "costo_hora_proveedor"
-                        ),
-
-                        rs.getDouble(
-                                "costo_fijo_proveedor"
-                        ),
-
-                        rs.getDouble(
-                                "precio_hora_cliente"
-                        ),
-
-                        rs.getDouble(
-                                "precio_fijo_cliente"
-                        ),
-
-                        rs.getString(
-                                "observaciones"
-                        ),
-
-                        rs.getBoolean(
-                                "activo"
-                        )
-                );
-            }
-        }
+        throw new Exception(
+                respuesta != null
+                        && respuesta.has("mensaje")
+                        ? respuesta
+                                .get("mensaje")
+                                .getAsString()
+                        : "No fue posible consultar la maquinaria."
+        );
     }
 
+    com.google.gson.JsonObject item =
+            respuesta.getAsJsonObject("datos");
+
+    if (item == null) {
+
+        throw new Exception(
+                "No se encontró la maquinaria."
+        );
+    }
+
+    Double horometro =
+            item.has("horometroActual")
+            && !item.get("horometroActual").isJsonNull()
+                    ? item.get("horometroActual").getAsDouble()
+                    : null;
+
+    Integer idProveedor =
+            item.has("idProveedor")
+            && !item.get("idProveedor").isJsonNull()
+                    ? item.get("idProveedor").getAsInt()
+                    : null;
+
+    Integer idPropietario =
+            item.has("idPropietario")
+            && !item.get("idPropietario").isJsonNull()
+                    ? item.get("idPropietario").getAsInt()
+                    : null;
+
+    return new MaquinariaDetalle(
+            item.get("idMaquinaria").getAsInt(),
+
+            obtenerTextoJson(
+                    item,
+                    "codigoInterno"
+            ),
+
+            obtenerTextoJson(
+                    item,
+                    "codigoActual"
+            ),
+
+            obtenerTextoJson(
+                    item,
+                    "codigoPlaca"
+            ),
+
+            obtenerTextoJson(
+                    item,
+                    "descripcion"
+            ),
+
+            item.get("idTipoMaquinaria").getAsInt(),
+
+            "",
+
+            obtenerTextoJson(
+                    item,
+                    "modelo"
+            ),
+
+            obtenerTextoJson(
+                    item,
+                    "serieMaquina"
+            ),
+
+            obtenerTextoJson(
+                    item,
+                    "serieActual"
+            ),
+
+            horometro,
+
+            item.has("horometroConfirmado")
+                    && !item.get("horometroConfirmado").isJsonNull()
+                    && item.get("horometroConfirmado").getAsBoolean(),
+
+            idProveedor,
+
+            "",
+
+            idPropietario,
+
+            "",
+
+            obtenerTextoJson(
+                    item,
+                    "tipoPropiedad"
+            ),
+
+            obtenerTextoJson(
+                    item,
+                    "estadoOperativo"
+            ),
+
+            obtenerTextoJson(
+                    item,
+                    "tipoCobro"
+            ),
+
+            obtenerDoubleJson(
+                    item,
+                    "costoHoraProveedor"
+            ),
+
+            obtenerDoubleJson(
+                    item,
+                    "costoFijoProveedor"
+            ),
+
+            obtenerDoubleJson(
+                    item,
+                    "precioHoraCliente"
+            ),
+
+            obtenerDoubleJson(
+                    item,
+                    "precioFijoCliente"
+            ),
+
+            obtenerTextoJson(
+                    item,
+                    "observaciones"
+            ),
+
+            item.has("activo")
+                    && !item.get("activo").isJsonNull()
+                    && item.get("activo").getAsBoolean()
+    );
+}
     public static List<CatalogoItem>
             obtenerTiposMaquinaria() throws Exception {
 
@@ -679,492 +398,109 @@ public class MaquinariaDAO {
 
         return lista;
     }
-        public static int insertar(
-            String codigoInterno,
-            String codigoActual,
-            String placa,
-            String descripcion,
-            int idTipoMaquinaria,
-            String modelo,
-            String serieMaquina,
-            String serieActual,
-            Double horometroActual,
-            boolean horometroConfirmado,
-            Integer idProveedor,
-            Integer idPropietario,
-            String tipoPropiedad,
-            String estadoOperativo,
-            String tipoCobro,
-            double costoHoraProveedor,
-            double costoFijoProveedor,
-            double precioHoraCliente,
-            double precioFijoCliente,
-            String observaciones
-    ) throws Exception {
+       public static int insertar(
+        String codigoInterno,
+        String codigoActual,
+        String placa,
+        String descripcion,
+        int idTipoMaquinaria,
+        String modelo,
+        String serieMaquina,
+        String serieActual,
+        Double horometroActual,
+        boolean horometroConfirmado,
+        Integer idProveedor,
+        Integer idPropietario,
+        String tipoPropiedad,
+        String estadoOperativo,
+        String tipoCobro,
+        double costoHoraProveedor,
+        double costoFijoProveedor,
+        double precioHoraCliente,
+        double precioFijoCliente,
+        String observaciones
+) throws Exception {
 
-        String sql = """
-                INSERT INTO maquinaria (
-                    codigo_interno,
-                    codigo_actual,
-                    codigo_placa,
-                    descripcion,
-                    id_tipo_maquinaria,
-                    modelo,
-                    serie_maquina,
-                    serie_actual,
-                    horometro_actual,
-                    horometro_confirmado,
-                    id_proveedor,
-                    id_propietario,
-                    tipo_propiedad,
-                    estado_operativo,
-                    tipo_cobro,
-                    costo_hora_proveedor,
-                    costo_fijo_proveedor,
-                    precio_hora_cliente,
-                    precio_fijo_cliente,
-                    observaciones
-                )
-                VALUES (
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?
-                )
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql,
-                                Statement.RETURN_GENERATED_KEYS
-                        )
-        ) {
-
-            asignarTexto(
-                    ps,
-                    1,
-                    codigoInterno
-            );
-
-            asignarTexto(
-                    ps,
-                    2,
-                    codigoActual
-            );
-
-            asignarTexto(
-                    ps,
-                    3,
-                    placa
-            );
-
-            ps.setString(
-                    4,
-                    descripcion
-            );
-
-            ps.setInt(
-                    5,
-                    idTipoMaquinaria
-            );
-
-            asignarTexto(
-                    ps,
-                    6,
-                    modelo
-            );
-
-            asignarTexto(
-                    ps,
-                    7,
-                    serieMaquina
-            );
-
-            asignarTexto(
-                    ps,
-                    8,
-                    serieActual
-            );
-
-            if (horometroActual == null) {
-
-                ps.setNull(
-                        9,
-                        Types.DECIMAL
-                );
-
-            } else {
-
-                ps.setDouble(
-                        9,
-                        horometroActual
-                );
-            }
-
-            ps.setBoolean(
-                    10,
-                    horometroConfirmado
-            );
-
-            if (idProveedor == null) {
-
-                ps.setNull(
-                        11,
-                        Types.INTEGER
-                );
-
-            } else {
-
-                ps.setInt(
-                        11,
-                        idProveedor
-                );
-            }
-
-            if (idPropietario == null) {
-
-                ps.setNull(
-                        12,
-                        Types.INTEGER
-                );
-
-            } else {
-
-                ps.setInt(
-                        12,
-                        idPropietario
-                );
-            }
-
-            ps.setString(
-                    13,
-                    tipoPropiedad
-            );
-
-            ps.setString(
-                    14,
-                    estadoOperativo
-            );
-
-            ps.setString(
-                    15,
-                    normalizarTipoCobro(
-                            tipoCobro
-                    )
-            );
-
-            ps.setDouble(
-                    16,
-                    costoHoraProveedor
-            );
-
-            ps.setDouble(
-                    17,
-                    costoFijoProveedor
-            );
-
-            ps.setDouble(
-                    18,
-                    precioHoraCliente
-            );
-
-            ps.setDouble(
-                    19,
-                    precioFijoCliente
-            );
-
-            asignarTexto(
-                    ps,
-                    20,
-                    observaciones
-            );
-
-            ps.executeUpdate();
-
-            try (
-                    ResultSet claves =
-                            ps.getGeneratedKeys()
-            ) {
-
-                if (claves.next()) {
-
-                    return claves.getInt(
-                            1
-                    );
-                }
-            }
-        }
-
-        throw new Exception(
-                "No fue posible obtener el ID de la maquinaria."
-        );
-    }
+    return MaquinariaAPI.crearMaquinaria(
+            codigoInterno,
+            codigoActual,
+            placa,
+            descripcion,
+            idTipoMaquinaria,
+            modelo,
+            serieMaquina,
+            serieActual,
+            horometroActual,
+            horometroConfirmado,
+            idProveedor,
+            idPropietario,
+            tipoPropiedad,
+            estadoOperativo,
+            normalizarTipoCobro(tipoCobro),
+            costoHoraProveedor,
+            costoFijoProveedor,
+            precioHoraCliente,
+            precioFijoCliente,
+            observaciones
+    );
+}
 
     public static void actualizar(
-            int idMaquinaria,
-            String codigoInterno,
-            String codigoActual,
-            String codigoPlaca,
-            String descripcion,
-            int idTipoMaquinaria,
-            String modelo,
-            String serieMaquina,
-            String serieActual,
-            Double horometroActual,
-            boolean horometroConfirmado,
-            Integer idProveedor,
-            Integer idPropietario,
-            String tipoPropiedad,
-            String estadoOperativo,
-            String tipoCobro,
-            double costoHoraProveedor,
-            double costoFijoProveedor,
-            double precioHoraCliente,
-            double precioFijoCliente,
-            String observaciones
-    ) throws Exception {
+        int idMaquinaria,
+        String codigoInterno,
+        String codigoActual,
+        String codigoPlaca,
+        String descripcion,
+        int idTipoMaquinaria,
+        String modelo,
+        String serieMaquina,
+        String serieActual,
+        Double horometroActual,
+        boolean horometroConfirmado,
+        Integer idProveedor,
+        Integer idPropietario,
+        String tipoPropiedad,
+        String estadoOperativo,
+        String tipoCobro,
+        double costoHoraProveedor,
+        double costoFijoProveedor,
+        double precioHoraCliente,
+        double precioFijoCliente,
+        String observaciones
+) throws Exception {
 
-        String sql = """
-                UPDATE maquinaria
-
-                SET
-                    codigo_interno = ?,
-                    codigo_actual = ?,
-                    codigo_placa = ?,
-                    descripcion = ?,
-                    id_tipo_maquinaria = ?,
-                    modelo = ?,
-                    serie_maquina = ?,
-                    serie_actual = ?,
-                    horometro_actual = ?,
-                    horometro_confirmado = ?,
-                    id_proveedor = ?,
-                    id_propietario = ?,
-                    tipo_propiedad = ?,
-                    estado_operativo = ?,
-                    tipo_cobro = ?,
-                    costo_hora_proveedor = ?,
-                    costo_fijo_proveedor = ?,
-                    precio_hora_cliente = ?,
-                    precio_fijo_cliente = ?,
-                    observaciones = ?
-
-                WHERE id_maquinaria = ?
-                  AND activo = 1
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
-        ) {
-
-            asignarTexto(
-                    ps,
-                    1,
-                    codigoInterno
-            );
-
-            asignarTexto(
-                    ps,
-                    2,
-                    codigoActual
-            );
-
-            asignarTexto(
-                    ps,
-                    3,
-                    codigoPlaca
-            );
-
-            ps.setString(
-                    4,
-                    descripcion
-            );
-
-            ps.setInt(
-                    5,
-                    idTipoMaquinaria
-            );
-
-            asignarTexto(
-                    ps,
-                    6,
-                    modelo
-            );
-
-            asignarTexto(
-                    ps,
-                    7,
-                    serieMaquina
-            );
-
-            asignarTexto(
-                    ps,
-                    8,
-                    serieActual
-            );
-
-            if (horometroActual == null) {
-
-                ps.setNull(
-                        9,
-                        Types.DECIMAL
-                );
-
-            } else {
-
-                ps.setDouble(
-                        9,
-                        horometroActual
-                );
-            }
-
-            ps.setBoolean(
-                    10,
-                    horometroConfirmado
-            );
-
-            if (idProveedor == null) {
-
-                ps.setNull(
-                        11,
-                        Types.INTEGER
-                );
-
-            } else {
-
-                ps.setInt(
-                        11,
-                        idProveedor
-                );
-            }
-
-            if (idPropietario == null) {
-
-                ps.setNull(
-                        12,
-                        Types.INTEGER
-                );
-
-            } else {
-
-                ps.setInt(
-                        12,
-                        idPropietario
-                );
-            }
-
-            ps.setString(
-                    13,
-                    tipoPropiedad
-            );
-
-            ps.setString(
-                    14,
-                    estadoOperativo
-            );
-
-            ps.setString(
-                    15,
-                    normalizarTipoCobro(
-                            tipoCobro
-                    )
-            );
-
-            ps.setDouble(
-                    16,
-                    costoHoraProveedor
-            );
-
-            ps.setDouble(
-                    17,
-                    costoFijoProveedor
-            );
-
-            ps.setDouble(
-                    18,
-                    precioHoraCliente
-            );
-
-            ps.setDouble(
-                    19,
-                    precioFijoCliente
-            );
-
-            asignarTexto(
-                    ps,
-                    20,
-                    observaciones
-            );
-
-            ps.setInt(
-                    21,
-                    idMaquinaria
-            );
-
-            int filas =
-                    ps.executeUpdate();
-
-            if (filas == 0) {
-
-                throw new Exception(
-                        "No fue posible actualizar la maquinaria."
-                );
-            }
-        }
-    }
-
+    MaquinariaAPI.actualizarMaquinaria(
+            idMaquinaria,
+            codigoInterno,
+            codigoActual,
+            codigoPlaca,
+            descripcion,
+            idTipoMaquinaria,
+            modelo,
+            serieMaquina,
+            serieActual,
+            horometroActual,
+            horometroConfirmado,
+            idProveedor,
+            idPropietario,
+            tipoPropiedad,
+            estadoOperativo,
+            normalizarTipoCobro(tipoCobro),
+            costoHoraProveedor,
+            costoFijoProveedor,
+            precioHoraCliente,
+            precioFijoCliente,
+            observaciones
+    );
+}
     public static void desactivar(
-            int idMaquinaria
-    ) throws Exception {
+        int idMaquinaria
+) throws Exception {
 
-        String sql = """
-                UPDATE maquinaria
-
-                SET
-                    activo = 0,
-                    estado_operativo = 'INACTIVA'
-
-                WHERE id_maquinaria = ?
-                  AND activo = 1
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sql
-                        )
-        ) {
-
-            ps.setInt(
-                    1,
-                    idMaquinaria
-            );
-
-            int filas =
-                    ps.executeUpdate();
-
-            if (filas == 0) {
-
-                throw new Exception(
-                        "La maquinaria no existe "
-                                + "o ya está desactivada."
-                );
-            }
-        }
-    }
+    MaquinariaAPI.desactivarMaquinaria(
+            idMaquinaria
+    );
+}
 
     private static String normalizarTipoCobro(
             String tipoCobro
@@ -1207,4 +543,74 @@ public class MaquinariaDAO {
             );
         }
     }
+    public static String obtenerDescripcionPorNumeroMaquina(String numeroMaquina) throws Exception {
+
+    String sql = """
+            SELECT descripcion
+            FROM maquinaria
+            WHERE activo = 1
+              AND (
+                    codigo_actual = ?
+                 OR codigo_interno = ?
+                 OR codigo_placa = ?
+              )
+            LIMIT 1
+            """;
+
+    try (
+            Connection conexion = ConexionDB.obtenerConexion();
+            PreparedStatement ps = conexion.prepareStatement(sql)
+    ) {
+
+        ps.setString(1, numeroMaquina.trim());
+        ps.setString(2, numeroMaquina.trim());
+        ps.setString(3, numeroMaquina.trim());
+
+        try (ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getString("descripcion");
+            }
+        }
+    }
+
+    return "";
+}
+private static String obtenerTextoJson(
+        com.google.gson.JsonObject objeto,
+        String propiedad
+) {
+
+    if (
+            objeto == null
+            || !objeto.has(propiedad)
+            || objeto.get(propiedad).isJsonNull()
+    ) {
+
+        return "";
+    }
+
+    return objeto
+            .get(propiedad)
+            .getAsString();
+}
+
+private static double obtenerDoubleJson(
+        com.google.gson.JsonObject objeto,
+        String propiedad
+) {
+
+    if (
+            objeto == null
+            || !objeto.has(propiedad)
+            || objeto.get(propiedad).isJsonNull()
+    ) {
+
+        return 0.00;
+    }
+
+    return objeto
+            .get(propiedad)
+            .getAsDouble();
+}
 }

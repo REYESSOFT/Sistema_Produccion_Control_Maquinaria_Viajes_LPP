@@ -142,6 +142,25 @@ public class FormGuiaTrabajoMaquinaria extends JDialog {
         txtNumeroGuia = new JTextField();
         txtNumeroMaquina = new JTextField();
         txtTipoMaquina = new JTextField();
+        txtTipoMaquina.setEditable(false);
+
+txtNumeroMaquina.getDocument().addDocumentListener(new DocumentListener() {
+
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        cargarDescripcionMaquinaria();
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        cargarDescripcionMaquinaria();
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        cargarDescripcionMaquinaria();
+    }
+});
         txtCliente = new JTextField();
         txtSector = new JTextField();
         txtFecha = crearCampoFecha();
@@ -1369,6 +1388,26 @@ JOptionPane.showMessageDialog(
 
     e.printStackTrace();
 }
+}
+private void cargarDescripcionMaquinaria() {
+
+    try {
+
+        String numero = txtNumeroMaquina.getText().trim();
+
+        if (numero.isEmpty()) {
+            txtTipoMaquina.setText("");
+            return;
+        }
+
+        txtTipoMaquina.setText(
+                MaquinariaDAO.obtenerDescripcionPorNumeroMaquina(numero)
+        );
+
+    } catch (Exception e) {
+
+        txtTipoMaquina.setText("");
+    }
 }
 
 

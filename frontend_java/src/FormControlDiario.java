@@ -922,24 +922,34 @@ lblM3Guia.setText(
                     );
 
             String metrosTexto =
-                    txtMetrosLineales
-                            .getText()
-                            .trim();
+        txtMetrosLineales
+                .getText()
+                .trim();
 
-            if (metrosTexto.isBlank()) {
+double metrosLineales = 0;
 
-                throw new Exception(
-                        "Debe ingresar los metros lineales."
+boolean requiereAvance =
+        guiaSeleccionada != null
+        && "Guía Producción Volquetas"
+                .equalsIgnoreCase(
+                        guiaSeleccionada.tipoGuia()
                 );
-            }
 
-            double metrosLineales =
-                    Double.parseDouble(
-                            metrosTexto.replace(
-                                    ",",
-                                    "."
-                            )
-                    );
+if (requiereAvance) {
+
+    if (metrosTexto.isBlank()) {
+
+        throw new Exception(
+                "Debe ingresar los metros lineales."
+        );
+    }
+
+    metrosLineales =
+            Double.parseDouble(
+                    metrosTexto.replace(",", ".")
+            );
+
+}
 
             Double ancho =
                     convertirDoubleOpcional(
