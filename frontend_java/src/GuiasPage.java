@@ -4,7 +4,7 @@ import java.awt.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
+import java.util.List;
 public class GuiasPage extends JPanel {
 
     private JComboBox<String> cboEmpresa;
@@ -363,85 +363,46 @@ if (
 
     modelo.setRowCount(0);
 
-    boolean limitarPorEmpresa =
-            usuarioActual != null
-            && usuarioActual.esDigitadorGuias()
-            && usuarioActual.getNombreEmpresa() != null;
+    try {
 
-    StringBuilder sql = new StringBuilder("""
-            SELECT
-                    e.nombre_empresa,
-                    g.tipo_guia,
-                    g.numero_guia,
-                    DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
-                    COALESCE(g.chofer_operador, '') AS chofer_operador,
-                    COALESCE(g.placa, '') AS placa,
-                    COALESCE(g.m3, 0) AS m3,
-                    g.estado
-            FROM guias g
-            INNER JOIN empresas e
-                    ON e.id_empresa = g.id_empresa
-            WHERE 1 = 1
-            """);
+        List<GuiaAPI.GuiaResumen> guias =
+                GuiaAPI.obtenerResumen();
 
-    if (limitarPorEmpresa) {
-        sql.append(" AND e.nombre_empresa = ? ");
-    }
+        boolean limitarPorEmpresa =
+                usuarioActual != null
+                && usuarioActual.esDigitadorGuias()
+                && usuarioActual.getNombreEmpresa() != null;
 
-    sql.append(" ORDER BY g.id_guia DESC ");
+        for (GuiaAPI.GuiaResumen guia : guias) {
 
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement statement =
-                    conexion.prepareStatement(
-                            sql.toString()
-                    )
-    ) {
-
-        if (limitarPorEmpresa) {
-
-            statement.setString(
-                    1,
-                    usuarioActual.getNombreEmpresa()
-            );
-        }
-
-        try (
-                ResultSet resultado =
-                        statement.executeQuery()
-        ) {
-
-            while (resultado.next()) {
-
-                modelo.addRow(new Object[]{
-                        resultado.getString(
-                                "nombre_empresa"
-                        ),
-                        resultado.getString(
-                                "tipo_guia"
-                        ),
-                        resultado.getString(
-                                "numero_guia"
-                        ),
-                        resultado.getString(
-                                "fecha"
-                        ),
-                        resultado.getString(
-                                "chofer_operador"
-                        ),
-                        resultado.getString(
-                                "placa"
-                        ),
-                        resultado.getDouble(
-                                "m3"
-                        ),
-                        resultado.getString(
-                                "estado"
-                        )
-                });
+            if (
+                    limitarPorEmpresa
+                    && !usuarioActual.getNombreEmpresa()
+                            .equalsIgnoreCase(
+                                    guia.empresa()
+                            )
+            ) {
+                continue;
             }
+
+            modelo.addRow(
+                    new Object[]{
+                            guia.empresa(),
+                            guia.tipoGuia(),
+                            guia.numeroGuia(),
+                            guia.fecha() == null
+                                    ? ""
+                                    : guia.fecha()
+                                            .format(
+                                                    java.time.format.DateTimeFormatter
+                                                            .ofPattern("dd/MM/yyyy")
+                                            ),
+                            guia.choferOperador(),
+                            guia.placa(),
+                            guia.m3(),
+                            guia.estado()
+                    }
+            );
         }
 
     } catch (Exception e) {
@@ -458,11 +419,7 @@ if (
     }
 }
 
-    
-
-
-
-    private void buscarGuias() {
+   private void buscarGuias() {
 
     DefaultTableModel modelo =
             (DefaultTableModel) tablaGuias.getModel();
@@ -476,89 +433,62 @@ if (
             cboTipoGuia.getSelectedItem().toString();
 
     String numeroGuia =
-            txtNumeroGuia.getText().trim();
+            txtNumeroGuia.getText()
+                    .trim()
+                    .toLowerCase();
 
-    StringBuilder sql = new StringBuilder("""
-            SELECT
-                    e.nombre_empresa,
-                    g.tipo_guia,
-                    g.numero_guia,
-                    DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
-                    COALESCE(g.chofer_operador, '') AS chofer_operador,
-                    COALESCE(g.placa, '') AS placa,
-                    COALESCE(g.m3, 0) AS m3,
-                    g.estado
-            FROM guias g
-            INNER JOIN empresas e
-                    ON e.id_empresa = g.id_empresa
-            WHERE 1 = 1
-            """);
+    try {
 
-    if (!empresaSeleccionada.equals("Todas")) {
-        sql.append(" AND e.nombre_empresa = ? ");
-    }
+        java.util.List<GuiaAPI.GuiaResumen> guias =
+                GuiaAPI.obtenerResumen();
 
-    if (!tipoGuiaSeleccionado.equals("Todas")) {
-        sql.append(" AND g.tipo_guia = ? ");
-    }
+        for (GuiaAPI.GuiaResumen guia : guias) {
 
-    if (!numeroGuia.isEmpty()) {
-        sql.append(" AND g.numero_guia LIKE ? ");
-    }
+            boolean coincideEmpresa =
+                    empresaSeleccionada.equals("Todas")
+                    || empresaSeleccionada.equalsIgnoreCase(
+                            guia.empresa()
+                    );
 
-    sql.append(" ORDER BY g.id_guia DESC ");
+            boolean coincideTipo =
+                    tipoGuiaSeleccionado.equals("Todas")
+                    || tipoGuiaSeleccionado.equalsIgnoreCase(
+                            guia.tipoGuia()
+                    );
 
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
+            boolean coincideNumero =
+                    numeroGuia.isEmpty()
+                    || (
+                            guia.numeroGuia() != null
+                            && guia.numeroGuia()
+                                    .toLowerCase()
+                                    .contains(numeroGuia)
+                    );
 
-            PreparedStatement statement =
-                    conexion.prepareStatement(sql.toString())
-    ) {
+            if (
+                    coincideEmpresa
+                    && coincideTipo
+                    && coincideNumero
+            ) {
 
-        int parametro = 1;
-
-        if (!empresaSeleccionada.equals("Todas")) {
-
-            statement.setString(
-                    parametro++,
-                    empresaSeleccionada
-            );
-        }
-
-        if (!tipoGuiaSeleccionado.equals("Todas")) {
-
-            statement.setString(
-                    parametro++,
-                    tipoGuiaSeleccionado
-            );
-        }
-
-        if (!numeroGuia.isEmpty()) {
-
-            statement.setString(
-                    parametro,
-                    "%" + numeroGuia + "%"
-            );
-        }
-
-        try (
-                ResultSet resultado =
-                        statement.executeQuery()
-        ) {
-
-            while (resultado.next()) {
-
-                modelo.addRow(new Object[]{
-                        resultado.getString("nombre_empresa"),
-                        resultado.getString("tipo_guia"),
-                        resultado.getString("numero_guia"),
-                        resultado.getString("fecha"),
-                        resultado.getString("chofer_operador"),
-                        resultado.getString("placa"),
-                        resultado.getDouble("m3"),
-                        resultado.getString("estado")
-                });
+                modelo.addRow(
+                        new Object[]{
+                                guia.empresa(),
+                                guia.tipoGuia(),
+                                guia.numeroGuia(),
+                                guia.fecha() == null
+                                        ? ""
+                                        : guia.fecha()
+                                                .format(
+                                                        java.time.format.DateTimeFormatter
+                                                                .ofPattern("dd/MM/yyyy")
+                                                ),
+                                guia.choferOperador(),
+                                guia.placa(),
+                                guia.m3(),
+                                guia.estado()
+                        }
+                );
             }
         }
 
@@ -585,7 +515,6 @@ if (
         e.printStackTrace();
     }
 }
-
 
 
 
@@ -849,66 +778,36 @@ if (
                 return;
         }
 
-        String sql = """
-                DELETE g
-                FROM guias g
-                INNER JOIN empresas e
-                        ON e.id_empresa = g.id_empresa
-                WHERE e.nombre_empresa = ?
-                AND g.tipo_guia = ?
-                AND g.numero_guia = ?
-                AND g.estado = 'PENDIENTE'
-                """;
+       try {
 
-        try (
-                Connection conexion = ConexionDB.obtenerConexion();
-                PreparedStatement statement =
-                        conexion.prepareStatement(sql)
-        ) {
+    GuiaAPI.eliminarGuia(
+            empresa,
+            tipoGuia,
+            numeroGuia
+    );
 
-                statement.setString(1, empresa);
-                statement.setString(2, tipoGuia);
-                statement.setString(3, numeroGuia);
+    JOptionPane.showMessageDialog(
+            this,
+            "Guía eliminada correctamente.",
+            "LPP Smart ERP",
+            JOptionPane.INFORMATION_MESSAGE
+    );
 
-                int filasEliminadas = statement.executeUpdate();
+    cargarGuiasDesdeMySQL();
 
-                if (filasEliminadas > 0) {
+} catch (Exception e) {
 
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Guía eliminada correctamente.",
-                        "LPP Smart ERP",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+    JOptionPane.showMessageDialog(
+            this,
+            "Error al eliminar la guía:\n"
+                    + e.getMessage(),
+            "Error",
+            JOptionPane.ERROR_MESSAGE
+    );
 
-                cargarGuiasDesdeMySQL();
-
-                } else {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "La guía no pudo eliminarse.\n"
-                                + "Puede haber sido aprobada o eliminada previamente.",
-                        "Información",
-                        JOptionPane.WARNING_MESSAGE
-                );
-                }
-
-        } catch (Exception e) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Error al eliminar la guía:\n"
-                                + e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-
-                e.printStackTrace();
-        }
+    e.printStackTrace();
+}
     }
-
-
 
     private void mostrarDetalleGuiaSeleccionada() {
 
@@ -927,428 +826,450 @@ if (
         return;
     }
 
+    String empresa =
+            tablaGuias
+                    .getValueAt(
+                            filaSeleccionada,
+                            0
+                    )
+                    .toString();
 
-    String empresa = tablaGuias
-        .getValueAt(filaSeleccionada, 0)
-        .toString();
+    String tipoGuia =
+            tablaGuias
+                    .getValueAt(
+                            filaSeleccionada,
+                            1
+                    )
+                    .toString();
 
-    String tipoGuia = tablaGuias
-        .getValueAt(filaSeleccionada, 1)
-        .toString();
+    String numeroGuia =
+            tablaGuias
+                    .getValueAt(
+                            filaSeleccionada,
+                            2
+                    )
+                    .toString();
 
-    String numeroGuia = tablaGuias
-        .getValueAt(filaSeleccionada, 2)
-        .toString();
-
-
-if (tipoGuia.equals("Control Trabajo Volquetas")) {
-
-    DetalleControlTrabajoDialog detalle =
-            new DetalleControlTrabajoDialog(
-                    SwingUtilities.getWindowAncestor(this),
-                    empresa,
-                    numeroGuia
-            );
-
-    detalle.setVisible(true);
-    return;
-}
-
-
-if (
-        tipoGuia.equals(
-                "Guía Trabajo Diario Maquinaria"
-        )
-) {
-
-    DetalleGuiaTrabajoMaquinariaDialog detalle =
-            new DetalleGuiaTrabajoMaquinariaDialog(
-                    SwingUtilities.getWindowAncestor(this),
-                    empresa,
-                    numeroGuia
-            );
-
-    detalle.setVisible(true);
-    return;
-}
-
-
-if (
-        tipoGuia.equals(
-                "Guía Despacho de Material"
-        )
-) {
-
-    DetalleGuiaDespachoMaterialDialog detalle =
-            new DetalleGuiaDespachoMaterialDialog(
-                    SwingUtilities.getWindowAncestor(this),
-                    empresa,
-                    numeroGuia
-            );
-
-    detalle.setVisible(true);
-    return;
-}
-
-
-if (!tipoGuia.equals("Guía Producción Volquetas")) {
-
-    JOptionPane.showMessageDialog(
-            this,
-            "La visualización del detalle todavía no está disponible "
-                    + "para este tipo de guía.",
-            "Información",
-            JOptionPane.INFORMATION_MESSAGE
-    );
-
-    return;
-}
-
-
-    String sqlCabecera = """
-            SELECT
-                    g.id_guia,
-                    e.nombre_empresa,
-                    g.numero_guia,
-                    DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
-                    COALESCE(g.chofer_operador, '') AS chofer_operador,
-                    COALESCE(g.placa, '') AS placa,
-                    COALESCE(g.m3, 0) AS m3,
-                    COALESCE(g.recibi_conforme, '') AS recibi_conforme,
-                    COALESCE(g.observaciones, '') AS observaciones,
-                    g.estado
-            FROM guias g
-            INNER JOIN empresas e
-                    ON e.id_empresa = g.id_empresa
-            WHERE e.nombre_empresa = ?
-                AND g.numero_guia = ?
-                AND g.tipo_guia = ?
-            LIMIT 1
-            """;
-
-    String sqlDetalle = """
-            SELECT
-                    numero_fila,
-                    COALESCE(proyecto, '') AS proyecto,
-                    COALESCE(sector, '') AS sector,
-                    COALESCE(cantera, '') AS cantera,
-                    COALESCE(material, '') AS material,
-                    TIME_FORMAT(hora_origen, '%H:%i') AS hora_origen,
-                    TIME_FORMAT(hora_destino, '%H:%i') AS hora_destino
-            FROM guia_produccion_detalle
-            WHERE id_guia = ?
-            ORDER BY numero_fila
-            """;
-
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement psCabecera =
-                    conexion.prepareStatement(sqlCabecera)
+    if (
+            tipoGuia.equals(
+                    "Control Trabajo Volquetas"
+            )
     ) {
 
-        psCabecera.setString(1, empresa);
-        psCabecera.setString(2, numeroGuia);
-        psCabecera.setString(3, tipoGuia);
-
-        try (
-                ResultSet cabecera =
-                        psCabecera.executeQuery()
-        ) {
-
-            if (!cabecera.next()) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "No se encontró la guía seleccionada.",
-                        "Información",
-                        JOptionPane.WARNING_MESSAGE
+        DetalleControlTrabajoDialog detalle =
+                new DetalleControlTrabajoDialog(
+                        SwingUtilities.getWindowAncestor(
+                                this
+                        ),
+                        empresa,
+                        numeroGuia
                 );
 
-                return;
-            }
+        detalle.setVisible(true);
 
-            int idGuia =
-                    cabecera.getInt("id_guia");
+        return;
+    }
 
-            JDialog ventanaDetalle =
-                    new JDialog(
-                            SwingUtilities.getWindowAncestor(this),
-                            "Detalle Guía N° " + numeroGuia,
-                            Dialog.ModalityType.APPLICATION_MODAL
-                    );
+    if (
+            tipoGuia.equals(
+                    "Guía Trabajo Diario Maquinaria"
+            )
+    ) {
 
-            ventanaDetalle.setSize(950, 600);
-            ventanaDetalle.setLocationRelativeTo(this);
-            ventanaDetalle.setDefaultCloseOperation(
-                    JDialog.DISPOSE_ON_CLOSE
-            );
+        DetalleGuiaTrabajoMaquinariaDialog detalle =
+                new DetalleGuiaTrabajoMaquinariaDialog(
+                        SwingUtilities.getWindowAncestor(
+                                this
+                        ),
+                        empresa,
+                        numeroGuia
+                );
 
-            JPanel panelPrincipal =
-                    new JPanel(new BorderLayout(10, 10));
+        detalle.setVisible(true);
 
-            panelPrincipal.setBorder(
-                    BorderFactory.createEmptyBorder(
-                            15,
-                            15,
-                            15,
-                            15
-                    )
-            );
+        return;
+    }
 
-            JPanel panelCabecera =
-                    new JPanel(new GridLayout(4, 4, 10, 8));
+    if (
+            tipoGuia.equals(
+                    "Guía Despacho de Material"
+            )
+    ) {
 
-            panelCabecera.add(
-                    new JLabel("Empresa:")
-            );
+        DetalleGuiaDespachoMaterialDialog detalle =
+                new DetalleGuiaDespachoMaterialDialog(
+                        SwingUtilities.getWindowAncestor(
+                                this
+                        ),
+                        empresa,
+                        numeroGuia
+                );
 
-            panelCabecera.add(
-                    new JLabel(
-                            cabecera.getString("nombre_empresa")
-                    )
-            );
+        detalle.setVisible(true);
 
-            panelCabecera.add(
-                    new JLabel("N° Guía:")
-            );
+        return;
+    }
 
-            panelCabecera.add(
-                    new JLabel(
-                            cabecera.getString("numero_guia")
-                    )
-            );
+    if (
+            !tipoGuia.equals(
+                    "Guía Producción Volquetas"
+            )
+    ) {
 
-            panelCabecera.add(
-                    new JLabel("Fecha:")
-            );
+        JOptionPane.showMessageDialog(
+                this,
+                "La visualización del detalle todavía no está disponible "
+                        + "para este tipo de guía.",
+                "Información",
+                JOptionPane.INFORMATION_MESSAGE
+        );
 
-            panelCabecera.add(
-                    new JLabel(
-                            cabecera.getString("fecha")
-                    )
-            );
+        return;
+    }
 
-            panelCabecera.add(
-                    new JLabel("Estado:")
-            );
+    try {
 
-            panelCabecera.add(
-                    new JLabel(
-                            cabecera.getString("estado")
-                    )
-            );
+        GuiaAPI.GuiaProduccionDetalle guia =
+                GuiaAPI.obtenerDetalleProduccion(
+                        empresa,
+                        numeroGuia,
+                        tipoGuia
+                );
 
-            panelCabecera.add(
-                    new JLabel("Chofer / Operador:")
-            );
+        JDialog ventanaDetalle =
+                new JDialog(
+                        SwingUtilities.getWindowAncestor(
+                                this
+                        ),
+                        "Detalle Guía N° "
+                                + numeroGuia,
+                        Dialog.ModalityType.APPLICATION_MODAL
+                );
 
-            panelCabecera.add(
-                    new JLabel(
-                            cabecera.getString("chofer_operador")
-                    )
-            );
+        ventanaDetalle.setSize(
+                950,
+                600
+        );
 
-            panelCabecera.add(
-                    new JLabel("Placa:")
-            );
+        ventanaDetalle.setLocationRelativeTo(
+                this
+        );
 
-            panelCabecera.add(
-                    new JLabel(
-                            cabecera.getString("placa")
-                    )
-            );
+        ventanaDetalle.setDefaultCloseOperation(
+                JDialog.DISPOSE_ON_CLOSE
+        );
 
-            panelCabecera.add(
-                    new JLabel("M3:")
-            );
+        JPanel panelPrincipal =
+                new JPanel(
+                        new BorderLayout(
+                                10,
+                                10
+                        )
+                );
 
-            panelCabecera.add(
-                    new JLabel(
-                            String.valueOf(
-                                    cabecera.getDouble("m3")
-                            )
-                    )
-            );
+        panelPrincipal.setBorder(
+                BorderFactory.createEmptyBorder(
+                        15,
+                        15,
+                        15,
+                        15
+                )
+        );
 
-            panelCabecera.add(new JLabel());
-            panelCabecera.add(new JLabel());
+        JPanel panelCabecera =
+                new JPanel(
+                        new GridLayout(
+                                4,
+                                4,
+                                10,
+                                8
+                        )
+                );
 
-            String[] columnasDetalle = {
-                    "N°",
-                    "Proyecto",
-                    "Sector",
-                    "Cantera",
-                    "Material",
-                    "Hora Origen",
-                    "Hora Destino"
-            };
+        panelCabecera.add(
+                new JLabel(
+                        "Empresa:"
+                )
+        );
 
-            DefaultTableModel modeloDetalle =
-                    new DefaultTableModel(
-                            columnasDetalle,
-                            0
-                    ) {
+        panelCabecera.add(
+                new JLabel(
+                        guia.empresa()
+                )
+        );
 
-                        @Override
-                        public boolean isCellEditable(
-                                int fila,
-                                int columna
-                        ) {
-                            return false;
-                        }
-                    };
+        panelCabecera.add(
+                new JLabel(
+                        "N° Guía:"
+                )
+        );
 
-            JTable tablaDetalle =
-                    new JTable(modeloDetalle);
+        panelCabecera.add(
+                new JLabel(
+                        guia.numeroGuia()
+                )
+        );
 
-            tablaDetalle.setRowHeight(26);
-            tablaDetalle.setAutoResizeMode(
-                    JTable.AUTO_RESIZE_OFF
-            );
+        panelCabecera.add(
+                new JLabel(
+                        "Fecha:"
+                )
+        );
 
-            tablaDetalle.getColumnModel()
-                    .getColumn(0)
-                    .setPreferredWidth(50);
+        panelCabecera.add(
+                new JLabel(
+                        guia.fecha() == null
+                                ? ""
+                                : guia.fecha()
+                                        .format(
+                                                java.time.format
+                                                        .DateTimeFormatter
+                                                        .ofPattern(
+                                                                "dd/MM/yyyy"
+                                                        )
+                                        )
+                )
+        );
 
-            tablaDetalle.getColumnModel()
-                    .getColumn(1)
-                    .setPreferredWidth(180);
+        panelCabecera.add(
+                new JLabel(
+                        "Estado:"
+                )
+        );
 
-            tablaDetalle.getColumnModel()
-                    .getColumn(2)
-                    .setPreferredWidth(150);
+        panelCabecera.add(
+                new JLabel(
+                        guia.estado()
+                )
+        );
 
-            tablaDetalle.getColumnModel()
-                    .getColumn(3)
-                    .setPreferredWidth(170);
+        panelCabecera.add(
+                new JLabel(
+                        "Chofer / Operador:"
+                )
+        );
 
-            tablaDetalle.getColumnModel()
-                    .getColumn(4)
-                    .setPreferredWidth(170);
+        panelCabecera.add(
+                new JLabel(
+                        guia.choferOperador()
+                )
+        );
 
-            tablaDetalle.getColumnModel()
-                    .getColumn(5)
-                    .setPreferredWidth(110);
+        panelCabecera.add(
+                new JLabel(
+                        "Placa:"
+                )
+        );
 
-            tablaDetalle.getColumnModel()
-                    .getColumn(6)
-                    .setPreferredWidth(110);
+        panelCabecera.add(
+                new JLabel(
+                        guia.placa()
+                )
+        );
 
-            try (
-                    PreparedStatement psDetalle =
-                            conexion.prepareStatement(
-                                    sqlDetalle
-                            )
-            ) {
+        panelCabecera.add(
+                new JLabel(
+                        "M3:"
+                )
+        );
 
-                psDetalle.setInt(1, idGuia);
+        panelCabecera.add(
+                new JLabel(
+                        String.valueOf(
+                                guia.m3()
+                        )
+                )
+        );
 
-                try (
-                        ResultSet detalle =
-                                psDetalle.executeQuery()
+        panelCabecera.add(
+                new JLabel()
+        );
+
+        panelCabecera.add(
+                new JLabel()
+        );
+
+        String[] columnasDetalle = {
+                "N°",
+                "Proyecto",
+                "Sector",
+                "Cantera",
+                "Material",
+                "Hora Origen",
+                "Hora Destino"
+        };
+
+        DefaultTableModel modeloDetalle =
+                new DefaultTableModel(
+                        columnasDetalle,
+                        0
                 ) {
 
-                    while (detalle.next()) {
+                    @Override
+                    public boolean isCellEditable(
+                            int fila,
+                            int columna
+                    ) {
 
-                        modeloDetalle.addRow(
-                                new Object[]{
-                                        detalle.getInt(
-                                                "numero_fila"
-                                        ),
-                                        detalle.getString(
-                                                "proyecto"
-                                        ),
-                                        detalle.getString(
-                                                "sector"
-                                        ),
-                                        detalle.getString(
-                                                "cantera"
-                                        ),
-                                        detalle.getString(
-                                                "material"
-                                        ),
-                                        detalle.getString(
-                                                "hora_origen"
-                                        ),
-                                        detalle.getString(
-                                                "hora_destino"
-                                        )
-                                }
-                        );
+                        return false;
                     }
-                }
+                };
+
+        JTable tablaDetalle =
+                new JTable(
+                        modeloDetalle
+                );
+
+        tablaDetalle.setRowHeight(
+                26
+        );
+
+        tablaDetalle.setAutoResizeMode(
+                JTable.AUTO_RESIZE_OFF
+        );
+
+        tablaDetalle
+                .getColumnModel()
+                .getColumn(0)
+                .setPreferredWidth(50);
+
+        tablaDetalle
+                .getColumnModel()
+                .getColumn(1)
+                .setPreferredWidth(180);
+
+        tablaDetalle
+                .getColumnModel()
+                .getColumn(2)
+                .setPreferredWidth(150);
+
+        tablaDetalle
+                .getColumnModel()
+                .getColumn(3)
+                .setPreferredWidth(170);
+
+        tablaDetalle
+                .getColumnModel()
+                .getColumn(4)
+                .setPreferredWidth(170);
+
+        tablaDetalle
+                .getColumnModel()
+                .getColumn(5)
+                .setPreferredWidth(110);
+
+        tablaDetalle
+                .getColumnModel()
+                .getColumn(6)
+                .setPreferredWidth(110);
+
+        if (guia.detalle() != null) {
+
+            for (
+                    GuiaAPI.GuiaProduccionDetalleFila fila
+                            : guia.detalle()
+            ) {
+
+                modeloDetalle.addRow(
+                        new Object[]{
+                                fila.numeroFila(),
+                                fila.proyecto(),
+                                fila.sector(),
+                                fila.cantera(),
+                                fila.material(),
+                                fila.horaOrigen(),
+                                fila.horaDestino()
+                        }
+                );
             }
-
-            JPanel panelInferior =
-                    new JPanel(new BorderLayout(10, 10));
-
-            JTextArea txtInformacion =
-                    new JTextArea();
-
-            txtInformacion.setEditable(false);
-            txtInformacion.setLineWrap(true);
-            txtInformacion.setWrapStyleWord(true);
-
-            txtInformacion.setText(
-                    "Recibí conforme: "
-                            + cabecera.getString(
-                                    "recibi_conforme"
-                            )
-                            + "\n\nObservaciones: "
-                            + cabecera.getString(
-                                    "observaciones"
-                            )
-            );
-
-            JButton btnCerrar =
-                    new JButton("Cerrar");
-
-            btnCerrar.addActionListener(
-                    e -> ventanaDetalle.dispose()
-            );
-
-            JPanel panelBoton =
-                    new JPanel(
-                            new FlowLayout(
-                                    FlowLayout.RIGHT
-                            )
-                    );
-
-            panelBoton.add(btnCerrar);
-
-            panelInferior.add(
-                    new JScrollPane(txtInformacion),
-                    BorderLayout.CENTER
-            );
-
-            panelInferior.add(
-                    panelBoton,
-                    BorderLayout.SOUTH
-            );
-
-            panelPrincipal.add(
-                    panelCabecera,
-                    BorderLayout.NORTH
-            );
-
-            panelPrincipal.add(
-                    new JScrollPane(tablaDetalle),
-                    BorderLayout.CENTER
-            );
-
-            panelPrincipal.add(
-                    panelInferior,
-                    BorderLayout.SOUTH
-            );
-
-            ventanaDetalle.setContentPane(
-                    panelPrincipal
-            );
-
-            ventanaDetalle.setVisible(true);
         }
+
+        JPanel panelInferior =
+                new JPanel(
+                        new BorderLayout(
+                                10,
+                                10
+                        )
+                );
+
+        JTextArea txtInformacion =
+                new JTextArea();
+
+        txtInformacion.setEditable(
+                false
+        );
+
+        txtInformacion.setLineWrap(
+                true
+        );
+
+        txtInformacion.setWrapStyleWord(
+                true
+        );
+
+        txtInformacion.setText(
+                "Recibí conforme: "
+                        + guia.recibiConforme()
+                        + "\n\nObservaciones: "
+                        + guia.observaciones()
+        );
+
+        JButton btnCerrar =
+                new JButton(
+                        "Cerrar"
+                );
+
+        btnCerrar.addActionListener(
+                e -> ventanaDetalle.dispose()
+        );
+
+        JPanel panelBoton =
+                new JPanel(
+                        new FlowLayout(
+                                FlowLayout.RIGHT
+                        )
+                );
+
+        panelBoton.add(
+                btnCerrar
+        );
+
+        panelInferior.add(
+                new JScrollPane(
+                        txtInformacion
+                ),
+                BorderLayout.CENTER
+        );
+
+        panelInferior.add(
+                panelBoton,
+                BorderLayout.SOUTH
+        );
+
+        panelPrincipal.add(
+                panelCabecera,
+                BorderLayout.NORTH
+        );
+
+        panelPrincipal.add(
+                new JScrollPane(
+                        tablaDetalle
+                ),
+                BorderLayout.CENTER
+        );
+
+        panelPrincipal.add(
+                panelInferior,
+                BorderLayout.SOUTH
+        );
+
+        ventanaDetalle.setContentPane(
+                panelPrincipal
+        );
+
+        ventanaDetalle.setVisible(
+                true
+        );
 
     } catch (Exception e) {
 

@@ -163,151 +163,148 @@ public class FormGuiaProduccionVolquetas extends JDialog {
 
     public void cargarGuia(String numeroGuia) {
 
-        String sqlCabecera = """
-            SELECT
-                id_guia,
-                numero_guia,
-                DATE_FORMAT(fecha, '%d/%m/%Y') AS fecha,
-                chofer_operador,
-                placa,
-                m3,
-                recibi_conforme,
-                observaciones
-            FROM guias
-            WHERE numero_guia = ?
-            AND tipo_guia = 'Guía Producción Volquetas'
-            AND id_empresa = 1
-            LIMIT 1
-            """;
+    try {
 
-        String sqlDetalle = """
-            SELECT
-                numero_fila,
-                proyecto,
-                sector,
-                cantera,
-                material,
-                TIME_FORMAT(hora_origen, '%H:%i') AS hora_origen,
-                TIME_FORMAT(hora_destino, '%H:%i') AS hora_destino
-            FROM guia_produccion_detalle
-            WHERE id_guia = ?
-            ORDER BY numero_fila
-            """;
+        GuiaAPI.GuiaProduccionDetalle guia =
+                GuiaAPI.obtenerDetalleProduccion(
+                        "EQUIPOS PRO",
+                        numeroGuia,
+                        "Guía Producción Volquetas"
+                );
 
-        try (
-            Connection conexion = ConexionDB.obtenerConexion();
-            PreparedStatement psCabecera = conexion.prepareStatement(sqlCabecera)
+        idGuiaEdicion =
+                guia.idGuia();
+
+        txtNumeroGuia.setText(
+                guia.numeroGuia()
+        );
+
+        txtFecha.setText(
+                guia.fecha() == null
+                        ? ""
+                        : guia.fecha()
+                                .format(
+                                        java.time.format.DateTimeFormatter
+                                                .ofPattern("dd/MM/yyyy")
+                                )
+        );
+
+        txtChofer.setText(
+                guia.choferOperador()
+        );
+
+        txtPlaca.setText(
+                guia.placa()
+        );
+
+        spnM3.setValue(
+                guia.m3()
+        );
+
+        txtRecibiConforme.setText(
+                guia.recibiConforme()
+        );
+
+        txtObservaciones.setText(
+                guia.observaciones()
+        );
+
+        DefaultTableModel modelo =
+                (DefaultTableModel) tablaDetalle.getModel();
+
+        for (
+                int fila = 0;
+                fila < modelo.getRowCount();
+                fila++
         ) {
 
-            psCabecera.setString(1, numeroGuia);
-
-            try (ResultSet resultado = psCabecera.executeQuery()) {
-
-                if (!resultado.next()) {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "No se encontró la guía N° " + numeroGuia + ".",
-                            "Información",
-                            JOptionPane.WARNING_MESSAGE
-                    );
-                    return;
-                }
-
-                idGuiaEdicion = resultado.getInt("id_guia");
-
-                txtNumeroGuia.setText(resultado.getString("numero_guia"));
-                txtFecha.setText(resultado.getString("fecha"));
-                txtChofer.setText(resultado.getString("chofer_operador"));
-                txtPlaca.setText(resultado.getString("placa"));
-                spnM3.setValue(resultado.getDouble("m3"));
-                txtRecibiConforme.setText(
-                        resultado.getString("recibi_conforme")
-                );
-                txtObservaciones.setText(
-                        resultado.getString("observaciones")
-                );
-            }
-
-            DefaultTableModel modelo =
-                    (DefaultTableModel) tablaDetalle.getModel();
-
-            for (int fila = 0; fila < modelo.getRowCount(); fila++) {
-                for (int columna = 1; columna < modelo.getColumnCount(); columna++) {
-                    modelo.setValueAt(null, fila, columna);
-                }
-            }
-
-            try (
-                PreparedStatement psDetalle =
-                        conexion.prepareStatement(sqlDetalle)
+            for (
+                    int columna = 1;
+                    columna < modelo.getColumnCount();
+                    columna++
             ) {
-                psDetalle.setInt(1, idGuiaEdicion);
 
-                try (ResultSet detalle = psDetalle.executeQuery()) {
-
-                    while (detalle.next()) {
-
-                        int fila = detalle.getInt("numero_fila") - 1;
-
-                        if (fila < 0 || fila >= modelo.getRowCount()) {
-                            continue;
-                        }
-
-                    modelo.setValueAt(
-                                detalle.getString("proyecto"),
-                                fila,
-                                1
-                        );
-
-                        modelo.setValueAt(
-                                detalle.getString("sector"),
-                                fila,
-                                2
-                        );
-
-                        modelo.setValueAt(
-                                detalle.getString("cantera"),
-                                fila,
-                                3
-                        );
-
-                        modelo.setValueAt(
-                                detalle.getString("material"),
-                                fila,
-                                4
-                        );
-
-                        modelo.setValueAt(
-                                detalle.getString("hora_origen"),
-                                fila,
-                                5
-                        );
-
-                        modelo.setValueAt(
-                                detalle.getString("hora_destino"),
-                                fila,
-                                6
-                        );
-                    }
-                }
+                modelo.setValueAt(
+                        null,
+                        fila,
+                        columna
+                );
             }
-
-            setTitle(
-                    "Editar Guía Producción Volquetas - N° " + numeroGuia
-            );
-
-        } catch (Exception e) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error al cargar la guía:\n" + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-
-            e.printStackTrace();
         }
+
+        if (guia.detalle() != null) {
+
+            for (
+                    GuiaAPI.GuiaProduccionDetalleFila detalle
+                            : guia.detalle()
+            ) {
+
+                int fila =
+                        detalle.numeroFila() - 1;
+
+                if (
+                        fila < 0
+                        || fila >= modelo.getRowCount()
+                ) {
+                    continue;
+                }
+
+                modelo.setValueAt(
+                        detalle.proyecto(),
+                        fila,
+                        1
+                );
+
+                modelo.setValueAt(
+                        detalle.sector(),
+                        fila,
+                        2
+                );
+
+                modelo.setValueAt(
+                        detalle.cantera(),
+                        fila,
+                        3
+                );
+
+                modelo.setValueAt(
+                        detalle.material(),
+                        fila,
+                        4
+                );
+
+                modelo.setValueAt(
+                        detalle.horaOrigen(),
+                        fila,
+                        5
+                );
+
+                modelo.setValueAt(
+                        detalle.horaDestino(),
+                        fila,
+                        6
+                );
+            }
+        }
+
+        setTitle(
+                "Editar Guía Producción Volquetas - N° "
+                        + numeroGuia
+        );
+
+    } catch (Exception e) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar la guía:\n"
+                        + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+        e.printStackTrace();
     }
+}
 
 
     private void guardarGuia() {
