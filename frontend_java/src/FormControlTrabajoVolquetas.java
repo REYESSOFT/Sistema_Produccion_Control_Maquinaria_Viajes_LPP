@@ -2,9 +2,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.MaskFormatter;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.text.ParseException;
 
 public class FormControlTrabajoVolquetas extends JDialog {
@@ -761,231 +758,124 @@ private double convertirTotalADecimal(
 
 public void cargarGuia(String numeroGuia) {
 
-    String sqlCabecera = """
-            SELECT
-                g.id_guia,
-                g.numero_guia,
-                DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
-                COALESCE(g.cliente, '') AS cliente,
-                COALESCE(g.placa, '') AS placa,
-                COALESCE(g.chofer_operador, '') AS chofer,
-                COALESCE(g.sector, '') AS sector,
-                COALESCE(g.observaciones, '') AS observaciones,
-                COALESCE(g.encargado_obra, '') AS encargado_obra
+    try {
 
-            FROM guias g
-            WHERE g.id_empresa = 2
-              AND g.tipo_guia = 'Control Trabajo Volquetas'
-              AND g.numero_guia = ?
-            LIMIT 1
-            """;
-            
-
-    String sqlTurnos = """
-            SELECT
-                turno,
-                TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio,
-                TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin
-            FROM control_trabajo_turnos
-            WHERE id_guia = ?
-            """;
-
-    String sqlParalizaciones = """
-            SELECT
-                codigo,
-                TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio,
-                TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin
-            FROM control_trabajo_paralizaciones
-            WHERE id_guia = ?
-            ORDER BY numero_fila
-            """;
-
-    try (
-            Connection conexion = ConexionDB.obtenerConexion();
-            PreparedStatement psCabecera =
-                    conexion.prepareStatement(sqlCabecera)
-    ) {
-
-        psCabecera.setString(1, numeroGuia);
-
-        try (
-                ResultSet resultado =
-                        psCabecera.executeQuery()
-        ) {
-
-            if (!resultado.next()) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "No se encontró la guía N° " + numeroGuia + ".",
-                        "Información",
-                        JOptionPane.WARNING_MESSAGE
+        ControlTrabajoVolquetasAPI.GuiaDetalle guia =
+                ControlTrabajoVolquetasAPI.obtenerDetalle(
+                        "DEVIALTRANSPORT",
+                        numeroGuia,
+                        "Control Trabajo Volquetas"
                 );
 
-                return;
-            }
+        idGuiaEdicion = guia.idGuia();
 
-            idGuiaEdicion =
-                    resultado.getInt("id_guia");
+        txtNumeroGuia.setText(guia.numeroGuia());
 
-            txtNumeroGuia.setText(
-                    resultado.getString("numero_guia")
-            );
+        txtFecha.setText(
+                guia.fecha() == null
+                        ? ""
+                        : guia.fecha().format(
+                                java.time.format.DateTimeFormatter
+                                        .ofPattern("dd/MM/yyyy")
+                        )
+        );
 
-            txtFecha.setText(
-                    resultado.getString("fecha")
-            );
+        txtCliente.setText(guia.cliente());
+        txtSolicitante.setText(guia.solicitante());
+        txtPlaca.setText(guia.placa());
+        txtChofer.setText(guia.choferOperador());
+        txtSector.setText(guia.sector());
+        txtObservaciones.setText(guia.observaciones());
+        txtEncargadoObra.setText(guia.encargadoObra());
 
-            txtCliente.setText(
-                    resultado.getString("cliente")
-            );
-
-            txtPlaca.setText(
-                    resultado.getString("placa")
-            );
-
-            txtChofer.setText(
-                    resultado.getString("chofer")
-            );
-
-            txtSector.setText(
-                    resultado.getString("sector")
-            );
-
-            txtObservaciones.setText(
-                    resultado.getString("observaciones")
-            );
-
-            txtEncargadoObra.setText(
-                    resultado.getString("encargado_obra")
-            );
-        }
-
-        // Limpiar los turnos antes de cargarlos.
         for (
                 int fila = 0;
                 fila < tablaTurnos.getRowCount();
                 fila++
         ) {
-
             tablaTurnos.setValueAt("", fila, 1);
             tablaTurnos.setValueAt("", fila, 2);
             tablaTurnos.setValueAt("", fila, 3);
         }
 
-        try (
-                PreparedStatement psTurnos =
-                        conexion.prepareStatement(sqlTurnos)
-        ) {
+        if (guia.turnos() != null) {
 
-            psTurnos.setInt(1, idGuiaEdicion);
-
-            try (
-                    ResultSet turnos =
-                            psTurnos.executeQuery()
+            for (
+                    ControlTrabajoVolquetasAPI.Turno turno
+                            : guia.turnos()
             ) {
 
-                while (turnos.next()) {
+                int fila = obtenerFilaTurno(
+                        turno.turno()
+                );
 
-                    String turno =
-                            turnos.getString("turno");
-
-                    int filaTurno =
-                            obtenerFilaTurno(turno);
-
-                    if (filaTurno >= 0) {
-
-                        String horaInicio =
-                                turnos.getString("hora_inicio");
-
-                        String horaFin =
-                                turnos.getString("hora_fin");
-
-                        tablaTurnos.setValueAt(
-                                horaInicio == null ? "" : horaInicio,
-                                filaTurno,
-                                1
-                        );
-
-                        tablaTurnos.setValueAt(
-                                horaFin == null ? "" : horaFin,
-                                filaTurno,
-                                2
-                        );
-
-                        calcularTotalTurno(filaTurno);
-                    }
+                if (fila < 0) {
+                    continue;
                 }
+
+                tablaTurnos.setValueAt(
+                        turno.horaInicio() == null
+                                ? ""
+                                : turno.horaInicio(),
+                        fila,
+                        1
+                );
+
+                tablaTurnos.setValueAt(
+                        turno.horaFin() == null
+                                ? ""
+                                : turno.horaFin(),
+                        fila,
+                        2
+                );
+
+                calcularTotalTurno(fila);
             }
         }
 
-        // Limpiar las paralizaciones antes de cargarlas.
         for (
                 int fila = 0;
                 fila < tablaParalizaciones.getRowCount();
                 fila++
         ) {
-
             tablaParalizaciones.setValueAt("", fila, 2);
             tablaParalizaciones.setValueAt("", fila, 3);
             tablaParalizaciones.setValueAt("", fila, 4);
         }
 
-        try (
-                PreparedStatement psParalizaciones =
-                        conexion.prepareStatement(
-                                sqlParalizaciones
-                        )
-        ) {
+        if (guia.paralizaciones() != null) {
 
-            psParalizaciones.setInt(
-                    1,
-                    idGuiaEdicion
-            );
-
-            try (
-                    ResultSet paralizaciones =
-                            psParalizaciones.executeQuery()
+            for (
+                    ControlTrabajoVolquetasAPI.Paralizacion paralizacion
+                            : guia.paralizaciones()
             ) {
 
-                while (paralizaciones.next()) {
+                int fila = paralizacion.codigo() - 1;
 
-                    int codigo =
-                            paralizaciones.getInt("codigo");
-
-                    int fila =
-                            codigo - 1;
-
-                    if (
-                        fila >= 0
-                        && fila < tablaParalizaciones.getRowCount()
-                    ) {
-
-                        String horaInicio =
-                                paralizaciones.getString(
-                                        "hora_inicio"
-                                );
-
-                        String horaFin =
-                                paralizaciones.getString(
-                                        "hora_fin"
-                                );
-
-                        tablaParalizaciones.setValueAt(
-                                horaInicio == null ? "" : horaInicio,
-                                fila,
-                                2
-                        );
-
-                        tablaParalizaciones.setValueAt(
-                                horaFin == null ? "" : horaFin,
-                                fila,
-                                3
-                        );
-
-                        calcularTotalParalizacion(fila);
-                    }
+                if (
+                        fila < 0
+                        || fila >= tablaParalizaciones.getRowCount()
+                ) {
+                    continue;
                 }
+
+                tablaParalizaciones.setValueAt(
+                        paralizacion.horaInicio() == null
+                                ? ""
+                                : paralizacion.horaInicio(),
+                        fila,
+                        2
+                );
+
+                tablaParalizaciones.setValueAt(
+                        paralizacion.horaFin() == null
+                                ? ""
+                                : paralizacion.horaFin(),
+                        fila,
+                        3
+                );
+
+                calcularTotalParalizacion(fila);
             }
         }
 
@@ -1008,48 +898,75 @@ public void cargarGuia(String numeroGuia) {
     }
 }
 
-
-
-
 private int obtenerFilaTurno(String turno) {
 
     if (turno == null) {
         return -1;
     }
 
-    return switch (turno.toUpperCase()) {
-
+    return switch (turno.trim().toUpperCase()) {
         case "MAÑANA" -> 0;
         case "TARDE" -> 1;
         case "NOCHE" -> 2;
-
         default -> -1;
     };
 }
 
+private void detenerEdicionTablas() {
 
+    if (tablaTurnos.isEditing()) {
+        tablaTurnos.getCellEditor().stopCellEditing();
+    }
 
+    if (tablaParalizaciones.isEditing()) {
+        tablaParalizaciones.getCellEditor().stopCellEditing();
+    }
+}
 
-private void guardarTurnos(
-        Connection conexion,
-        int idGuia
-) throws Exception {
+private void guardarGuia() {
 
-    String sql = """
-            INSERT INTO control_trabajo_turnos (
-                id_guia,
-                turno,
-                hora_inicio,
-                hora_fin,
-                total_horas
-            )
-            VALUES (?, ?, ?, ?, ?)
-            """;
+    detenerEdicionTablas();
 
-    try (
-            PreparedStatement ps =
-                    conexion.prepareStatement(sql)
+    String numeroGuia =
+            txtNumeroGuia.getText().trim();
+
+    String fechaTexto =
+            txtFecha.getText().trim();
+
+    if (numeroGuia.isEmpty()) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Ingrese el número de guía.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        txtNumeroGuia.requestFocus();
+        return;
+    }
+
+    if (
+            fechaTexto.isEmpty()
+            || fechaTexto.contains("_")
     ) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Ingrese la fecha.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        txtFecha.requestFocus();
+        return;
+    }
+
+    try {
+
+        java.util.List<
+                ControlTrabajoVolquetasAPI.Turno
+        > turnos = new java.util.ArrayList<>();
 
         for (
                 int fila = 0;
@@ -1085,94 +1002,60 @@ private void guardarTurnos(
                             3
                     );
 
-            ps.setInt(
-                    1,
-                    idGuia
-            );
+            boolean inicioVacio =
+                    horaInicio.isEmpty();
 
-            ps.setString(
-                    2,
-                    turno
-            );
+            boolean finVacio =
+                    horaFin.isEmpty();
 
-            if (horaInicio.isEmpty()) {
+            if (inicioVacio != finVacio) {
 
-                ps.setNull(
-                        3,
-                        java.sql.Types.TIME
-                );
-
-            } else {
-
-                ps.setTime(
-                        3,
-                        java.sql.Time.valueOf(
-                                horaInicio + ":00"
-                        )
+                throw new Exception(
+                        "Complete la hora de inicio y la hora de fin del turno "
+                                + turno + "."
                 );
             }
 
-            if (horaFin.isEmpty()) {
-
-                ps.setNull(
-                        4,
-                        java.sql.Types.TIME
-                );
-
-            } else {
-
-                ps.setTime(
-                        4,
-                        java.sql.Time.valueOf(
-                                horaFin + ":00"
-                        )
-                );
+            if (!inicioVacio) {
+                convertirHoraAMinutos(horaInicio);
+                convertirHoraAMinutos(horaFin);
             }
 
-            ps.setDouble(
-                    5,
-                    convertirTotalADecimal(
-                            totalHoras
+            turnos.add(
+                    new ControlTrabajoVolquetasAPI.Turno(
+                            turno,
+                            horaInicio,
+                            horaFin,
+                            convertirTotalADecimal(totalHoras)
                     )
             );
-
-            ps.addBatch();
         }
 
-        ps.executeBatch();
-    }
-}
-
-
-
-
-private void guardarParalizaciones(
-        Connection conexion,
-        int idGuia
-) throws Exception {
-
-    String sql = """
-            INSERT INTO control_trabajo_paralizaciones (
-                id_guia,
-                numero_fila,
-                codigo,
-                hora_inicio,
-                hora_fin,
-                total_horas
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-            """;
-
-    try (
-            PreparedStatement ps =
-                    conexion.prepareStatement(sql)
-    ) {
+        java.util.List<
+                ControlTrabajoVolquetasAPI.Paralizacion
+        > paralizaciones = new java.util.ArrayList<>();
 
         for (
                 int fila = 0;
                 fila < tablaParalizaciones.getRowCount();
                 fila++
         ) {
+
+            int codigo =
+                    Integer.parseInt(
+                            obtenerTextoTabla(
+                                    tablaParalizaciones,
+                                    fila,
+                                    0
+                            )
+                    );
+
+            String descripcion =
+                    obtenerTextoTabla(
+                            tablaParalizaciones,
+                            fila,
+                            1
+                    );
 
             String horaInicio =
                     obtenerTextoTabla(
@@ -1188,22 +1071,6 @@ private void guardarParalizaciones(
                             3
                     );
 
-            if (
-                horaInicio.isEmpty()
-                && horaFin.isEmpty()
-            ) {
-                continue;
-            }
-
-            int codigo =
-                    Integer.parseInt(
-                            obtenerTextoTabla(
-                                    tablaParalizaciones,
-                                    fila,
-                                    0
-                            )
-                    );
-
             String totalHoras =
                     obtenerTextoTabla(
                             tablaParalizaciones,
@@ -1211,521 +1078,109 @@ private void guardarParalizaciones(
                             4
                     );
 
-            ps.setInt(
-                    1,
-                    idGuia
-            );
+            boolean inicioVacio =
+                    horaInicio.isEmpty();
 
-            ps.setInt(
-                    2,
-                    fila + 1
-            );
+            boolean finVacio =
+                    horaFin.isEmpty();
 
-            ps.setInt(
-                    3,
-                    codigo
-            );
+            if (inicioVacio && finVacio) {
+                continue;
+            }
 
-            ps.setTime(
-                    4,
-                    java.sql.Time.valueOf(
-                            horaInicio + ":00"
-                    )
-            );
+            if (inicioVacio != finVacio) {
 
-            ps.setTime(
-                    5,
-                    java.sql.Time.valueOf(
-                            horaFin + ":00"
-                    )
-            );
-
-            ps.setDouble(
-                    6,
-                    convertirTotalADecimal(
-                            totalHoras
-                    )
-            );
-
-            ps.addBatch();
-        }
-
-        ps.executeBatch();
-    }
-}
-
-
-    private void guardarGuia() {
-
-    if (txtNumeroGuia.getText().trim().isEmpty()) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Ingrese el número de guía."
-        );
-
-        txtNumeroGuia.requestFocus();
-        return;
-    }
-
-    if (txtFecha.getText().contains("_")) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Ingrese la fecha."
-        );
-
-        txtFecha.requestFocus();
-        return;
-    }
-
-
-
-
-    for (
-    int fila = 0;
-    fila < tablaTurnos.getRowCount();
-    fila++
-) {
-
-    String turno =
-            obtenerTextoTabla(
-                    tablaTurnos,
-                    fila,
-                    0
-            );
-
-    String horaInicio =
-            obtenerTextoTabla(
-                    tablaTurnos,
-                    fila,
-                    1
-            );
-
-    String horaFin =
-            obtenerTextoTabla(
-                    tablaTurnos,
-                    fila,
-                    2
-            );
-
-    boolean inicioVacio =
-            horaInicio.isEmpty();
-
-    boolean finVacio =
-            horaFin.isEmpty();
-
-    if (inicioVacio != finVacio) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Complete la hora de inicio y la hora de fin del turno "
-                        + turno + ".",
-                "Validación",
-                JOptionPane.WARNING_MESSAGE
-        );
-
-        return;
-    }
-
-    if (!inicioVacio) {
-
-        try {
+                throw new Exception(
+                        "Complete la hora de inicio y la hora de fin "
+                                + "de la paralización "
+                                + codigo + " - " + descripcion + "."
+                );
+            }
 
             convertirHoraAMinutos(horaInicio);
             convertirHoraAMinutos(horaFin);
 
-        } catch (Exception e) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Las horas del turno "
-                            + turno
-                            + " deben tener formato HH:mm.\n"
-                            + "Ejemplo: 07:30",
-                    "Validación",
-                    JOptionPane.WARNING_MESSAGE
+            paralizaciones.add(
+                    new ControlTrabajoVolquetasAPI.Paralizacion(
+                            fila + 1,
+                            codigo,
+                            descripcion,
+                            horaInicio,
+                            horaFin,
+                            convertirTotalADecimal(totalHoras)
+                    )
             );
-
-            return;
         }
-    }
 
-}
+        java.time.LocalDate fecha =
+                java.time.LocalDate.parse(
+                        fechaTexto,
+                        java.time.format.DateTimeFormatter
+                                .ofPattern("dd/MM/yyyy")
+                );
 
+        ControlTrabajoVolquetasAPI.GuiaGuardar guia =
+                new ControlTrabajoVolquetasAPI.GuiaGuardar(
+                        idGuiaEdicion,
+                        numeroGuia,
+                        fecha,
+                        txtCliente.getText().trim(),
+                        txtSolicitante.getText().trim(),
+                        txtPlaca.getText().trim().toUpperCase(),
+                        txtChofer.getText().trim(),
+                        txtSector.getText().trim(),
+                        txtObservaciones.getText().trim(),
+                        txtEncargadoObra.getText().trim(),
+                        turnos,
+                        paralizaciones
+                );
 
+        boolean esEdicion =
+                idGuiaEdicion != null;
 
+        ControlTrabajoVolquetasAPI.GuiaDetalle resultado =
+                ControlTrabajoVolquetasAPI.guardar(
+                        guia
+                );
 
-    /* ===== VALIDAR PARALIZACIONES ===== */
-
-for (
-        int fila = 0;
-        fila < tablaParalizaciones.getRowCount();
-        fila++
-) {
-
-    String codigo =
-            obtenerTextoTabla(
-                    tablaParalizaciones,
-                    fila,
-                    0
-            );
-
-    String descripcion =
-            obtenerTextoTabla(
-                    tablaParalizaciones,
-                    fila,
-                    1
-            );
-
-    String horaInicio =
-            obtenerTextoTabla(
-                    tablaParalizaciones,
-                    fila,
-                    2
-            );
-
-    String horaFin =
-            obtenerTextoTabla(
-                    tablaParalizaciones,
-                    fila,
-                    3
-            );
-
-    boolean inicioVacio =
-            horaInicio.isEmpty();
-
-    boolean finVacio =
-            horaFin.isEmpty();
-
-    // Si ambas horas están vacías, la fila no se utilizará.
-    if (inicioVacio && finVacio) {
-        continue;
-    }
-
-    if (inicioVacio != finVacio) {
+        idGuiaEdicion =
+                resultado.idGuia();
 
         JOptionPane.showMessageDialog(
                 this,
-                "Complete la hora de inicio y la hora de fin "
-                        + "de la paralización "
-                        + codigo + " - " + descripcion + ".",
+                esEdicion
+                        ? "Guía actualizada correctamente."
+                        : "Guía guardada correctamente.",
+                "LPP Smart ERP",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+
+        dispose();
+
+    } catch (
+            java.time.format.DateTimeParseException e
+    ) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "La fecha debe tener el formato dd/MM/yyyy.",
                 "Validación",
                 JOptionPane.WARNING_MESSAGE
         );
 
-        return;
-    }
-
-    try {
-
-        convertirHoraAMinutos(horaInicio);
-        convertirHoraAMinutos(horaFin);
+        txtFecha.requestFocus();
 
     } catch (Exception e) {
 
         JOptionPane.showMessageDialog(
                 this,
-                "Las horas de la paralización "
-                        + codigo + " - " + descripcion
-                        + " deben tener formato HH:mm.\n"
-                        + "Ejemplo: 10:15",
-                "Validación",
-                JOptionPane.WARNING_MESSAGE
+                "Error al guardar la guía:\n"
+                        + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
         );
 
-        return;
-    }
-}
-
-/* ===== FIN VALIDAR PARALIZACIONES ===== */
-
-    Connection conexion = null;
-
-try {
-
-    conexion = ConexionDB.obtenerConexion();
-    conexion.setAutoCommit(false);
-
-    int idGuia;
-
-    if (idGuiaEdicion == null) {
-
-        String sqlInsertarGuia = """
-                INSERT INTO guias (
-                    id_empresa,
-                    tipo_guia,
-                    numero_guia,
-                    fecha,
-                    cliente,
-                    placa,
-                    chofer_operador,
-                    sector,
-                    observaciones,
-                    encargado_obra,
-                    estado
-                )
-                VALUES (
-                    2,
-                    'Control Trabajo Volquetas',
-                    ?,
-                    STR_TO_DATE(?, '%d/%m/%Y'),
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    'PENDIENTE'
-                )
-                """;
-
-        try (
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sqlInsertarGuia,
-                                java.sql.Statement.RETURN_GENERATED_KEYS
-                        )
-        ) {
-
-            ps.setString(
-                    1,
-                    txtNumeroGuia.getText().trim()
-            );
-
-            ps.setString(
-                    2,
-                    txtFecha.getText().trim()
-            );
-
-            ps.setString(
-                    3,
-                    txtCliente.getText().trim()
-            );
-
-            ps.setString(
-                    4,
-                    txtPlaca.getText().trim()
-            );
-
-            ps.setString(
-                    5,
-                    txtChofer.getText().trim()
-            );
-
-            ps.setString(
-                    6,
-                    txtSector.getText().trim()
-            );
-
-            ps.setString(
-                    7,
-                    txtObservaciones.getText().trim()
-            );
-
-
-            ps.setString(
-                        8,
-                        txtEncargadoObra.getText().trim()
-            );
-
-            ps.executeUpdate();
-
-            try (
-                    ResultSet claves =
-                            ps.getGeneratedKeys()
-            ) {
-
-                if (!claves.next()) {
-
-                    throw new Exception(
-                            "No fue posible obtener el ID de la guía."
-                    );
-                }
-
-                idGuia =
-                        claves.getInt(1);
-            }
-        }
-
-    } else {
-
-        idGuia =
-                idGuiaEdicion;
-
-        String sqlActualizarGuia = """
-                UPDATE guias
-                SET
-                    numero_guia = ?,
-                    fecha = STR_TO_DATE(?, '%d/%m/%Y'),
-                    cliente = ?,
-                    placa = ?,
-                    chofer_operador = ?,
-                    sector = ?,
-                    observaciones = ?,
-                    encargado_obra = ?
-                WHERE id_guia = ?
-                  AND estado = 'PENDIENTE'
-                """;
-
-        try (
-                PreparedStatement ps =
-                        conexion.prepareStatement(
-                                sqlActualizarGuia
-                        )
-        ) {
-
-            ps.setString(
-                    1,
-                    txtNumeroGuia.getText().trim()
-            );
-
-            ps.setString(
-                    2,
-                    txtFecha.getText().trim()
-            );
-
-            ps.setString(
-                    3,
-                    txtCliente.getText().trim()
-            );
-
-            ps.setString(
-                    4,
-                    txtPlaca.getText().trim()
-            );
-
-            ps.setString(
-                    5,
-                    txtChofer.getText().trim()
-            );
-
-            ps.setString(
-                    6,
-                    txtSector.getText().trim()
-            );
-
-            ps.setString(
-                    7,
-                    txtObservaciones.getText().trim()
-            );
-
-            ps.setString(
-                    8,
-                    txtEncargadoObra.getText().trim()
-            );
-
-
-            ps.setInt(
-                9,
-                idGuia
-            );
-
-            int filasActualizadas =
-                    ps.executeUpdate();
-
-            if (filasActualizadas == 0) {
-
-                throw new Exception(
-                        "La guía no pudo actualizarse. "
-                                + "Puede estar aprobada."
-                );
-            }
-        }
-
-        // Eliminar los datos anteriores para reemplazarlos.
-        try (
-                PreparedStatement psEliminarTurnos =
-                        conexion.prepareStatement(
-                                """
-                                DELETE FROM control_trabajo_turnos
-                                WHERE id_guia = ?
-                                """
-                        );
-
-                PreparedStatement psEliminarParalizaciones =
-                        conexion.prepareStatement(
-                                """
-                                DELETE FROM control_trabajo_paralizaciones
-                                WHERE id_guia = ?
-                                """
-                        )
-        ) {
-
-            psEliminarTurnos.setInt(
-                    1,
-                    idGuia
-            );
-
-            psEliminarTurnos.executeUpdate();
-
-            psEliminarParalizaciones.setInt(
-                    1,
-                    idGuia
-            );
-
-            psEliminarParalizaciones.executeUpdate();
-        }
-    }
-
-    guardarTurnos(
-            conexion,
-            idGuia
-    );
-
-    guardarParalizaciones(
-            conexion,
-            idGuia
-    );
-
-    conexion.commit();
-
-    String mensaje =
-            idGuiaEdicion == null
-                    ? "Guía guardada correctamente."
-                    : "Guía actualizada correctamente.";
-
-    JOptionPane.showMessageDialog(
-            this,
-            mensaje,
-            "LPP Smart ERP",
-            JOptionPane.INFORMATION_MESSAGE
-    );
-
-    dispose();
-
-} catch (Exception e) {
-
-    if (conexion != null) {
-
-        try {
-            conexion.rollback();
-        } catch (Exception rollbackError) {
-            rollbackError.printStackTrace();
-        }
-    }
-
-    JOptionPane.showMessageDialog(
-            this,
-            "Error al guardar la guía:\n"
-                    + e.getMessage(),
-            "Error",
-            JOptionPane.ERROR_MESSAGE
-    );
-
-    e.printStackTrace();
-
-} finally {
-
-    if (conexion != null) {
-
-        try {
-            conexion.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+        e.printStackTrace();
     }
 }
 

@@ -4,9 +4,6 @@ import java.awt.*;
 import java.text.ParseException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -748,121 +745,84 @@ private boolean horaValida(
 
 public void cargarGuia(String numeroGuia) {
 
-    String sql = """
-            SELECT
-                id_guia,
-                numero_guia,
-                DATE_FORMAT(fecha, '%d/%m/%Y') AS fecha,
-                COALESCE(solicitante, '') AS solicitante,
-                COALESCE(placa, '') AS placa,
-                COALESCE(chofer_operador, '') AS chofer,
-                COALESCE(m3, 0) AS cubicaje,
-                COALESCE(material, '') AS material,
-                COALESCE(sector, '') AS sector,
-                COALESCE(origen, '') AS origen,
-                COALESCE(destino, '') AS destino,
-                TIME_FORMAT(hora_inicio, '%H:%i') AS hora_entrada,
-                TIME_FORMAT(hora_fin, '%H:%i') AS hora_salida,
-                COALESCE(recibi_conforme, '') AS recibi_conforme,
-                COALESCE(observaciones, '') AS observaciones
-            FROM guias
-            WHERE tipo_guia = 'Guía Despacho de Material'
-              AND numero_guia = ?
-            LIMIT 1
-            """;
+    try {
 
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement ps =
-                    conexion.prepareStatement(sql)
-    ) {
-
-        ps.setString(1, numeroGuia);
-
-        try (
-                java.sql.ResultSet resultado =
-                        ps.executeQuery()
-        ) {
-
-            if (!resultado.next()) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "No se encontró la guía.",
-                        "Información",
-                        JOptionPane.WARNING_MESSAGE
+        GuiaDespachoMaterialAPI.GuiaDetalle guia =
+                GuiaDespachoMaterialAPI.obtenerDetalle(
+                        "DEVIALTRANSPORT",
+                        numeroGuia,
+                        "Guía Despacho de Material"
                 );
 
-                return;
-            }
+        idGuiaEdicion =
+                guia.idGuia();
 
-            idGuiaEdicion =
-                    resultado.getInt("id_guia");
+        txtNumeroGuia.setText(
+                guia.numeroGuia()
+        );
 
-            txtNumeroGuia.setText(
-                    resultado.getString("numero_guia")
-            );
+        txtFecha.setText(
+                guia.fecha() == null
+                        ? ""
+                        : guia.fecha().format(
+                                java.time.format.DateTimeFormatter
+                                        .ofPattern("dd/MM/yyyy")
+                        )
+        );
 
-            txtFecha.setText(
-                    resultado.getString("fecha")
-            );
+        txtSolicitante.setText(
+                guia.solicitante()
+        );
 
-            txtSolicitante.setText(
-                    resultado.getString("solicitante")
-            );
+        txtPlaca.setText(
+                guia.placa()
+        );
 
-            txtPlaca.setText(
-                    resultado.getString("placa")
-            );
+        txtChofer.setText(
+                guia.choferOperador()
+        );
 
-            txtChofer.setText(
-                    resultado.getString("chofer")
-            );
+        txtCubicaje.setText(
+                formatearDecimal(
+                        guia.m3()
+                )
+        );
 
-            txtCubicaje.setText(
-                    resultado.getString("cubicaje")
-            );
+        txtSector.setText(
+                guia.sector()
+        );
 
-            txtSector.setText(
-                    resultado.getString("sector")
-            );
+        txtDestino.setText(
+                guia.destino()
+        );
 
-            txtDestino.setText(
-                    resultado.getString("destino")
-            );
+        txtHoraEntrada.setText(
+                guia.horaEntrada() == null
+                        ? ""
+                        : guia.horaEntrada()
+        );
 
-            String horaEntrada =
-                    resultado.getString("hora_entrada");
+        txtHoraSalida.setText(
+                guia.horaSalida() == null
+                        ? ""
+                        : guia.horaSalida()
+        );
 
-            String horaSalida =
-                    resultado.getString("hora_salida");
+        txtRecibiConforme.setText(
+                guia.recibiConforme()
+        );
 
-            txtHoraEntrada.setText(
-                    horaEntrada == null ? "" : horaEntrada
-            );
+        txtObservaciones.setText(
+                guia.observaciones()
+        );
 
-            txtHoraSalida.setText(
-                    horaSalida == null ? "" : horaSalida
-            );
+        cargarOrigenesSeleccionados(
+                guia.origen()
+        );
 
-            txtRecibiConforme.setText(
-                    resultado.getString("recibi_conforme")
-            );
-
-            txtObservaciones.setText(
-                    resultado.getString("observaciones")
-            );
-
-            cargarOrigenesSeleccionados(
-                    resultado.getString("origen")
-            );
-
-            cargarMaterialesSeleccionados(
-                    resultado.getString("material")
-            );
-        }
+        cargarMaterialesSeleccionados(
+                guia.material()
+        );
 
         setTitle(
                 "Editar Guía Despacho de Material - "
@@ -881,6 +841,25 @@ public void cargarGuia(String numeroGuia) {
 
         e.printStackTrace();
     }
+}
+
+private String formatearDecimal(
+        double valor
+) {
+
+    if (valor == Math.rint(valor)) {
+        return String.format(
+                java.util.Locale.US,
+                "%.0f",
+                valor
+        );
+    }
+
+    return String.format(
+            java.util.Locale.US,
+            "%.2f",
+            valor
+    );
 }
 
 private void cargarOrigenesSeleccionados(
@@ -922,6 +901,13 @@ private void cargarOrigenesSeleccionados(
             txtOtroOrigen.setText(
                     limpio.substring(6).trim()
             );
+
+        } else if (
+                limpio.equalsIgnoreCase("Otros")
+        ) {
+
+            chkOrigenOtros.setSelected(true);
+            txtOtroOrigen.setEnabled(true);
         }
     }
 }
@@ -965,19 +951,23 @@ private void cargarMaterialesSeleccionados(
             txtOtroMaterial.setText(
                     limpio.substring(6).trim()
             );
+
+        } else if (
+                limpio.equalsIgnoreCase("Otros")
+        ) {
+
+            chkMaterialOtros.setSelected(true);
+            txtOtroMaterial.setEnabled(true);
         }
     }
 }
-
-
-
 
 private void guardarGuia() {
 
     String numeroGuia =
             txtNumeroGuia.getText().trim();
 
-    String fecha =
+    String fechaTexto =
             txtFecha.getText().trim();
 
     String chofer =
@@ -990,7 +980,9 @@ private void guardarGuia() {
             txtSector.getText().trim();
 
     String placa =
-            txtPlaca.getText().trim();
+            txtPlaca.getText()
+                    .trim()
+                    .toUpperCase();
 
     String cubicajeTexto =
             txtCubicaje.getText()
@@ -1022,40 +1014,37 @@ private void guardarGuia() {
     String recibiConforme =
             txtRecibiConforme.getText().trim();
 
+    if (
+            chkOrigenOtros.isSelected()
+                    && txtOtroOrigen.getText().trim().isEmpty()
+    ) {
 
+        JOptionPane.showMessageDialog(
+                this,
+                "Especifique el otro lugar de origen.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        txtOtroOrigen.requestFocus();
+        return;
+    }
 
     if (
-        chkOrigenOtros.isSelected()
-        && txtOtroOrigen.getText().trim().isEmpty()
-) {
+            chkMaterialOtros.isSelected()
+                    && txtOtroMaterial.getText().trim().isEmpty()
+    ) {
 
-    JOptionPane.showMessageDialog(
-            this,
-            "Especifique el otro lugar de origen.",
-            "Validación",
-            JOptionPane.WARNING_MESSAGE
-    );
+        JOptionPane.showMessageDialog(
+                this,
+                "Especifique el otro tipo de material.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
 
-    txtOtroOrigen.requestFocus();
-    return;
-}
-
-if (
-        chkMaterialOtros.isSelected()
-        && txtOtroMaterial.getText().trim().isEmpty()
-) {
-
-    JOptionPane.showMessageDialog(
-            this,
-            "Especifique el otro tipo de material.",
-            "Validación",
-            JOptionPane.WARNING_MESSAGE
-    );
-
-    txtOtroMaterial.requestFocus();
-    return;
-}
-
+        txtOtroMaterial.requestFocus();
+        return;
+    }
 
     if (numeroGuia.isEmpty()) {
 
@@ -1070,7 +1059,10 @@ if (
         return;
     }
 
-    if (fecha.contains("_")) {
+    if (
+            fechaTexto.isEmpty()
+                    || fechaTexto.contains("_")
+    ) {
 
         JOptionPane.showMessageDialog(
                 this,
@@ -1147,8 +1139,8 @@ if (
     }
 
     if (
-        horaEntrada.isEmpty()
-        != horaSalida.isEmpty()
+            horaEntrada.isEmpty()
+                    != horaSalida.isEmpty()
     ) {
 
         JOptionPane.showMessageDialog(
@@ -1162,11 +1154,11 @@ if (
     }
 
     if (
-        !horaEntrada.isEmpty()
-        && (
-            !horaValida(horaEntrada)
-            || !horaValida(horaSalida)
-        )
+            !horaEntrada.isEmpty()
+                    && (
+                    !horaValida(horaEntrada)
+                            || !horaValida(horaSalida)
+            )
     ) {
 
         JOptionPane.showMessageDialog(
@@ -1191,11 +1183,15 @@ if (
                                 cubicajeTexto
                         );
 
+        if (cubicaje < 0) {
+            throw new NumberFormatException();
+        }
+
     } catch (NumberFormatException e) {
 
         JOptionPane.showMessageDialog(
                 this,
-                "El cubicaje debe contener solamente números.\n"
+                "El cubicaje debe contener solamente números positivos.\n"
                         + "Ejemplo: 12.50",
                 "Validación",
                 JOptionPane.WARNING_MESSAGE
@@ -1205,183 +1201,68 @@ if (
         return;
     }
 
+    try {
 
-
-
-
-    String sql;
-
-if (idGuiaEdicion == null) {
-
-    sql = """
-            INSERT INTO guias (
-                id_empresa,
-                tipo_guia,
-                numero_guia,
-                fecha,
-                solicitante,
-                placa,
-                chofer_operador,
-                m3,
-                material,
-                sector,
-                origen,
-                destino,
-                hora_inicio,
-                hora_fin,
-                recibi_conforme,
-                observaciones,
-                estado
-            )
-            VALUES (
-                (
-                    SELECT id_empresa
-                    FROM empresas
-                    WHERE nombre_empresa = 'DEVIALTRANSPORT'
-                    LIMIT 1
-                ),
-                'Guía Despacho de Material',
-                ?,
-                STR_TO_DATE(?, '%d/%m/%Y'),
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                'PENDIENTE'
-            )
-            """;
-
-} else {
-
-    sql = """
-            UPDATE guias
-            SET
-                numero_guia = ?,
-                fecha = STR_TO_DATE(?, '%d/%m/%Y'),
-                solicitante = ?,
-                placa = ?,
-                chofer_operador = ?,
-                m3 = ?,
-                material = ?,
-                sector = ?,
-                origen = ?,
-                destino = ?,
-                hora_inicio = ?,
-                hora_fin = ?,
-                recibi_conforme = ?,
-                observaciones = ?
-            WHERE id_guia = ?
-              AND tipo_guia = 'Guía Despacho de Material'
-              AND estado = 'PENDIENTE'
-            """;
-}
-
-    
-
-
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement ps =
-                    conexion.prepareStatement(sql)
-    ) {
-
-        ps.setString(1, numeroGuia);
-        ps.setString(2, fecha);
-        ps.setString(3, solicitante);
-        ps.setString(4, placa);
-        ps.setString(5, chofer);
-        ps.setDouble(6, cubicaje);
-        ps.setString(7, material);
-        ps.setString(8, sector);
-        ps.setString(9, origen);
-        ps.setString(10, destino);
-
-        if (horaEntrada.isEmpty()) {
-
-            ps.setNull(
-                    11,
-                    Types.TIME
-            );
-
-        } else {
-
-            ps.setTime(
-                    11,
-                    java.sql.Time.valueOf(
-                            horaEntrada + ":00"
-                    )
-            );
-        }
-
-        if (horaSalida.isEmpty()) {
-
-            ps.setNull(
-                    12,
-                    Types.TIME
-            );
-
-        } else {
-
-            ps.setTime(
-                    12,
-                    java.sql.Time.valueOf(
-                            horaSalida + ":00"
-                    )
-            );
-        }
-
-        ps.setString(
-                13,
-                recibiConforme
-        );
-
-        ps.setString(
-                14,
-                observaciones
-        );
-
-        if (idGuiaEdicion != null) {
-
-                ps.setInt(
-                        15,
-                        idGuiaEdicion
+        java.time.LocalDate fecha =
+                java.time.LocalDate.parse(
+                        fechaTexto,
+                        java.time.format.DateTimeFormatter
+                                .ofPattern("dd/MM/yyyy")
                 );
-        }
 
+        GuiaDespachoMaterialAPI.GuiaGuardar guia =
+                new GuiaDespachoMaterialAPI.GuiaGuardar(
+                        idGuiaEdicion,
+                        numeroGuia,
+                        fecha,
+                        chofer,
+                        solicitante,
+                        sector,
+                        placa,
+                        cubicaje,
+                        origen,
+                        destino,
+                        horaEntrada,
+                        horaSalida,
+                        material,
+                        observaciones,
+                        recibiConforme
+                );
 
-        int filasInsertadas =
-                ps.executeUpdate();
+        boolean esEdicion =
+                idGuiaEdicion != null;
 
-        if (filasInsertadas == 0) {
+        GuiaDespachoMaterialAPI.GuiaDetalle resultado =
+                GuiaDespachoMaterialAPI.guardar(
+                        guia
+                );
 
-            throw new Exception(
-                    "No fue posible guardar la guía."
-            );
-        }
+        idGuiaEdicion =
+                resultado.idGuia();
 
-        String mensaje =
-        idGuiaEdicion == null
-                ? "Guía de despacho de material guardada correctamente."
-                : "Guía de despacho de material actualizada correctamente.";
-
-JOptionPane.showMessageDialog(
-        this,
-        mensaje,
-        "LPP Smart ERP",
-        JOptionPane.INFORMATION_MESSAGE
-);
+        JOptionPane.showMessageDialog(
+                this,
+                esEdicion
+                        ? "Guía de despacho de material actualizada correctamente."
+                        : "Guía de despacho de material guardada correctamente.",
+                "LPP Smart ERP",
+                JOptionPane.INFORMATION_MESSAGE
+        );
 
         dispose();
+
+    } catch (
+            java.time.format.DateTimeParseException e
+    ) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "La fecha debe tener el formato dd/MM/yyyy.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        txtFecha.requestFocus();
 
     } catch (Exception e) {
 

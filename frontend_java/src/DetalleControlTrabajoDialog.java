@@ -1,9 +1,6 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 public class DetalleControlTrabajoDialog extends JDialog {
 
@@ -34,147 +31,69 @@ public class DetalleControlTrabajoDialog extends JDialog {
 
     private void cargarDetalle() {
 
-        String sqlCabecera = """
-                SELECT
-                    g.id_guia,
-                    e.nombre_empresa,
-                    g.numero_guia,
-                    DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
-                    COALESCE(g.cliente, '') AS cliente,
-                    COALESCE(g.chofer_operador, '') AS chofer,
-                    COALESCE(g.placa, '') AS placa,
-                    COALESCE(g.sector, '') AS sector,
-                    COALESCE(g.observaciones, '') AS observaciones,
-                    g.estado
-                FROM guias g
-                INNER JOIN empresas e
-                    ON e.id_empresa = g.id_empresa
-                WHERE e.nombre_empresa = ?
-                  AND g.tipo_guia = 'Control Trabajo Volquetas'
-                  AND g.numero_guia = ?
-                LIMIT 1
-                """;
+        try {
 
-        String sqlTurnos = """
-                SELECT
-                    turno,
-                    TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio,
-                    TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin,
-                    total_horas
-                FROM control_trabajo_turnos
-                WHERE id_guia = ?
-                ORDER BY FIELD(
-                    turno,
-                    'MAÑANA',
-                    'TARDE',
-                    'NOCHE'
-                )
-                """;
-
-        String sqlParalizaciones = """
-                SELECT
-                    codigo,
-                    TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio,
-                    TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin,
-                    total_horas
-                FROM control_trabajo_paralizaciones
-                WHERE id_guia = ?
-                ORDER BY numero_fila
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement psCabecera =
-                        conexion.prepareStatement(sqlCabecera)
-        ) {
-
-            psCabecera.setString(1, empresa);
-            psCabecera.setString(2, numeroGuia);
-
-            try (
-                    ResultSet cabecera =
-                            psCabecera.executeQuery()
-            ) {
-
-                if (!cabecera.next()) {
-
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "No se encontró la guía seleccionada.",
-                            "Información",
-                            JOptionPane.WARNING_MESSAGE
+            ControlTrabajoVolquetasAPI.GuiaDetalle guia =
+                    ControlTrabajoVolquetasAPI.obtenerDetalle(
+                            empresa,
+                            numeroGuia,
+                            "Control Trabajo Volquetas"
                     );
 
-                    dispose();
-                    return;
-                }
+            JPanel panelPrincipal =
+                    new JPanel(
+                            new BorderLayout(10, 10)
+                    );
 
-                int idGuia =
-                        cabecera.getInt("id_guia");
+            panelPrincipal.setBorder(
+                    BorderFactory.createEmptyBorder(
+                            15,
+                            15,
+                            15,
+                            15
+                    )
+            );
 
-                JPanel panelPrincipal =
-                        new JPanel(
-                                new BorderLayout(10, 10)
-                        );
+            panelPrincipal.add(
+                    crearPanelCabecera(guia),
+                    BorderLayout.NORTH
+            );
 
-                panelPrincipal.setBorder(
-                        BorderFactory.createEmptyBorder(
-                                15,
-                                15,
-                                15,
-                                15
-                        )
-                );
+            JPanel panelTablas =
+                    new JPanel(
+                            new GridLayout(
+                                    2,
+                                    1,
+                                    10,
+                                    10
+                            )
+                    );
 
-                panelPrincipal.add(
-                        crearPanelCabecera(cabecera),
-                        BorderLayout.NORTH
-                );
+            panelTablas.add(
+                    crearPanelTurnos(
+                            guia.turnos()
+                    )
+            );
 
-                JPanel panelTablas =
-                        new JPanel(
-                                new GridLayout(
-                                        2,
-                                        1,
-                                        10,
-                                        10
-                                )
-                        );
+            panelTablas.add(
+                    crearPanelParalizaciones(
+                            guia.paralizaciones()
+                    )
+            );
 
-                panelTablas.add(
-                        crearPanelTurnos(
-                                conexion,
-                                idGuia,
-                                sqlTurnos
-                        )
-                );
+            panelPrincipal.add(
+                    panelTablas,
+                    BorderLayout.CENTER
+            );
 
-                panelTablas.add(
-                        crearPanelParalizaciones(
-                                conexion,
-                                idGuia,
-                                sqlParalizaciones
-                        )
-                );
+            panelPrincipal.add(
+                    crearPanelInferior(
+                            guia.observaciones()
+                    ),
+                    BorderLayout.SOUTH
+            );
 
-                panelPrincipal.add(
-                        panelTablas,
-                        BorderLayout.CENTER
-                );
-
-                panelPrincipal.add(
-                        crearPanelInferior(
-                                cabecera.getString(
-                                        "observaciones"
-                                )
-                        ),
-                        BorderLayout.SOUTH
-                );
-
-                setContentPane(panelPrincipal);
-            }
+            setContentPane(panelPrincipal);
 
         } catch (Exception e) {
 
@@ -192,8 +111,8 @@ public class DetalleControlTrabajoDialog extends JDialog {
     }
 
     private JPanel crearPanelCabecera(
-            ResultSet cabecera
-    ) throws Exception {
+            ControlTrabajoVolquetasAPI.GuiaDetalle guia
+    ) {
 
         JPanel panel =
                 new JPanel(
@@ -212,73 +131,44 @@ public class DetalleControlTrabajoDialog extends JDialog {
         );
 
         panel.add(new JLabel("Empresa:"));
-        panel.add(
-                new JLabel(
-                        cabecera.getString(
-                                "nombre_empresa"
-                        )
-                )
-        );
+        panel.add(new JLabel(guia.empresa()));
 
         panel.add(new JLabel("N° Guía:"));
-        panel.add(
-                new JLabel(
-                        cabecera.getString(
-                                "numero_guia"
-                        )
-                )
-        );
+        panel.add(new JLabel(guia.numeroGuia()));
 
         panel.add(new JLabel("Fecha:"));
         panel.add(
                 new JLabel(
-                        cabecera.getString("fecha")
+                        guia.fecha() == null
+                                ? ""
+                                : guia.fecha().format(
+                                        java.time.format.DateTimeFormatter
+                                                .ofPattern("dd/MM/yyyy")
+                                )
                 )
         );
 
         panel.add(new JLabel("Estado:"));
-        panel.add(
-                new JLabel(
-                        cabecera.getString("estado")
-                )
-        );
+        panel.add(new JLabel(guia.estado()));
 
         panel.add(new JLabel("Cliente:"));
-        panel.add(
-                new JLabel(
-                        cabecera.getString("cliente")
-                )
-        );
+        panel.add(new JLabel(guia.cliente()));
 
         panel.add(new JLabel("Sector:"));
-        panel.add(
-                new JLabel(
-                        cabecera.getString("sector")
-                )
-        );
+        panel.add(new JLabel(guia.sector()));
 
         panel.add(new JLabel("Chofer:"));
-        panel.add(
-                new JLabel(
-                        cabecera.getString("chofer")
-                )
-        );
+        panel.add(new JLabel(guia.choferOperador()));
 
         panel.add(new JLabel("Placa:"));
-        panel.add(
-                new JLabel(
-                        cabecera.getString("placa")
-                )
-        );
+        panel.add(new JLabel(guia.placa()));
 
         return panel;
     }
 
     private JPanel crearPanelTurnos(
-            Connection conexion,
-            int idGuia,
-            String sqlTurnos
-    ) throws Exception {
+            java.util.List<ControlTrabajoVolquetasAPI.Turno> turnos
+    ) {
 
         String[] columnas = {
                 "Turno",
@@ -290,43 +180,23 @@ public class DetalleControlTrabajoDialog extends JDialog {
         DefaultTableModel modelo =
                 crearModeloNoEditable(columnas);
 
-        try (
-                PreparedStatement statement =
-                        conexion.prepareStatement(
-                                sqlTurnos
-                        )
-        ) {
+        if (turnos != null) {
 
-            statement.setInt(1, idGuia);
-
-            try (
-                    ResultSet resultado =
-                            statement.executeQuery()
+            for (
+                    ControlTrabajoVolquetasAPI.Turno turno
+                            : turnos
             ) {
 
-                while (resultado.next()) {
-
-                    modelo.addRow(
-                            new Object[]{
-                                    resultado.getString(
-                                            "turno"
-                                    ),
-                                    valorHora(
-                                            resultado,
-                                            "hora_inicio"
-                                    ),
-                                    valorHora(
-                                            resultado,
-                                            "hora_fin"
-                                    ),
-                                    convertirDecimalAHoras(
-                                            resultado.getDouble(
-                                                    "total_horas"
-                                            )
-                                    )
-                            }
-                    );
-                }
+                modelo.addRow(
+                        new Object[]{
+                                turno.turno(),
+                                turno.horaInicio(),
+                                turno.horaFin(),
+                                convertirDecimalAHoras(
+                                        turno.totalHoras()
+                                )
+                        }
+                );
             }
         }
 
@@ -353,10 +223,10 @@ public class DetalleControlTrabajoDialog extends JDialog {
     }
 
     private JPanel crearPanelParalizaciones(
-            Connection conexion,
-            int idGuia,
-            String sqlParalizaciones
-    ) throws Exception {
+            java.util.List<
+                    ControlTrabajoVolquetasAPI.Paralizacion
+            > paralizaciones
+    ) {
 
         String[] columnas = {
                 "Código",
@@ -369,47 +239,24 @@ public class DetalleControlTrabajoDialog extends JDialog {
         DefaultTableModel modelo =
                 crearModeloNoEditable(columnas);
 
-        try (
-                PreparedStatement statement =
-                        conexion.prepareStatement(
-                                sqlParalizaciones
-                        )
-        ) {
+        if (paralizaciones != null) {
 
-            statement.setInt(1, idGuia);
-
-            try (
-                    ResultSet resultado =
-                            statement.executeQuery()
+            for (
+                    ControlTrabajoVolquetasAPI.Paralizacion paralizacion
+                            : paralizaciones
             ) {
 
-                while (resultado.next()) {
-
-                    int codigo =
-                            resultado.getInt("codigo");
-
-                    modelo.addRow(
-                            new Object[]{
-                                    codigo,
-                                    obtenerDescripcionParalizacion(
-                                            codigo
-                                    ),
-                                    valorHora(
-                                            resultado,
-                                            "hora_inicio"
-                                    ),
-                                    valorHora(
-                                            resultado,
-                                            "hora_fin"
-                                    ),
-                                    convertirDecimalAHoras(
-                                            resultado.getDouble(
-                                                    "total_horas"
-                                            )
-                                    )
-                            }
-                    );
-                }
+                modelo.addRow(
+                        new Object[]{
+                                paralizacion.codigo(),
+                                paralizacion.descripcion(),
+                                paralizacion.horaInicio(),
+                                paralizacion.horaFin(),
+                                convertirDecimalAHoras(
+                                        paralizacion.totalHoras()
+                                )
+                        }
+                );
             }
         }
 
@@ -517,19 +364,6 @@ public class DetalleControlTrabajoDialog extends JDialog {
         };
     }
 
-    private String valorHora(
-            ResultSet resultado,
-            String columna
-    ) throws Exception {
-
-        String valor =
-                resultado.getString(columna);
-
-        return valor == null
-                ? ""
-                : valor;
-    }
-
     private String convertirDecimalAHoras(
             double horasDecimal
     ) {
@@ -550,26 +384,5 @@ public class DetalleControlTrabajoDialog extends JDialog {
                 horas,
                 minutos
         );
-    }
-
-    private String obtenerDescripcionParalizacion(
-            int codigo
-    ) {
-
-        return switch (codigo) {
-
-            case 1 -> "Clima";
-            case 2 -> "Parada por daño";
-            case 3 -> "Falta de área";
-            case 4 -> "Mantenimiento";
-            case 5 -> "Alimentación";
-            case 6 ->
-                    "Abastecimiento de combustible";
-            case 7 ->
-                    "Mantenimiento o reparación (Eq. encendido)";
-            case 8 -> "Otros";
-
-            default -> "";
-        };
     }
 }

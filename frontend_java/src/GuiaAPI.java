@@ -16,16 +16,16 @@ public class GuiaAPI {
     }
 
     public record GuiaResumen(
-            String empresa,
-            String tipoGuia,
-            String numeroGuia,
-            LocalDate fecha,
-            String choferOperador,
-            String placa,
-            double m3,
-            String estado
-    ) {
-    }
+        String empresa,
+        String tipoGuia,
+        String numeroGuia,
+        LocalDate fecha,
+        String choferOperador,
+        String placa,
+        double m3,
+        String estado
+) {
+}
     public record GuiaProduccionDetalleFila(
         int numeroFila,
         String proyecto,
@@ -49,6 +49,29 @@ public record GuiaProduccionDetalle(
         String observaciones,
         String estado,
         List<GuiaProduccionDetalleFila> detalle
+) {
+}
+    public record GuiaProduccionGuardarFila(
+        int numeroFila,
+        String proyecto,
+        String sector,
+        String cantera,
+        String material,
+        String horaOrigen,
+        String horaDestino
+) {
+}
+
+public record GuiaProduccionGuardar(
+        Integer idGuia,
+        String numeroGuia,
+        LocalDate fecha,
+        String placa,
+        String choferOperador,
+        double m3,
+        String recibiConforme,
+        String observaciones,
+        List<GuiaProduccionGuardarFila> detalle
 ) {
 }
 
@@ -93,7 +116,9 @@ public record GuiaProduccionDetalle(
                     elemento.getAsJsonObject();
 
             guias.add(
-                    new GuiaResumen(
+                    new 
+                    GuiaResumen(
+                            
                             obtenerTexto(
                                     item,
                                     "empresa"
@@ -351,6 +376,137 @@ public record GuiaProduccionDetalle(
             filas
     );
 }
+    public static GuiaProduccionDetalle guardarGuiaProduccion(
+        GuiaProduccionGuardar guia
+) throws Exception {
+
+    if (guia == null) {
+        throw new IllegalArgumentException(
+                "Los datos de la guía son obligatorios."
+        );
+    }
+
+    JsonObject cuerpo =
+            new JsonObject();
+
+    cuerpo.addProperty(
+            "numeroGuia",
+            guia.numeroGuia()
+    );
+
+    cuerpo.addProperty(
+            "fecha",
+            guia.fecha() == null
+                    ? null
+                    : guia.fecha().toString()
+    );
+
+    cuerpo.addProperty(
+            "placa",
+            guia.placa()
+    );
+
+    cuerpo.addProperty(
+            "choferOperador",
+            guia.choferOperador()
+    );
+
+    cuerpo.addProperty(
+            "m3",
+            guia.m3()
+    );
+
+    cuerpo.addProperty(
+            "recibiConforme",
+            guia.recibiConforme()
+    );
+
+    cuerpo.addProperty(
+            "observaciones",
+            guia.observaciones()
+    );
+
+    JsonArray detalleJson =
+            new JsonArray();
+
+    if (guia.detalle() != null) {
+
+        for (
+                GuiaProduccionGuardarFila fila
+                        : guia.detalle()
+        ) {
+
+            JsonObject item =
+                    new JsonObject();
+
+            item.addProperty(
+                    "numeroFila",
+                    fila.numeroFila()
+            );
+
+            item.addProperty(
+                    "proyecto",
+                    fila.proyecto()
+            );
+
+            item.addProperty(
+                    "sector",
+                    fila.sector()
+            );
+
+            item.addProperty(
+                    "cantera",
+                    fila.cantera()
+            );
+
+            item.addProperty(
+                    "material",
+                    fila.material()
+            );
+
+            item.addProperty(
+                    "horaOrigen",
+                    fila.horaOrigen()
+            );
+
+            item.addProperty(
+                    "horaDestino",
+                    fila.horaDestino()
+            );
+
+            detalleJson.add(item);
+        }
+    }
+
+    cuerpo.add(
+            "detalle",
+            detalleJson
+    );
+
+    String respuestaJson;
+
+    if (guia.idGuia() == null) {
+
+        respuestaJson =
+                ConexionAPI.post(
+                        "/api/v1/guias/produccion",
+                        GSON.toJson(cuerpo)
+                );
+
+    } else {
+
+        respuestaJson =
+                ConexionAPI.put(
+                        "/api/v1/guias/produccion/"
+                                + guia.idGuia(),
+                        GSON.toJson(cuerpo)
+                );
+    }
+
+    return convertirDetalleRespuesta(
+            respuestaJson
+    );
+}
 
     private static String obtenerMensajeError(
             JsonObject respuesta
@@ -442,5 +598,128 @@ public record GuiaProduccionDetalle(
     return objeto
             .get(propiedad)
             .getAsInt();
+}
+    private static GuiaProduccionDetalle convertirDetalleRespuesta(
+        String respuestaJson
+) throws Exception {
+
+    JsonObject respuesta =
+            GSON.fromJson(
+                    respuestaJson,
+                    JsonObject.class
+            );
+
+    if (
+            respuesta == null
+            || !respuesta.has("exito")
+            || !respuesta.get("exito").getAsBoolean()
+    ) {
+
+        throw new Exception(
+                obtenerMensajeError(respuesta)
+        );
+    }
+
+    JsonObject datos =
+            respuesta.getAsJsonObject("datos");
+
+    if (datos == null) {
+
+        throw new Exception(
+                "La API no devolvió los datos de la guía."
+        );
+    }
+
+    List<GuiaProduccionDetalleFila> filas =
+            new ArrayList<>();
+
+    JsonArray detalle =
+            datos.getAsJsonArray("detalle");
+
+    if (detalle != null) {
+
+        for (JsonElement elemento : detalle) {
+
+            JsonObject item =
+                    elemento.getAsJsonObject();
+
+            filas.add(
+                    new GuiaProduccionDetalleFila(
+                            obtenerEntero(
+                                    item,
+                                    "numeroFila"
+                            ),
+                            obtenerTexto(
+                                    item,
+                                    "proyecto"
+                            ),
+                            obtenerTexto(
+                                    item,
+                                    "sector"
+                            ),
+                            obtenerTexto(
+                                    item,
+                                    "cantera"
+                            ),
+                            obtenerTexto(
+                                    item,
+                                    "material"
+                            ),
+                            obtenerTexto(
+                                    item,
+                                    "horaOrigen"
+                            ),
+                            obtenerTexto(
+                                    item,
+                                    "horaDestino"
+                            )
+                    )
+            );
+        }
+    }
+
+    return new GuiaProduccionDetalle(
+            obtenerEntero(
+                    datos,
+                    "idGuia"
+            ),
+            obtenerTexto(
+                    datos,
+                    "empresa"
+            ),
+            obtenerTexto(
+                    datos,
+                    "numeroGuia"
+            ),
+            obtenerFecha(
+                    datos,
+                    "fecha"
+            ),
+            obtenerTexto(
+                    datos,
+                    "choferOperador"
+            ),
+            obtenerTexto(
+                    datos,
+                    "placa"
+            ),
+            obtenerDecimal(
+                    datos,
+                    "m3"
+            ),
+            obtenerTexto(
+                    datos,
+                    "recibiConforme"
+            ),
+            obtenerTexto(
+                    datos,
+                    "observaciones"
+            ),
+            obtenerTexto(
+                    datos,
+                    "estado"
+            ),
+            filas
+    );
 }
 }

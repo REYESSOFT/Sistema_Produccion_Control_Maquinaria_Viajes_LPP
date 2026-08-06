@@ -7,9 +7,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 
 
@@ -748,311 +745,191 @@ txtNumeroMaquina.getDocument().addDocumentListener(new DocumentListener() {
 
 
 
-private List<GuiaTrabajoMaquinariaDAO.Turno>
-        obtenerTurnosParaGuardar() throws Exception {
-
-    List<GuiaTrabajoMaquinariaDAO.Turno> turnos =
-            new ArrayList<>();
-
-    for (
-            int fila = 0;
-            fila < tablaTurnos.getRowCount();
-            fila++
-    ) {
-
-        String nombreTurno =
-                obtenerTextoTabla(
-                        tablaTurnos,
-                        fila,
-                        0
-                );
-
-        String horaInicio =
-                obtenerTextoTabla(
-                        tablaTurnos,
-                        fila,
-                        1
-                );
-
-        String horaFin =
-                obtenerTextoTabla(
-                        tablaTurnos,
-                        fila,
-                        2
-                );
-
-        String total =
-                obtenerTextoTabla(
-                        tablaTurnos,
-                        fila,
-                        3
-                );
-
-        boolean inicioVacio =
-                horaInicio.isEmpty();
-
-        boolean finVacio =
-                horaFin.isEmpty();
-
-        if (inicioVacio != finVacio) {
-
-            throw new Exception(
-                    "Complete la hora de inicio y la hora de fin "
-                            + "del turno " + nombreTurno + "."
-            );
-        }
-
-        if (!inicioVacio) {
-
-            convertirHoraAMinutos(
-                    horaInicio
-            );
-
-            convertirHoraAMinutos(
-                    horaFin
-            );
-        }
-
-        turnos.add(
-                new GuiaTrabajoMaquinariaDAO.Turno(
-                        nombreTurno,
-                        horaInicio,
-                        horaFin,
-                        convertirTotalADecimal(total)
-                )
-        );
-    }
-
-    return turnos;
-}
-
-
 
 public void cargarGuia(String numeroGuia) {
 
-    String sqlCabecera = """
-            SELECT
-                id_guia,
-                numero_guia,
-                DATE_FORMAT(fecha, '%d/%m/%Y') AS fecha,
-                COALESCE(cliente, '') AS cliente,
-                COALESCE(equipo, '') AS tipo_maquina,
-                COALESCE(numero_maquina, '') AS numero_maquina,
-                COALESCE(chofer_operador, '') AS operador,
-                COALESCE(sector, '') AS sector,
-                COALESCE(trabajo_realizar, '') AS trabajo_realizar,
-                COALESCE(chequeo_engrase, 0) AS chequeo_engrase,
-                TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio,
-                TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin,
-                horometro_inicial,
-                horometro_final,
-                horometro_recorrido,
-                COALESCE(combustible, '') AS combustible,
-                COALESCE(recibi_conforme, '') AS recibi_conforme,
-                COALESCE(observaciones, '') AS observaciones
-            FROM guias
-            WHERE tipo_guia = 'Guía Trabajo Diario Maquinaria'
-              AND numero_guia = ?
-            LIMIT 1
-            """;
+    try {
 
-    String sqlTurnos = """
-            SELECT
-                turno,
-                TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio,
-                TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin
-            FROM trabajo_maquinaria_turnos
-            WHERE id_guia = ?
-            ORDER BY FIELD(
-                turno,
-                'MAÑANA',
-                'TARDE',
-                'NOCHE'
-            )
-            """;
-
-    try (
-            Connection conexion =
-                    ConexionDB.obtenerConexion();
-
-            PreparedStatement psCabecera =
-                    conexion.prepareStatement(sqlCabecera)
-    ) {
-
-        psCabecera.setString(
-                1,
-                numeroGuia
-        );
-
-        try (
-                ResultSet resultado =
-                        psCabecera.executeQuery()
-        ) {
-
-            if (!resultado.next()) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "No se encontró la guía N° "
-                                + numeroGuia + ".",
-                        "Información",
-                        JOptionPane.WARNING_MESSAGE
+        GuiaTrabajoMaquinariaAPI.GuiaDetalle guia =
+                GuiaTrabajoMaquinariaAPI.obtenerDetalle(
+                        "EQUIPOS PRO",
+                        numeroGuia,
+                        "Guía Trabajo Diario Maquinaria"
                 );
 
-                return;
-            }
+        if (guia == null) {
 
-            idGuiaEdicion =
-                    resultado.getInt("id_guia");
-
-            txtNumeroGuia.setText(
-                    resultado.getString("numero_guia")
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No se encontró la guía N° "
+                            + numeroGuia + ".",
+                    "Información",
+                    JOptionPane.WARNING_MESSAGE
             );
 
-            txtFecha.setText(
-                    resultado.getString("fecha")
-            );
-
-            txtCliente.setText(
-                    resultado.getString("cliente")
-            );
-
-            txtTipoMaquina.setText(
-                    resultado.getString("tipo_maquina")
-            );
-
-            txtNumeroMaquina.setText(
-                    resultado.getString("numero_maquina")
-            );
-
-            txtOperador.setText(
-                    resultado.getString("operador")
-            );
-
-            txtSector.setText(
-                    resultado.getString("sector")
-            );
-
-            txtTrabajoRealizar.setText(
-                    resultado.getString("trabajo_realizar")
-            );
-
-            chkEngrase.setSelected(
-                    resultado.getBoolean("chequeo_engrase")
-            );
-
-            String horaInicio =
-                    resultado.getString("hora_inicio");
-
-            String horaFin =
-                    resultado.getString("hora_fin");
-
-            txtHoraInicio.setText(
-                    horaInicio == null ? "" : horaInicio
-            );
-
-            txtHoraFin.setText(
-                    horaFin == null ? "" : horaFin
-            );
-
-            Object horometroInicial =
-                    resultado.getObject("horometro_inicial");
-
-            Object horometroFinal =
-                    resultado.getObject("horometro_final");
-
-            Object horometroRecorrido =
-                    resultado.getObject("horometro_recorrido");
-
-            txtHorometroInicio.setText(
-                    horometroInicial == null
-                            ? ""
-                            : horometroInicial.toString()
-            );
-
-            txtHorometroFin.setText(
-                    horometroFinal == null
-                            ? ""
-                            : horometroFinal.toString()
-            );
-
-            txtHorometroRecorrido.setText(
-                    horometroRecorrido == null
-                            ? ""
-                            : horometroRecorrido.toString()
-            );
-
-            txtCombustible.setText(
-                    resultado.getString("combustible")
-            );
-
-            txtRecibiConforme.setText(
-                    resultado.getString("recibi_conforme")
-            );
-
-            txtObservaciones.setText(
-                    resultado.getString("observaciones")
-            );
+            return;
         }
 
-        // Limpiar los turnos antes de cargarlos.
+        /*
+         * El ID se recibe únicamente para mantener
+         * la actualización por PUT que ya funciona.
+         *
+         * No se obtiene desde la tabla de GuiasPage.
+         */
+        idGuiaEdicion =
+                guia.idGuia();
+
+        txtNumeroGuia.setText(
+                guia.numeroGuia()
+        );
+
+        txtFecha.setText(
+                guia.fecha() == null
+                        ? ""
+                        : guia.fecha().format(
+                                java.time.format.DateTimeFormatter
+                                        .ofPattern("dd/MM/yyyy")
+                        )
+        );
+
+        txtCliente.setText(
+                guia.cliente()
+        );
+
+        txtNumeroMaquina.setText(
+                guia.numeroMaquina()
+        );
+
+        txtTipoMaquina.setText(
+                guia.tipoMaquina()
+        );
+
+        txtOperador.setText(
+                guia.operador()
+        );
+
+        txtSector.setText(
+                guia.sector()
+        );
+
+        txtTrabajoRealizar.setText(
+                guia.trabajoRealizar()
+        );
+
+        chkEngrase.setSelected(
+                guia.chequeoEngrase()
+        );
+
+        txtHoraInicio.setText(
+                guia.horaInicio() == null
+                        ? ""
+                        : guia.horaInicio()
+        );
+
+        txtHoraFin.setText(
+                guia.horaFin() == null
+                        ? ""
+                        : guia.horaFin()
+        );
+
+        txtHorometroInicio.setText(
+                guia.horometroInicial() == null
+                        ? ""
+                        : guia.horometroInicial().toString()
+        );
+
+        txtHorometroFin.setText(
+                guia.horometroFinal() == null
+                        ? ""
+                        : guia.horometroFinal().toString()
+        );
+
+        txtHorometroRecorrido.setText(
+                guia.horometroRecorrido() == null
+                        ? ""
+                        : guia.horometroRecorrido().toString()
+        );
+
+        txtCombustible.setText(
+                guia.combustible()
+        );
+
+        txtRecibiConforme.setText(
+                guia.recibiConforme()
+        );
+
+        txtObservaciones.setText(
+                guia.observaciones()
+        );
+
+        /*
+         * Limpiar la tabla antes de cargar
+         * los turnos recibidos desde la API.
+         */
         for (
                 int fila = 0;
                 fila < tablaTurnos.getRowCount();
                 fila++
         ) {
 
-            tablaTurnos.setValueAt("", fila, 1);
-            tablaTurnos.setValueAt("", fila, 2);
-            tablaTurnos.setValueAt("", fila, 3);
-        }
-
-        try (
-                PreparedStatement psTurnos =
-                        conexion.prepareStatement(sqlTurnos)
-        ) {
-
-            psTurnos.setInt(
-                    1,
-                    idGuiaEdicion
+            tablaTurnos.setValueAt(
+                    "",
+                    fila,
+                    1
             );
 
-            try (
-                    ResultSet turnos =
-                            psTurnos.executeQuery()
+            tablaTurnos.setValueAt(
+                    "",
+                    fila,
+                    2
+            );
+
+            tablaTurnos.setValueAt(
+                    "",
+                    fila,
+                    3
+            );
+        }
+
+        if (guia.turnos() != null) {
+
+            for (
+                    GuiaTrabajoMaquinariaAPI.Turno turno
+                            : guia.turnos()
             ) {
 
-                while (turnos.next()) {
+                int fila =
+                        obtenerFilaTurno(
+                                turno.turno()
+                        );
 
-                    int fila =
-                            obtenerFilaTurno(
-                                    turnos.getString("turno")
-                            );
-
-                    if (fila == -1) {
-                        continue;
-                    }
-
-                    String inicio =
-                            turnos.getString("hora_inicio");
-
-                    String fin =
-                            turnos.getString("hora_fin");
-
-                    tablaTurnos.setValueAt(
-                            inicio == null ? "" : inicio,
-                            fila,
-                            1
-                    );
-
-                    tablaTurnos.setValueAt(
-                            fin == null ? "" : fin,
-                            fila,
-                            2
-                    );
-
-                    calcularTotalTurno(fila);
+                if (fila == -1) {
+                    continue;
                 }
+
+                tablaTurnos.setValueAt(
+                        turno.horaInicio() == null
+                                ? ""
+                                : turno.horaInicio(),
+                        fila,
+                        1
+                );
+
+                tablaTurnos.setValueAt(
+                        turno.horaFin() == null
+                                ? ""
+                                : turno.horaFin(),
+                        fila,
+                        2
+                );
+
+                tablaTurnos.setValueAt(
+                        formatearTotalHoras(
+                                turno.totalHoras()
+                        ),
+                        fila,
+                        3
+                );
             }
         }
 
@@ -1204,7 +1081,10 @@ private void guardarGuia() {
         return;
     }
 
-    if (fecha.contains("_")) {
+    if (
+            fecha.isEmpty()
+            || fecha.contains("_")
+    ) {
 
         JOptionPane.showMessageDialog(
                 this,
@@ -1302,71 +1182,133 @@ private void guardarGuia() {
 
     try {
 
-    List<GuiaTrabajoMaquinariaDAO.Turno> turnos =
-            obtenerTurnosParaGuardar();
+    List<GuiaTrabajoMaquinariaAPI.Turno> turnos =
+        new ArrayList<>();
 
+for (
+        int fila = 0;
+        fila < tablaTurnos.getRowCount();
+        fila++
+) {
 
-    
-    
-    if (idGuiaEdicion == null) {
+    String nombreTurno =
+            obtenerTextoTabla(
+                    tablaTurnos,
+                    fila,
+                    0
+            );
 
-    GuiaTrabajoMaquinariaDAO.guardarNuevaGuia(
+    String inicio =
+            obtenerTextoTabla(
+                    tablaTurnos,
+                    fila,
+                    1
+            );
 
-            numeroGuia,
-            fecha,
-            cliente,
-            tipoMaquina,
-            numeroMaquina,
-            operador,
-            convertirTotalADecimal(totalHoras),
-            sector,
-            trabajoRealizar,
-            chkEngrase.isSelected(),
-            horaInicio,
-            horaFin,
-            horometroInicio,
-            horometroFin,
-            horometroRecorrido,
-            combustible,
-            recibiConforme,
-            observaciones,
-            turnos
-    );
+    String fin =
+            obtenerTextoTabla(
+                    tablaTurnos,
+                    fila,
+                    2
+            );
 
-} else {
+    String total =
+            obtenerTextoTabla(
+                    tablaTurnos,
+                    fila,
+                    3
+            );
 
-    GuiaTrabajoMaquinariaDAO.actualizarGuia(
+    boolean inicioVacio =
+            inicio.isEmpty();
 
-            idGuiaEdicion,
+    boolean finVacio =
+            fin.isEmpty();
 
-            numeroGuia,
-            fecha,
-            cliente,
-            tipoMaquina,
-            numeroMaquina,
-            operador,
-            convertirTotalADecimal(totalHoras),
-            sector,
-            trabajoRealizar,
-            chkEngrase.isSelected(),
-            horaInicio,
-            horaFin,
-            horometroInicio,
-            horometroFin,
-            horometroRecorrido,
-            combustible,
-            recibiConforme,
-            observaciones,
-            turnos
+    if (inicioVacio != finVacio) {
+
+        throw new Exception(
+                "Complete la hora de inicio y la hora de fin "
+                        + "del turno "
+                        + nombreTurno
+                        + "."
+        );
+    }
+
+    if (!inicioVacio) {
+
+        convertirHoraAMinutos(
+                inicio
+        );
+
+        convertirHoraAMinutos(
+                fin
+        );
+    }
+
+    turnos.add(
+            new GuiaTrabajoMaquinariaAPI.Turno(
+                    nombreTurno,
+                    inicio,
+                    fin,
+                    convertirTotalADecimal(
+                            total
+                    )
+            )
     );
 }
 
-    
-    String mensaje =
-        idGuiaEdicion == null
-                ? "Guía de trabajo de maquinaria guardada correctamente."
-                : "Guía de trabajo de maquinaria actualizada correctamente.";
+java.time.LocalDate fechaApi =
+        java.time.LocalDate.parse(
+                fecha,
+                java.time.format.DateTimeFormatter
+                        .ofPattern("dd/MM/yyyy")
+        );
 
+GuiaTrabajoMaquinariaAPI.GuiaGuardar guia =
+        new GuiaTrabajoMaquinariaAPI.GuiaGuardar(
+                idGuiaEdicion,
+                numeroGuia,
+                fechaApi,
+                cliente,
+                tipoMaquina,
+                numeroMaquina,
+                operador,
+                convertirTotalADecimal(
+                        totalHoras
+                ),
+                sector,
+                trabajoRealizar,
+                chkEngrase.isSelected(),
+                horaInicio,
+                horaFin,
+                horometroInicio,
+                horometroFin,
+                horometroRecorrido,
+                combustible,
+                recibiConforme,
+                observaciones,
+                turnos
+        );
+
+boolean esEdicion =
+        idGuiaEdicion != null;
+
+GuiaTrabajoMaquinariaAPI.GuiaDetalle resultado =
+        GuiaTrabajoMaquinariaAPI.guardar(
+                guia
+        );
+
+idGuiaEdicion =
+        resultado.idGuia();
+
+      String mensaje =
+        esEdicion
+                ? "Guía de trabajo de maquinaria actualizada correctamente."
+                : "Guía de trabajo de maquinaria guardada correctamente.";
+
+    
+   
 JOptionPane.showMessageDialog(
         this,
         mensaje,
@@ -1410,5 +1352,27 @@ private void cargarDescripcionMaquinaria() {
     }
 }
 
+private String formatearTotalHoras(
+        double totalHoras
+) {
 
+    if (totalHoras <= 0) {
+        return "";
+    }
+
+    int minutosTotales =
+            (int) Math.round(totalHoras * 60);
+
+    int horas =
+            minutosTotales / 60;
+
+    int minutos =
+            minutosTotales % 60;
+
+    return String.format(
+            "%02d:%02d",
+            horas,
+            minutos
+    );
+}
 }

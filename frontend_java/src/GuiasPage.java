@@ -1,9 +1,6 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.List;
 public class GuiasPage extends JPanel {
 
@@ -523,16 +520,14 @@ if (
         int filaSeleccionada = tablaGuias.getSelectedRow();
 
         if (filaSeleccionada == -1) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Seleccione una guía en la tabla.",
-                        "Validación",
-                        JOptionPane.WARNING_MESSAGE
-                );
-                return;
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Seleccione una guía en la tabla.",
+                    "Validación",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
         }
-
-
 
         String empresa = tablaGuias
                 .getValueAt(filaSeleccionada, 0)
@@ -550,15 +545,14 @@ if (
                 .getValueAt(filaSeleccionada, 7)
                 .toString();
 
-
         if (estadoActual.equalsIgnoreCase("APROBADO")) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "La guía ya está aprobada.",
-                        "Información",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-                return;
+            JOptionPane.showMessageDialog(
+                    this,
+                    "La guía ya está aprobada.",
+                    "Información",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
         }
 
         int confirmacion = JOptionPane.showConfirmDialog(
@@ -569,58 +563,34 @@ if (
         );
 
         if (confirmacion != JOptionPane.YES_OPTION) {
-                return;
+            return;
         }
 
-       String sql = """
-                UPDATE guias g
-                INNER JOIN empresas e
-                        ON e.id_empresa = g.id_empresa
-                SET g.estado = 'APROBADO'
-                WHERE e.nombre_empresa = ?
-                AND g.tipo_guia = ?
-                AND g.numero_guia = ?
-                AND g.estado = 'PENDIENTE'
-                """;
+        try {
+            GuiaAPI.aprobarGuia(
+                    empresa,
+                    tipoGuia,
+                    numeroGuia
+            );
 
-        try (
-                Connection conexion = ConexionDB.obtenerConexion();
-                PreparedStatement statement = conexion.prepareStatement(sql)
-        ) {
-                statement.setString(1, empresa);
-                statement.setString(2, tipoGuia);
-                statement.setString(3, numeroGuia);
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Guía aprobada correctamente.",
+                    "LPP Smart ERP",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
 
-                int filasActualizadas = statement.executeUpdate();
-
-                if (filasActualizadas > 0) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Guía aprobada correctamente.",
-                        "LPP Smart ERP",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-
-                cargarGuiasDesdeMySQL();
-
-                } else {
-                        JOptionPane.showMessageDialog(
-                                this,
-                                "No se encontró la guía para aprobar.",
-                                "Error",
-                                JOptionPane.ERROR_MESSAGE
-                        );
-                }
+            cargarGuiasDesdeMySQL();
 
         } catch (Exception e) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Error al aprobar la guía:\n" + e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error al aprobar la guía:\n" + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
 
-                e.printStackTrace();
+            e.printStackTrace();
         }
     }
 

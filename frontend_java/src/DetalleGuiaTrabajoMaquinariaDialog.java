@@ -1,9 +1,6 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
 
@@ -35,152 +32,79 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
 
     private void cargarDetalle() {
 
-        String sqlCabecera = """
-                SELECT
-                    g.id_guia,
-                    e.nombre_empresa,
-                    g.numero_guia,
-                    DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
-                    COALESCE(g.cliente, '') AS cliente,
-                    COALESCE(g.equipo, '') AS tipo_maquina,
-                    COALESCE(g.numero_maquina, '') AS numero_maquina,
-                    COALESCE(g.chofer_operador, '') AS operador,
-                    COALESCE(g.sector, '') AS sector,
-                    COALESCE(g.trabajo_realizar, '') AS trabajo_realizar,
-                    COALESCE(g.chequeo_engrase, 0) AS chequeo_engrase,
-                    TIME_FORMAT(g.hora_inicio, '%H:%i') AS hora_inicio,
-                    TIME_FORMAT(g.hora_fin, '%H:%i') AS hora_fin,
-                    COALESCE(g.horas, 0) AS total_horas,
-                    g.horometro_inicial,
-                    g.horometro_final,
-                    g.horometro_recorrido,
-                    COALESCE(g.combustible, '') AS combustible,
-                    COALESCE(g.recibi_conforme, '') AS recibi_conforme,
-                    COALESCE(g.observaciones, '') AS observaciones,
-                    g.estado
-                FROM guias g
-                INNER JOIN empresas e
-                    ON e.id_empresa = g.id_empresa
-                WHERE e.nombre_empresa = ?
-                  AND g.tipo_guia =
-                      'Guía Trabajo Diario Maquinaria'
-                  AND g.numero_guia = ?
-                LIMIT 1
-                """;
+        try {
 
-        String sqlTurnos = """
-                SELECT
-                    turno,
-                    TIME_FORMAT(hora_inicio, '%H:%i')
-                        AS hora_inicio,
-                    TIME_FORMAT(hora_fin, '%H:%i')
-                        AS hora_fin,
-                    total_horas
-                FROM trabajo_maquinaria_turnos
-                WHERE id_guia = ?
-                ORDER BY FIELD(
-                    turno,
-                    'MAÑANA',
-                    'TARDE',
-                    'NOCHE'
-                )
-                """;
-
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement psCabecera =
-                        conexion.prepareStatement(sqlCabecera)
-        ) {
-
-            psCabecera.setString(1, empresa);
-            psCabecera.setString(2, numeroGuia);
-
-            try (
-                    ResultSet cabecera =
-                            psCabecera.executeQuery()
-            ) {
-
-                if (!cabecera.next()) {
-
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "No se encontró la guía seleccionada.",
-                            "Información",
-                            JOptionPane.WARNING_MESSAGE
+            GuiaTrabajoMaquinariaAPI.GuiaDetalle guia =
+                    GuiaTrabajoMaquinariaAPI.obtenerDetalle(
+                            empresa,
+                            numeroGuia,
+                            "Guía Trabajo Diario Maquinaria"
                     );
 
-                    dispose();
-                    return;
-                }
+            if (guia == null) {
 
-                int idGuia =
-                        cabecera.getInt("id_guia");
-
-                JPanel panelPrincipal =
-                        new JPanel(
-                                new BorderLayout(10, 10)
-                        );
-
-                panelPrincipal.setBorder(
-                        BorderFactory.createEmptyBorder(
-                                15,
-                                15,
-                                15,
-                                15
-                        )
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No se encontró la guía seleccionada.",
+                        "Información",
+                        JOptionPane.WARNING_MESSAGE
                 );
 
-                panelPrincipal.add(
-                        crearPanelCabecera(cabecera),
-                        BorderLayout.NORTH
-                );
-
-                JPanel panelCentro =
-                        new JPanel(
-                                new GridLayout(
-                                        2,
-                                        1,
-                                        10,
-                                        10
-                                )
-                        );
-
-                panelCentro.add(
-                        crearPanelTurnos(
-                                conexion,
-                                idGuia,
-                                sqlTurnos,
-                                cabecera.getDouble(
-                                        "total_horas"
-                                )
-                        )
-                );
-
-                panelCentro.add(
-                        crearPanelEquipo(cabecera)
-                );
-
-                panelPrincipal.add(
-                        panelCentro,
-                        BorderLayout.CENTER
-                );
-
-                panelPrincipal.add(
-                        crearPanelInferior(
-                                cabecera.getString(
-                                        "observaciones"
-                                ),
-                                cabecera.getString(
-                                        "recibi_conforme"
-                                )
-                        ),
-                        BorderLayout.SOUTH
-                );
-
-                setContentPane(panelPrincipal);
+                dispose();
+                return;
             }
+
+            JPanel panelPrincipal =
+                    new JPanel(
+                            new BorderLayout(10, 10)
+                    );
+
+            panelPrincipal.setBorder(
+                    BorderFactory.createEmptyBorder(
+                            15,
+                            15,
+                            15,
+                            15
+                    )
+            );
+
+            panelPrincipal.add(
+                    crearPanelCabecera(guia),
+                    BorderLayout.NORTH
+            );
+
+            JPanel panelCentro =
+                    new JPanel(
+                            new GridLayout(
+                                    2,
+                                    1,
+                                    10,
+                                    10
+                            )
+                    );
+
+            panelCentro.add(
+                    crearPanelTurnos(guia)
+            );
+
+            panelCentro.add(
+                    crearPanelEquipo(guia)
+            );
+
+            panelPrincipal.add(
+                    panelCentro,
+                    BorderLayout.CENTER
+            );
+
+            panelPrincipal.add(
+                    crearPanelInferior(
+                            guia.observaciones(),
+                            guia.recibiConforme()
+                    ),
+                    BorderLayout.SOUTH
+            );
+
+            setContentPane(panelPrincipal);
 
         } catch (Exception e) {
 
@@ -198,8 +122,8 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
     }
 
     private JPanel crearPanelCabecera(
-            ResultSet cabecera
-    ) throws Exception {
+            GuiaTrabajoMaquinariaAPI.GuiaDetalle guia
+    ) {
 
         JPanel panel =
                 new JPanel(
@@ -220,68 +144,73 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
         agregarDato(
                 panel,
                 "Empresa:",
-                cabecera.getString("nombre_empresa")
+                guia.empresa()
         );
 
         agregarDato(
                 panel,
                 "N° Guía:",
-                cabecera.getString("numero_guia")
+                guia.numeroGuia()
         );
 
         agregarDato(
                 panel,
                 "Fecha:",
-                cabecera.getString("fecha")
+                guia.fecha() == null
+                        ? ""
+                        : guia.fecha().format(
+                                java.time.format.DateTimeFormatter
+                                        .ofPattern("dd/MM/yyyy")
+                        )
         );
 
         agregarDato(
                 panel,
                 "Estado:",
-                cabecera.getString("estado")
+                guia.estado()
         );
 
         agregarDato(
                 panel,
                 "N° Máquina:",
-                cabecera.getString("numero_maquina")
+                guia.numeroMaquina()
         );
 
         agregarDato(
                 panel,
                 "Tipo de máquina:",
-                cabecera.getString("tipo_maquina")
+                guia.tipoMaquina()
         );
 
         agregarDato(
                 panel,
                 "Cliente:",
-                cabecera.getString("cliente")
+                guia.cliente()
         );
 
         agregarDato(
                 panel,
                 "Sector:",
-                cabecera.getString("sector")
+                guia.sector()
         );
 
         agregarDato(
                 panel,
                 "Operador:",
-                cabecera.getString("operador")
+                guia.operador()
         );
 
         agregarDato(
                 panel,
                 "Trabajo a realizar:",
-                cabecera.getString("trabajo_realizar")
+                guia.trabajoRealizar()
         );
 
         agregarDato(
                 panel,
                 "Hora inicio:",
                 valorTexto(
-                        cabecera.getString("hora_inicio")
+                        guia.horaInicio()
                 )
         );
 
@@ -289,14 +218,14 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
                 panel,
                 "Hora fin:",
                 valorTexto(
-                        cabecera.getString("hora_fin")
+                        guia.horaFin()
                 )
         );
 
         agregarDato(
                 panel,
                 "Chequeo de engrase:",
-                cabecera.getBoolean("chequeo_engrase")
+                guia.chequeoEngrase()
                         ? "Realizado"
                         : "No realizado"
         );
@@ -308,11 +237,8 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
     }
 
     private JPanel crearPanelTurnos(
-            Connection conexion,
-            int idGuia,
-            String sqlTurnos,
-            double totalHorasGeneral
-    ) throws Exception {
+            GuiaTrabajoMaquinariaAPI.GuiaDetalle guia
+    ) {
 
         String[] columnas = {
                 "Turno",
@@ -324,43 +250,27 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
         DefaultTableModel modelo =
                 crearModeloNoEditable(columnas);
 
-        try (
-                PreparedStatement statement =
-                        conexion.prepareStatement(sqlTurnos)
-        ) {
+        if (guia.turnos() != null) {
 
-            statement.setInt(1, idGuia);
-
-            try (
-                    ResultSet resultado =
-                            statement.executeQuery()
+            for (
+                    GuiaTrabajoMaquinariaAPI.Turno turno
+                            : guia.turnos()
             ) {
 
-                while (resultado.next()) {
-
-                    modelo.addRow(
-                            new Object[]{
-                                    resultado.getString(
-                                            "turno"
-                                    ),
-                                    valorTexto(
-                                            resultado.getString(
-                                                    "hora_inicio"
-                                            )
-                                    ),
-                                    valorTexto(
-                                            resultado.getString(
-                                                    "hora_fin"
-                                            )
-                                    ),
-                                    convertirDecimalAHoras(
-                                            resultado.getDouble(
-                                                    "total_horas"
-                                            )
-                                    )
-                            }
-                    );
-                }
+                modelo.addRow(
+                        new Object[]{
+                                turno.turno(),
+                                valorTexto(
+                                        turno.horaInicio()
+                                ),
+                                valorTexto(
+                                        turno.horaFin()
+                                ),
+                                convertirDecimalAHoras(
+                                        turno.totalHoras()
+                                )
+                        }
+                );
             }
         }
 
@@ -396,7 +306,7 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
                 new JLabel(
                         "Total horas de trabajo: "
                                 + convertirDecimalAHoras(
-                                        totalHorasGeneral
+                                        guia.totalHoras()
                                 )
                 )
         );
@@ -410,8 +320,8 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
     }
 
     private JPanel crearPanelEquipo(
-            ResultSet cabecera
-    ) throws Exception {
+            GuiaTrabajoMaquinariaAPI.GuiaDetalle guia
+    ) {
 
         JPanel panel =
                 new JPanel(
@@ -433,8 +343,7 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
                 panel,
                 "Horómetro inicio:",
                 valorDecimal(
-                        cabecera,
-                        "horometro_inicial"
+                        guia.horometroInicial()
                 )
         );
 
@@ -442,8 +351,7 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
                 panel,
                 "Horómetro fin:",
                 valorDecimal(
-                        cabecera,
-                        "horometro_final"
+                        guia.horometroFinal()
                 )
         );
 
@@ -451,15 +359,14 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
                 panel,
                 "Horómetro recorrido:",
                 valorDecimal(
-                        cabecera,
-                        "horometro_recorrido"
+                        guia.horometroRecorrido()
                 )
         );
 
         agregarDatoSimple(
                 panel,
                 "Combustible abastecido:",
-                cabecera.getString("combustible")
+                guia.combustible()
         );
 
         return panel;
@@ -620,12 +527,8 @@ public class DetalleGuiaTrabajoMaquinariaDialog extends JDialog {
     }
 
     private String valorDecimal(
-            ResultSet resultado,
-            String columna
-    ) throws Exception {
-
-        Object valor =
-                resultado.getObject(columna);
+            Double valor
+    ) {
 
         return valor == null
                 ? ""

@@ -1,8 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 public class DetalleGuiaDespachoMaterialDialog extends JDialog {
 
@@ -34,94 +31,45 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
 
     private void cargarDetalle() {
 
-        String sql = """
-                SELECT
-                    e.nombre_empresa,
-                    g.numero_guia,
-                    DATE_FORMAT(g.fecha, '%d/%m/%Y') AS fecha,
-                    COALESCE(g.chofer_operador, '') AS chofer,
-                    COALESCE(g.solicitante, '') AS solicitante,
-                    COALESCE(g.sector, '') AS sector,
-                    COALESCE(g.placa, '') AS placa,
-                    COALESCE(g.m3, 0) AS cubicaje,
-                    COALESCE(g.origen, '') AS origen,
-                    COALESCE(g.destino, '') AS destino,
-                    TIME_FORMAT(g.hora_inicio, '%H:%i') AS hora_entrada,
-                    TIME_FORMAT(g.hora_fin, '%H:%i') AS hora_salida,
-                    COALESCE(g.material, '') AS material,
-                    COALESCE(g.observaciones, '') AS observaciones,
-                    COALESCE(g.recibi_conforme, '') AS recibi_conforme,
-                    g.estado
-                FROM guias g
-                INNER JOIN empresas e
-                    ON e.id_empresa = g.id_empresa
-                WHERE e.nombre_empresa = ?
-                  AND g.tipo_guia =
-                      'Guía Despacho de Material'
-                  AND g.numero_guia = ?
-                LIMIT 1
-                """;
+        try {
 
-        try (
-                Connection conexion =
-                        ConexionDB.obtenerConexion();
-
-                PreparedStatement ps =
-                        conexion.prepareStatement(sql)
-        ) {
-
-            ps.setString(1, empresa);
-            ps.setString(2, numeroGuia);
-
-            try (
-                    ResultSet resultado =
-                            ps.executeQuery()
-            ) {
-
-                if (!resultado.next()) {
-
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "No se encontró la guía seleccionada.",
-                            "Información",
-                            JOptionPane.WARNING_MESSAGE
+            GuiaDespachoMaterialAPI.GuiaDetalle guia =
+                    GuiaDespachoMaterialAPI.obtenerDetalle(
+                            empresa,
+                            numeroGuia,
+                            "Guía Despacho de Material"
                     );
 
-                    dispose();
-                    return;
-                }
+            JPanel panelPrincipal =
+                    new JPanel(
+                            new BorderLayout(10, 10)
+                    );
 
-                JPanel panelPrincipal =
-                        new JPanel(
-                                new BorderLayout(10, 10)
-                        );
+            panelPrincipal.setBorder(
+                    BorderFactory.createEmptyBorder(
+                            15,
+                            15,
+                            15,
+                            15
+                    )
+            );
 
-                panelPrincipal.setBorder(
-                        BorderFactory.createEmptyBorder(
-                                15,
-                                15,
-                                15,
-                                15
-                        )
-                );
+            panelPrincipal.add(
+                    crearPanelDatosGenerales(guia),
+                    BorderLayout.NORTH
+            );
 
-                panelPrincipal.add(
-                        crearPanelDatosGenerales(resultado),
-                        BorderLayout.NORTH
-                );
+            panelPrincipal.add(
+                    crearPanelDespacho(guia),
+                    BorderLayout.CENTER
+            );
 
-                panelPrincipal.add(
-                        crearPanelDespacho(resultado),
-                        BorderLayout.CENTER
-                );
+            panelPrincipal.add(
+                    crearPanelInferior(guia),
+                    BorderLayout.SOUTH
+            );
 
-                panelPrincipal.add(
-                        crearPanelInferior(resultado),
-                        BorderLayout.SOUTH
-                );
-
-                setContentPane(panelPrincipal);
-            }
+            setContentPane(panelPrincipal);
 
         } catch (Exception e) {
 
@@ -139,8 +87,8 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
     }
 
     private JPanel crearPanelDatosGenerales(
-            ResultSet resultado
-    ) throws Exception {
+            GuiaDespachoMaterialAPI.GuiaDetalle guia
+    ) {
 
         JPanel panel =
                 new JPanel(
@@ -161,57 +109,62 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
         agregarDato(
                 panel,
                 "Empresa:",
-                resultado.getString("nombre_empresa")
+                guia.empresa()
         );
 
         agregarDato(
                 panel,
                 "N° Guía:",
-                resultado.getString("numero_guia")
+                guia.numeroGuia()
         );
 
         agregarDato(
                 panel,
                 "Fecha:",
-                resultado.getString("fecha")
+                guia.fecha() == null
+                        ? ""
+                        : guia.fecha().format(
+                                java.time.format.DateTimeFormatter
+                                        .ofPattern("dd/MM/yyyy")
+                        )
         );
 
         agregarDato(
                 panel,
                 "Estado:",
-                resultado.getString("estado")
+                guia.estado()
         );
 
         agregarDato(
                 panel,
                 "Chofer:",
-                resultado.getString("chofer")
+                guia.choferOperador()
         );
 
         agregarDato(
                 panel,
                 "Solicitante:",
-                resultado.getString("solicitante")
+                guia.solicitante()
         );
 
         agregarDato(
                 panel,
                 "Sector:",
-                resultado.getString("sector")
+                guia.sector()
         );
 
         agregarDato(
                 panel,
                 "Placa:",
-                resultado.getString("placa")
+                guia.placa()
         );
 
         return panel;
     }
 
     private JPanel crearPanelDespacho(
-            ResultSet resultado
-    ) throws Exception {
+            GuiaDespachoMaterialAPI.GuiaDetalle guia
+    ) {
 
         JPanel panel =
                 new JPanel(
@@ -232,26 +185,28 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
         agregarDatoSimple(
                 panel,
                 "Cubicaje:",
-                resultado.getString("cubicaje")
+                formatearDecimal(
+                        guia.m3()
+                )
         );
 
         agregarDatoSimple(
                 panel,
                 "Lugar(es) de origen:",
-                resultado.getString("origen")
+                guia.origen()
         );
 
         agregarDatoSimple(
                 panel,
                 "Lugar de destino:",
-                resultado.getString("destino")
+                guia.destino()
         );
 
         agregarDatoSimple(
                 panel,
                 "Hora de entrada:",
                 valorTexto(
-                        resultado.getString("hora_entrada")
+                        guia.horaEntrada()
                 )
         );
 
@@ -259,22 +214,22 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
                 panel,
                 "Hora de salida:",
                 valorTexto(
-                        resultado.getString("hora_salida")
+                        guia.horaSalida()
                 )
         );
 
         agregarDatoSimple(
                 panel,
                 "Tipo(s) de material:",
-                resultado.getString("material")
+                guia.material()
         );
 
         return panel;
     }
 
     private JPanel crearPanelInferior(
-            ResultSet resultado
-    ) throws Exception {
+            GuiaDespachoMaterialAPI.GuiaDetalle guia
+    ) {
 
         JPanel panel =
                 new JPanel(
@@ -292,8 +247,8 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
 
         JTextArea textoObservaciones =
                 new JTextArea(
-                        resultado.getString(
-                                "observaciones"
+                        valorTexto(
+                                guia.observaciones()
                         )
                 );
 
@@ -318,8 +273,8 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
 
         panelRecibe.add(
                 new JLabel(
-                        resultado.getString(
-                                "recibi_conforme"
+                        valorTexto(
+                                guia.recibiConforme()
                         )
                 ),
                 BorderLayout.CENTER
@@ -376,9 +331,10 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
     ) {
 
         panel.add(new JLabel(etiqueta));
+
         panel.add(
                 new JLabel(
-                        valor == null ? "" : valor
+                        valorTexto(valor)
                 )
         );
     }
@@ -390,9 +346,10 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
     ) {
 
         panel.add(new JLabel(etiqueta));
+
         panel.add(
                 new JLabel(
-                        valor == null ? "" : valor
+                        valorTexto(valor)
                 )
         );
     }
@@ -404,5 +361,24 @@ public class DetalleGuiaDespachoMaterialDialog extends JDialog {
         return valor == null
                 ? ""
                 : valor;
+    }
+
+    private String formatearDecimal(
+            double valor
+    ) {
+
+        if (valor == Math.rint(valor)) {
+            return String.format(
+                    java.util.Locale.US,
+                    "%.0f",
+                    valor
+            );
+        }
+
+        return String.format(
+                java.util.Locale.US,
+                "%.2f",
+                valor
+        );
     }
 }

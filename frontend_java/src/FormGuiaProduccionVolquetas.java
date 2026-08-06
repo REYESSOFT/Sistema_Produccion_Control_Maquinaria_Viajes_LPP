@@ -307,348 +307,225 @@ public class FormGuiaProduccionVolquetas extends JDialog {
 }
 
 
-    private void guardarGuia() {
+   private void guardarGuia() {
 
-    if (txtNumeroGuia.getText().trim().isEmpty()) {
+    if (
+            txtNumeroGuia
+                    .getText()
+                    .trim()
+                    .isEmpty()
+    ) {
+
         JOptionPane.showMessageDialog(
                 this,
                 "Ingrese el número de guía.",
                 "Validación",
                 JOptionPane.WARNING_MESSAGE
         );
+
         txtNumeroGuia.requestFocus();
         return;
     }
 
-    String fecha = txtFecha.getText().trim();
+    String fechaTexto =
+            txtFecha
+                    .getText()
+                    .trim();
 
-    if (fecha.contains("_")) {
+    if (
+            fechaTexto.isEmpty()
+            || fechaTexto.contains("_")
+    ) {
+
         JOptionPane.showMessageDialog(
                 this,
                 "Ingrese la fecha completa.",
                 "Validación",
                 JOptionPane.WARNING_MESSAGE
         );
+
         txtFecha.requestFocus();
         return;
     }
 
-    if (txtChofer.getText().trim().isEmpty()) {
+    if (
+            txtChofer
+                    .getText()
+                    .trim()
+                    .isEmpty()
+    ) {
+
         JOptionPane.showMessageDialog(
                 this,
                 "Ingrese el chofer.",
                 "Validación",
                 JOptionPane.WARNING_MESSAGE
         );
+
         txtChofer.requestFocus();
         return;
     }
 
-    if (txtPlaca.getText().trim().isEmpty()) {
+    if (
+            txtPlaca
+                    .getText()
+                    .trim()
+                    .isEmpty()
+    ) {
+
         JOptionPane.showMessageDialog(
                 this,
                 "Ingrese la placa.",
                 "Validación",
                 JOptionPane.WARNING_MESSAGE
         );
+
         txtPlaca.requestFocus();
         return;
     }
 
-    Connection conexion = null;
-
     try {
 
-        conexion = ConexionDB.obtenerConexion();
-        conexion.setAutoCommit(false);
-
-        int idGuia;
-
-        if (idGuiaEdicion == null) {
-
-            String sqlCabecera = """
-                INSERT INTO guias (
-                    id_empresa,
-                    tipo_guia,
-                    numero_guia,
-                    fecha,
-                    placa,
-                    chofer_operador,
-                    m3,
-                    recibi_conforme,
-                    observaciones,
-                    estado
-                )
-                VALUES (
-                    1,
-                    'Guía Producción Volquetas',
-                    ?,
-                    STR_TO_DATE(?, '%d/%m/%Y'),
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    'PENDIENTE'
-                )
-                """;
-
-            try (
-                PreparedStatement psCabecera = conexion.prepareStatement(
-                        sqlCabecera,
-                        Statement.RETURN_GENERATED_KEYS
-                )
-            ) {
-
-                psCabecera.setString(
-                        1,
-                        txtNumeroGuia.getText().trim()
+        java.time.LocalDate fecha =
+                java.time.LocalDate.parse(
+                        fechaTexto,
+                        java.time.format.DateTimeFormatter
+                                .ofPattern("dd/MM/yyyy")
                 );
 
-                psCabecera.setString(
-                        2,
-                        fecha
-                );
+        java.util.List<
+                GuiaAPI.GuiaProduccionGuardarFila
+        > filas =
+                new java.util.ArrayList<>();
 
-                psCabecera.setString(
-                        3,
-                        txtPlaca.getText().trim().toUpperCase()
-                );
-
-                psCabecera.setString(
-                        4,
-                        txtChofer.getText().trim()
-                );
-
-                psCabecera.setDouble(
-                        5,
-                        ((Number) spnM3.getValue()).doubleValue()
-                );
-
-                psCabecera.setString(
-                        6,
-                        txtRecibiConforme.getText().trim()
-                );
-
-                psCabecera.setString(
-                        7,
-                        txtObservaciones.getText().trim()
-                );
-
-                psCabecera.executeUpdate();
-
-                try (ResultSet claves = psCabecera.getGeneratedKeys()) {
-
-                    if (!claves.next()) {
-                        throw new Exception(
-                                "No fue posible obtener el ID de la guía."
-                        );
-                    }
-
-                    idGuia = claves.getInt(1);
-                }
-            }
-
-        } else {
-
-            String sqlActualizar = """
-                UPDATE guias
-                SET
-                    numero_guia = ?,
-                    fecha = STR_TO_DATE(?, '%d/%m/%Y'),
-                    placa = ?,
-                    chofer_operador = ?,
-                    m3 = ?,
-                    recibi_conforme = ?,
-                    observaciones = ?
-                WHERE id_guia = ?
-                AND estado = 'PENDIENTE'
-                """;
-
-            try (
-                PreparedStatement psActualizar =
-                        conexion.prepareStatement(sqlActualizar)
-            ) {
-
-                psActualizar.setString(
-                        1,
-                        txtNumeroGuia.getText().trim()
-                );
-
-                psActualizar.setString(
-                        2,
-                        fecha
-                );
-
-                psActualizar.setString(
-                        3,
-                        txtPlaca.getText().trim().toUpperCase()
-                );
-
-                psActualizar.setString(
-                        4,
-                        txtChofer.getText().trim()
-                );
-
-                psActualizar.setDouble(
-                        5,
-                        ((Number) spnM3.getValue()).doubleValue()
-                );
-
-                psActualizar.setString(
-                        6,
-                        txtRecibiConforme.getText().trim()
-                );
-
-                psActualizar.setString(
-                        7,
-                        txtObservaciones.getText().trim()
-                );
-
-                psActualizar.setInt(
-                        8,
-                        idGuiaEdicion
-                );
-
-                int filasActualizadas =
-                        psActualizar.executeUpdate();
-
-                if (filasActualizadas == 0) {
-                    throw new Exception(
-                            "La guía no pudo actualizarse."
-                    );
-                }
-            }
-
-            idGuia = idGuiaEdicion;
-
-            String sqlEliminarDetalle = """
-                DELETE FROM guia_produccion_detalle
-                WHERE id_guia = ?
-                """;
-
-            try (
-                PreparedStatement psEliminar =
-                        conexion.prepareStatement(sqlEliminarDetalle)
-            ) {
-
-                psEliminar.setInt(1, idGuia);
-                psEliminar.executeUpdate();
-            }
-        }
-
-        String sqlDetalle = """
-            INSERT INTO guia_produccion_detalle (
-                id_guia,
-                numero_fila,
-                proyecto,
-                sector,
-                cantera,
-                material,
-                hora_origen,
-                hora_destino
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """;
-
-        try (
-            PreparedStatement psDetalle =
-                    conexion.prepareStatement(sqlDetalle)
-        ) {
-
-            for (
+        for (
                 int fila = 0;
                 fila < tablaDetalle.getRowCount();
                 fila++
-            ) {
+        ) {
 
-                String proyecto =
-                        obtenerTextoCelda(fila, 1);
+            String proyecto =
+                    obtenerTextoCelda(
+                            fila,
+                            1
+                    );
 
-                String sector =
-                        obtenerTextoCelda(fila, 2);
+            String sector =
+                    obtenerTextoCelda(
+                            fila,
+                            2
+                    );
 
-                String cantera =
-                        obtenerTextoCelda(fila, 3);
+            String cantera =
+                    obtenerTextoCelda(
+                            fila,
+                            3
+                    );
 
-                String material =
-                        obtenerTextoCelda(fila, 4);
+            String material =
+                    obtenerTextoCelda(
+                            fila,
+                            4
+                    );
 
-                String horaOrigen =
-                        obtenerTextoCelda(fila, 5);
+            String horaOrigen =
+                    obtenerTextoCelda(
+                            fila,
+                            5
+                    );
 
-                String horaDestino =
-                        obtenerTextoCelda(fila, 6);
+            String horaDestino =
+                    obtenerTextoCelda(
+                            fila,
+                            6
+                    );
 
-                boolean filaVacia =
-                        proyecto.isEmpty()
-                        && sector.isEmpty()
-                        && cantera.isEmpty()
-                        && material.isEmpty()
-                        && horaOrigen.isEmpty()
-                        && horaDestino.isEmpty();
+            boolean filaVacia =
+                    proyecto.isEmpty()
+                    && sector.isEmpty()
+                    && cantera.isEmpty()
+                    && material.isEmpty()
+                    && horaOrigen.isEmpty()
+                    && horaDestino.isEmpty();
 
-                if (filaVacia) {
-                    continue;
-                }
-
-                psDetalle.setInt(1, idGuia);
-                psDetalle.setInt(2, fila + 1);
-                psDetalle.setString(3, proyecto);
-                psDetalle.setString(4, sector);
-                psDetalle.setString(5, cantera);
-                psDetalle.setString(6, material);
-
-                asignarHora(
-                        psDetalle,
-                        7,
-                        horaOrigen
-                );
-
-                asignarHora(
-                        psDetalle,
-                        8,
-                        horaDestino
-                );
-
-                psDetalle.addBatch();
+            if (filaVacia) {
+                continue;
             }
 
-            psDetalle.executeBatch();
-        }
-
-        conexion.commit();
-
-        if (idGuiaEdicion == null) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Guía guardada correctamente.",
-                    "LPP Smart ERP",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-
-        } else {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Guía actualizada correctamente.",
-                    "LPP Smart ERP",
-                    JOptionPane.INFORMATION_MESSAGE
+            filas.add(
+                    new GuiaAPI.GuiaProduccionGuardarFila(
+                            fila + 1,
+                            proyecto,
+                            sector,
+                            cantera,
+                            material,
+                            horaOrigen,
+                            horaDestino
+                    )
             );
         }
+
+        GuiaAPI.GuiaProduccionGuardar guia =
+                new GuiaAPI.GuiaProduccionGuardar(
+                        idGuiaEdicion,
+                        txtNumeroGuia
+                                .getText()
+                                .trim(),
+                        fecha,
+                        txtPlaca
+                                .getText()
+                                .trim()
+                                .toUpperCase(),
+                        txtChofer
+                                .getText()
+                                .trim(),
+                        ((Number) spnM3.getValue())
+                                .doubleValue(),
+                        txtRecibiConforme
+                                .getText()
+                                .trim(),
+                        txtObservaciones
+                                .getText()
+                                .trim(),
+                        filas
+                );
+
+        boolean esEdicion =
+                idGuiaEdicion != null;
+
+        GuiaAPI.GuiaProduccionDetalle resultado =
+                GuiaAPI.guardarGuiaProduccion(
+                        guia
+                );
+
+        idGuiaEdicion =
+                resultado.idGuia();
+
+        JOptionPane.showMessageDialog(
+                this,
+                esEdicion
+                        ? "Guía actualizada correctamente."
+                        : "Guía guardada correctamente.",
+                "LPP Smart ERP",
+                JOptionPane.INFORMATION_MESSAGE
+        );
 
         dispose();
 
-    } catch (Exception e) {
+    } catch (
+            java.time.format.DateTimeParseException e
+    ) {
 
-        if (conexion != null) {
-            try {
-                conexion.rollback();
-            } catch (Exception rollbackError) {
-                rollbackError.printStackTrace();
-            }
-        }
+        JOptionPane.showMessageDialog(
+                this,
+                "La fecha debe tener el formato dd/MM/yyyy.",
+                "Validación",
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        txtFecha.requestFocus();
+
+    } catch (Exception e) {
 
         JOptionPane.showMessageDialog(
                 this,
@@ -659,17 +536,6 @@ public class FormGuiaProduccionVolquetas extends JDialog {
         );
 
         e.printStackTrace();
-
-    } finally {
-
-        if (conexion != null) {
-            try {
-                conexion.setAutoCommit(true);
-                conexion.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 }
 
