@@ -448,8 +448,8 @@ public class DetalleControlDiarioMaquinariaDialog extends JDialog {
 
         try {
 
-            List<ControlDiarioMaquinariaDAO.ControlMaquinariaResumen> lista =
-                    ControlDiarioMaquinariaDAO.obtenerPorControl(
+            List<ControlDiarioAPI.ControlMaquinariaDetalle> lista =
+                    ControlDiarioAPI.obtenerMaquinariaPorControl(
                             idControl
                     );
 
@@ -461,7 +461,7 @@ public class DetalleControlDiarioMaquinariaDialog extends JDialog {
                     0.00;
 
             for (
-                    ControlDiarioMaquinariaDAO.ControlMaquinariaResumen item
+                    ControlDiarioAPI.ControlMaquinariaDetalle item
                     : lista
             ) {
 
@@ -619,7 +619,7 @@ public class DetalleControlDiarioMaquinariaDialog extends JDialog {
 
         try {
 
-            ControlDiarioMaquinariaDAO.eliminar(
+            ControlDiarioAPI.eliminarMaquinaria(
                     idRegistro
             );
 

@@ -1343,7 +1343,7 @@ private void cargarDescripcionMaquinaria() {
         }
 
         txtTipoMaquina.setText(
-                MaquinariaDAO.obtenerDescripcionPorNumeroMaquina(numero)
+                MaquinariaAPI.obtenerDescripcionPorNumeroMaquina(numero)
         );
 
     } catch (Exception e) {

@@ -721,7 +721,7 @@ if (this.idControlMaterial != null) {
             cmbCantera.addItem("");
 
             List<String> canteras =
-        CatalogoCanteraMaterialDAO
+        CatalogoCanteraMaterialAPI
                 .obtenerCanterasActivas(idControl);
 
             for (String cantera : canteras) {
@@ -784,7 +784,7 @@ if (this.idControlMaterial != null) {
             }
 
             List<String> materiales =
-        CatalogoCanteraMaterialDAO
+        CatalogoCanteraMaterialAPI
                 .obtenerMaterialesPorCantera(
                         idControl,
                         cantera
@@ -861,7 +861,7 @@ if (this.idControlMaterial != null) {
         }
 
         List<String> destinos =
-        CatalogoCanteraMaterialDAO.obtenerDestinos(idControl);
+        CatalogoCanteraMaterialAPI.obtenerDestinos(idControl);
 
         for (String destino : destinos) {
 
@@ -942,9 +942,9 @@ if (this.idControlMaterial != null) {
 
     try {
 
-        CatalogoCanteraMaterialDAO.TarifaOperacion tarifa =
+        CatalogoCanteraMaterialAPI.TarifaOperacion tarifa =
         
-                CatalogoCanteraMaterialDAO.obtenerTarifaActiva(
+                CatalogoCanteraMaterialAPI.obtenerTarifaActiva(
         idControl,
         cantera,
         material,
@@ -987,8 +987,8 @@ if (this.idControlMaterial != null) {
 
         try {
 
-            ControlDiarioMaterialDAO.ControlMaterialDetalle detalle =
-                    ControlDiarioMaterialDAO.obtenerPorId(
+            ControlDiarioAPI.ControlMaterialDetalle detalle =
+                    ControlDiarioAPI.obtenerMaterialPorId(
                             idControlMaterial
                     );
 
@@ -1087,7 +1087,7 @@ if (this.idControlMaterial != null) {
 }
 
     private void seleccionarTarifaParaEdicion(
-            ControlDiarioMaterialDAO.ControlMaterialDetalle detalle
+            ControlDiarioAPI.ControlMaterialDetalle detalle
     ) throws Exception {
 
         String canteraRegistro =
@@ -1115,7 +1115,7 @@ if (this.idControlMaterial != null) {
 
             for (
                     String material
-                    : CatalogoCanteraMaterialDAO
+                    : CatalogoCanteraMaterialAPI
         .obtenerMaterialesPorCantera(
                 idControl,
                 canteraRegistro
@@ -1135,14 +1135,14 @@ if (this.idControlMaterial != null) {
             cmbDestinoSector.removeAllItems();
             cmbDestinoSector.addItem("");
 
-            List<CatalogoCanteraMaterialDAO.TarifaResumen> tarifas =
-        CatalogoCanteraMaterialDAO.buscar(
+            List<CatalogoCanteraMaterialAPI.TarifaResumen> tarifas =
+        CatalogoCanteraMaterialAPI.buscar(
                 canteraRegistro,
                 materialRegistro,
                 "ACTIVO"
         );
 
-            CatalogoCanteraMaterialDAO.TarifaResumen coincidencia =
+            CatalogoCanteraMaterialAPI.TarifaResumen coincidencia =
         buscarTarifaCoincidente(
                 tarifas,
                 detalle.costoUnitarioMaterial()
@@ -1152,7 +1152,7 @@ if (this.idControlMaterial != null) {
 
     for (
             String destino
-            : CatalogoCanteraMaterialDAO.obtenerDestinos(idControl)
+            : CatalogoCanteraMaterialAPI.obtenerDestinos(idControl)
     ) {
 
         agregarItemSiNoExiste(
@@ -1216,8 +1216,8 @@ if (this.idControlMaterial != null) {
         }
     }
 
-   private CatalogoCanteraMaterialDAO.TarifaResumen buscarTarifaCoincidente(
-        List<CatalogoCanteraMaterialDAO.TarifaResumen> tarifas,
+   private CatalogoCanteraMaterialAPI.TarifaResumen buscarTarifaCoincidente(
+        List<CatalogoCanteraMaterialAPI.TarifaResumen> tarifas,
         double costoMaterial
 ) {
 
@@ -1225,7 +1225,7 @@ if (this.idControlMaterial != null) {
             0.0001;
 
     for (
-            CatalogoCanteraMaterialDAO.TarifaResumen tarifa
+            CatalogoCanteraMaterialAPI.TarifaResumen tarifa
             : tarifas
     ) {
 
@@ -1396,55 +1396,33 @@ if (this.idControlMaterial != null) {
                             "horas de volqueta"
                     );
 
-            if (idControlMaterial == null) {
+            boolean esEdicion =
+                    idControlMaterial != null;
 
-                ControlDiarioMaterialDAO.insertar(
-                        idControl,
-                        idTarifaSeleccionada,
-                        materialRecibido,
-                        cantera,
-                        destinoSector,
-                        cantidadViajes,
-                        volumenRecibido,
-                        costoUnitarioMaterial,
-                        costoUnitarioTransporte,
-                        cantidadVolquetas,
-                        horasVolqueta,
-                        txtObservaciones.getText()
-                );
+            ControlDiarioAPI.guardarMaterial(
+                    idControl,
+                    idControlMaterial,
+                    idTarifaSeleccionada,
+                    materialRecibido,
+                    cantera,
+                    destinoSector,
+                    cantidadViajes,
+                    volumenRecibido,
+                    costoUnitarioMaterial,
+                    costoUnitarioTransporte,
+                    cantidadVolquetas,
+                    horasVolqueta,
+                    txtObservaciones.getText()
+            );
 
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Material pétreo guardado correctamente.",
-                        "LPP Smart ERP",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-
-            } else {
-
-                ControlDiarioMaterialDAO.actualizar(
-                        idControlMaterial,
-                        idControl,
-                        idTarifaSeleccionada,
-                        materialRecibido,
-                        cantera,
-                        destinoSector,
-                        cantidadViajes,
-                        volumenRecibido,
-                        costoUnitarioMaterial,
-                        costoUnitarioTransporte,
-                        cantidadVolquetas,
-                        horasVolqueta,
-                        txtObservaciones.getText()
-                );
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Material pétreo actualizado correctamente.",
-                        "LPP Smart ERP",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-            }
+            JOptionPane.showMessageDialog(
+                    this,
+                    esEdicion
+                            ? "Material pétreo actualizado correctamente."
+                            : "Material pétreo guardado correctamente.",
+                    "LPP Smart ERP",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
 
             guardado =
                     true;

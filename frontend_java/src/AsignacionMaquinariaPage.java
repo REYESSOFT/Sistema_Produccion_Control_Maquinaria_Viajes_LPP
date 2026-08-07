@@ -254,8 +254,8 @@ public class AsignacionMaquinariaPage extends JPanel {
             modeloTabla.setRowCount(0);
 
             for (
-                    AsignacionMaquinariaDAO.AsignacionResumen asignacion
-                    : AsignacionMaquinariaDAO.obtenerActivas()
+                    AsignacionMaquinariaAPI.AsignacionResumen asignacion
+                    : AsignacionMaquinariaAPI.obtenerActivas()
             ) {
 
                 modeloTabla.addRow(
@@ -490,7 +490,7 @@ private void eliminarAsignacion() {
 
     try {
 
-        AsignacionMaquinariaDAO.eliminar(
+        AsignacionMaquinariaAPI.eliminar(
                 idAsignacion
         );
 

@@ -334,7 +334,7 @@ botones.add(
 
     if (modoEdicion) {
 
-        EntidadMaquinariaDAO.actualizar(
+        EntidadMaquinariaAPI.actualizar(
                 idEntidadEditar,
                 nombre,
                 tipoEntidad,
@@ -354,7 +354,7 @@ botones.add(
 
     } else {
 
-        EntidadMaquinariaDAO.insertar(
+        EntidadMaquinariaAPI.insertar(
                 nombre,
                 tipoEntidad,
                 identificacion,
@@ -409,8 +409,8 @@ botones.add(
 
     try {
 
-        EntidadMaquinariaDAO.EntidadDetalle entidad =
-                EntidadMaquinariaDAO.obtenerPorId(
+        EntidadMaquinariaAPI.EntidadDetalle entidad =
+                EntidadMaquinariaAPI.obtenerPorId(
                         idEntidadEditar
                 );
 

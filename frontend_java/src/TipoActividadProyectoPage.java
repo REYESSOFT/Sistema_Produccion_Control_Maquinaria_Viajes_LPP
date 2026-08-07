@@ -13,7 +13,8 @@ public class TipoActividadProyectoPage extends JPanel {
             Runnable accionVolver
     ) {
 
-        this.accionVolver = accionVolver;
+        this.accionVolver =
+                accionVolver;
 
         setLayout(
                 new BorderLayout(
@@ -40,7 +41,7 @@ public class TipoActividadProyectoPage extends JPanel {
         );
 
         crearInterfaz();
-        cargarActividades();
+        cargarTiposActividad();
     }
 
     private void crearInterfaz() {
@@ -84,7 +85,7 @@ public class TipoActividadProyectoPage extends JPanel {
 
         JLabel titulo =
                 new JLabel(
-                        "Catálogo de Tipos de Actividad"
+                        "Tipos de Actividad de Proyecto"
                 );
 
         titulo.setFont(
@@ -150,6 +151,18 @@ public class TipoActividadProyectoPage extends JPanel {
                 )
         );
 
+        tabla.getColumnModel()
+                .getColumn(0)
+                .setPreferredWidth(60);
+
+        tabla.getColumnModel()
+                .getColumn(1)
+                .setPreferredWidth(260);
+
+        tabla.getColumnModel()
+                .getColumn(2)
+                .setPreferredWidth(500);
+
         return new JScrollPane(
                 tabla
         );
@@ -200,15 +213,15 @@ public class TipoActividadProyectoPage extends JPanel {
         return panel;
     }
 
-    private void cargarActividades() {
+    private void cargarTiposActividad() {
 
         try {
 
             modeloTabla.setRowCount(0);
 
             for (
-                    TipoActividadProyectoDAO.TipoActividadResumen actividad
-                    : TipoActividadProyectoDAO.obtenerActivos()
+                    TipoActividadResumen actividad
+                    : TipoActividadProyectoAPI.obtenerActivos()
             ) {
 
                 modeloTabla.addRow(
@@ -224,7 +237,7 @@ public class TipoActividadProyectoPage extends JPanel {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Error al cargar tipos de actividad:\n"
+                    "Error al cargar los tipos de actividad:\n"
                             + e.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE
@@ -246,6 +259,14 @@ public class TipoActividadProyectoPage extends JPanel {
         txtDescripcion.setLineWrap(true);
         txtDescripcion.setWrapStyleWord(true);
 
+        JPanel panel =
+                new JPanel(
+                        new BorderLayout(
+                                8,
+                                8
+                        )
+                );
+
         JPanel datos =
                 new JPanel(
                         new GridLayout(
@@ -262,15 +283,9 @@ public class TipoActividadProyectoPage extends JPanel {
                 )
         );
 
-        datos.add(txtNombre);
-
-        JPanel panel =
-                new JPanel(
-                        new BorderLayout(
-                                8,
-                                8
-                        )
-                );
+        datos.add(
+                txtNombre
+        );
 
         panel.add(
                 datos,
@@ -294,15 +309,16 @@ public class TipoActividadProyectoPage extends JPanel {
                 );
 
         if (
-            respuesta
-            != JOptionPane.OK_OPTION
+                respuesta
+                        != JOptionPane.OK_OPTION
         ) {
+
             return;
         }
 
         try {
 
-            TipoActividadProyectoDAO.insertar(
+            TipoActividadProyectoAPI.insertar(
                     txtNombre
                             .getText()
                             .trim(),
@@ -311,7 +327,7 @@ public class TipoActividadProyectoPage extends JPanel {
                             .trim()
             );
 
-            cargarActividades();
+            cargarTiposActividad();
 
             JOptionPane.showMessageDialog(
                     this,
@@ -365,8 +381,8 @@ public class TipoActividadProyectoPage extends JPanel {
 
         try {
 
-            TipoActividadProyectoDAO.TipoActividadResumen actividad =
-                    TipoActividadProyectoDAO.obtenerPorId(
+            TipoActividadResumen actividad =
+                    TipoActividadProyectoAPI.obtenerPorId(
                             idTipoActividad
                     );
 
@@ -385,6 +401,14 @@ public class TipoActividadProyectoPage extends JPanel {
             txtDescripcion.setLineWrap(true);
             txtDescripcion.setWrapStyleWord(true);
 
+            JPanel panel =
+                    new JPanel(
+                            new BorderLayout(
+                                    8,
+                                    8
+                            )
+                    );
+
             JPanel datos =
                     new JPanel(
                             new GridLayout(
@@ -401,15 +425,9 @@ public class TipoActividadProyectoPage extends JPanel {
                     )
             );
 
-            datos.add(txtNombre);
-
-            JPanel panel =
-                    new JPanel(
-                            new BorderLayout(
-                                    8,
-                                    8
-                            )
-                    );
+            datos.add(
+                    txtNombre
+            );
 
             panel.add(
                     datos,
@@ -433,13 +451,14 @@ public class TipoActividadProyectoPage extends JPanel {
                     );
 
             if (
-                respuesta
-                != JOptionPane.OK_OPTION
+                    respuesta
+                            != JOptionPane.OK_OPTION
             ) {
+
                 return;
             }
 
-            TipoActividadProyectoDAO.actualizar(
+            TipoActividadProyectoAPI.actualizar(
                     idTipoActividad,
                     txtNombre
                             .getText()
@@ -449,7 +468,7 @@ public class TipoActividadProyectoPage extends JPanel {
                             .trim()
             );
 
-            cargarActividades();
+            cargarTiposActividad();
 
             JOptionPane.showMessageDialog(
                     this,
@@ -501,7 +520,7 @@ public class TipoActividadProyectoPage extends JPanel {
                                 .toString()
                 );
 
-        String nombre =
+        String nombreActividad =
                 modeloTabla
                         .getValueAt(
                                 filaModelo,
@@ -511,74 +530,60 @@ public class TipoActividadProyectoPage extends JPanel {
 
         try {
 
-    int proyectosRelacionados =
-            TipoActividadProyectoDAO
-                    .contarProyectosRelacionados(
-                            idTipoActividad
-                    );
+            int proyectosRelacionados =
+                    TipoActividadProyectoAPI
+                            .contarProyectosRelacionados(
+                                    idTipoActividad
+                            );
 
-    if (proyectosRelacionados > 0) {
+            if (proyectosRelacionados > 0) {
 
-        JOptionPane.showMessageDialog(
-                this,
-                "No se puede eliminar este tipo de actividad.\n\n"
-                        + "Está asignado a "
-                        + proyectosRelacionados
-                        + (
-                            proyectosRelacionados == 1
-                                    ? " proyecto."
-                                    : " proyectos."
-                        )
-                        + "\n\n"
-                        + "El registro debe conservarse "
-                        + "para proteger el historial.",
-                "Eliminación no permitida",
-                JOptionPane.WARNING_MESSAGE
-        );
-
-        return;
-    }
-
-} catch (Exception e) {
-
-    JOptionPane.showMessageDialog(
-            this,
-            "Error al comprobar los proyectos relacionados:\n"
-                    + e.getMessage(),
-            "Error",
-            JOptionPane.ERROR_MESSAGE
-    );
-
-    return;
-}
-
-        int respuesta =
-                JOptionPane.showConfirmDialog(
+                JOptionPane.showMessageDialog(
                         this,
-                        "¿Desea eliminar el tipo de actividad "
-                                + nombre
-                                + "?\n\n"
-                                + "El registro se desactivará "
-                                + "y no se borrará físicamente.",
-                        "Confirmar eliminación",
-                        JOptionPane.YES_NO_OPTION,
+                        "No se puede eliminar este tipo de actividad.\n\n"
+                                + "Está asignado a "
+                                + proyectosRelacionados
+                                + (
+                                    proyectosRelacionados == 1
+                                            ? " proyecto."
+                                            : " proyectos."
+                                )
+                                + "\n\n"
+                                + "Puede editar su descripción, "
+                                + "pero debe conservarse para proteger el historial.",
+                        "Tipo de actividad en uso",
                         JOptionPane.WARNING_MESSAGE
                 );
 
-        if (
-            respuesta
-            != JOptionPane.YES_OPTION
-        ) {
-            return;
-        }
+                return;
+            }
 
-        try {
+            int respuesta =
+                    JOptionPane.showConfirmDialog(
+                            this,
+                            "¿Desea eliminar el tipo de actividad "
+                                    + nombreActividad
+                                    + "?\n\n"
+                                    + "El registro se desactivará "
+                                    + "y no se borrará físicamente.",
+                            "Confirmar eliminación",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
 
-            TipoActividadProyectoDAO.eliminar(
+            if (
+                    respuesta
+                            != JOptionPane.YES_OPTION
+            ) {
+
+                return;
+            }
+
+            TipoActividadProyectoAPI.eliminar(
                     idTipoActividad
             );
 
-            cargarActividades();
+            cargarTiposActividad();
 
             JOptionPane.showMessageDialog(
                     this,

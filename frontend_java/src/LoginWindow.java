@@ -19,107 +19,191 @@ public class LoginWindow extends JFrame {
 
     private void crearInterfaz() {
 
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel =
+                new JPanel(
+                        new BorderLayout()
+                );
 
-        JLabel titulo = new JLabel(
-                "LPP Smart ERP",
-                SwingConstants.CENTER
+        JLabel titulo =
+                new JLabel(
+                        "LPP Smart ERP",
+                        SwingConstants.CENTER
+                );
+
+        titulo.setFont(
+                new Font(
+                        "Segoe UI",
+                        Font.BOLD,
+                        28
+                )
         );
 
-        titulo.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        panel.add(
+                titulo,
+                BorderLayout.NORTH
+        );
 
-        panel.add(titulo, BorderLayout.NORTH);
+        JPanel centro =
+                new JPanel(
+                        new GridLayout(
+                                4,
+                                2,
+                                10,
+                                10
+                        )
+                );
 
-        JPanel centro = new JPanel(new GridLayout(4,2,10,10));
-        centro.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+        centro.setBorder(
+                BorderFactory.createEmptyBorder(
+                        20,
+                        20,
+                        20,
+                        20
+                )
+        );
 
-        centro.add(new JLabel("Usuario"));
+        centro.add(
+                new JLabel("Usuario")
+        );
 
-        txtUsuario = new JTextField();
+        txtUsuario =
+                new JTextField();
+
         centro.add(txtUsuario);
 
-        centro.add(new JLabel("Contraseña"));
+        centro.add(
+                new JLabel("Contraseña")
+        );
 
-        txtClave = new JPasswordField();
+        txtClave =
+                new JPasswordField();
+
         centro.add(txtClave);
 
-        JButton btnIngresar = new JButton("Ingresar");
+        JButton btnIngresar =
+                new JButton("Ingresar");
 
-        btnIngresar.addActionListener(e -> validar());
+        btnIngresar.addActionListener(
+                e -> validar()
+        );
 
-        centro.add(new JLabel());
-        centro.add(btnIngresar);
+        /*
+         * Permite iniciar sesión presionando ENTER.
+         */
+        getRootPane().setDefaultButton(
+                btnIngresar
+        );
 
-        panel.add(centro, BorderLayout.CENTER);
+        centro.add(
+                new JLabel()
+        );
+
+        centro.add(
+                btnIngresar
+        );
+
+        panel.add(
+                centro,
+                BorderLayout.CENTER
+        );
 
         add(panel);
     }
 
     private void validar() {
 
-    String nombreUsuario =
-            txtUsuario.getText().trim();
+        String nombreUsuario =
+                txtUsuario
+                        .getText()
+                        .trim();
 
-    String clave =
-            new String(txtClave.getPassword());
+        char[] claveCaracteres =
+                txtClave.getPassword();
 
-    if (nombreUsuario.isEmpty()) {
+        String clave =
+                new String(
+                        claveCaracteres
+                );
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Ingrese el usuario.",
-                "Validación",
-                JOptionPane.WARNING_MESSAGE
+        /*
+         * Limpia el arreglo en memoria cuando ya se obtuvo el texto.
+         */
+        java.util.Arrays.fill(
+                claveCaracteres,
+                '\0'
         );
 
-        txtUsuario.requestFocus();
-        return;
-    }
+        if (nombreUsuario.isEmpty()) {
 
-    if (clave.isEmpty()) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Ingrese la contraseña.",
-                "Validación",
-                JOptionPane.WARNING_MESSAGE
-        );
-
-        txtClave.requestFocus();
-        return;
-    }
-
-    UsuarioDAO usuarioDAO =
-            new UsuarioDAO();
-
-    Usuario usuarioAutenticado =
-            usuarioDAO.autenticar(
-                    nombreUsuario,
-                    clave
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Ingrese el usuario.",
+                    "Validación",
+                    JOptionPane.WARNING_MESSAGE
             );
 
-    if (usuarioAutenticado == null) {
+            txtUsuario.requestFocus();
+            return;
+        }
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Usuario o contraseña incorrectos.",
-                "Acceso denegado",
-                JOptionPane.ERROR_MESSAGE
-        );
+        if (clave.isEmpty()) {
 
-        txtClave.setText("");
-        txtClave.requestFocus();
-        return;
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Ingrese la contraseña.",
+                    "Validación",
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            txtClave.requestFocus();
+            return;
+        }
+
+        try {
+
+            Usuario usuarioAutenticado =
+                    UsuarioAPI.autenticar(
+                            nombreUsuario,
+                            clave
+                    );
+
+            if (usuarioAutenticado == null) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Usuario o contraseña incorrectos.",
+                        "Acceso denegado",
+                        JOptionPane.ERROR_MESSAGE
+                );
+
+                txtClave.setText("");
+                txtClave.requestFocus();
+                return;
+            }
+
+            SesionUsuario.iniciarSesion(
+                    usuarioAutenticado
+            );
+
+            MenuPrincipal menu =
+                    new MenuPrincipal();
+
+            menu.setVisible(true);
+
+            dispose();
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No fue posible conectar con el servicio "
+                            + "de autenticación.\n\n"
+                            + ex.getMessage(),
+                    "Error de conexión",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
+            ex.printStackTrace();
+        }
     }
-
-    SesionUsuario.iniciarSesion(usuarioAutenticado);
-
-MenuPrincipal menu =
-        new MenuPrincipal();
-
-menu.setVisible(true);
-
-dispose();
-}
-
 }

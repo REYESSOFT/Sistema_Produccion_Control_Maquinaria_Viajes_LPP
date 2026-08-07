@@ -32,8 +32,8 @@ public class DetalleCodigoHistoricoDialog
 
         try {
 
-            CodigoHistoricoDAO.CodigoHistoricoDetalle detalle =
-                    CodigoHistoricoDAO.obtenerPorId(
+            CodigoHistoricoAPI.CodigoHistoricoDetalle detalle =
+                    CodigoHistoricoAPI.obtenerPorId(
                             idCodigoHistorico
                     );
 

@@ -45,10 +45,28 @@ public class ControlDiarioDAO {
     ) {
     }
     public static List<ControlDiarioResumen>
-        obtenerControles() throws Exception {
+    obtenerControles() throws Exception {
 
-    return ControlDiarioAPI.obtenerResumen();
-}
+        List<ControlDiarioResumen> controles =
+                new ArrayList<>();
+
+        for (
+                ControlDiarioAPI.ControlDiarioResumen item
+                : ControlDiarioAPI.obtenerResumen()
+        ) {
+
+            controles.add(
+                    new ControlDiarioResumen(
+                            item.idControl(),
+                            item.proyecto(),
+                            item.fecha(),
+                            item.metrosLineales()
+                    )
+            );
+        }
+
+        return controles;
+    }
 public static List<ProyectoItem>
         obtenerProyectosActivos() throws Exception {
 
@@ -99,8 +117,20 @@ public static ControlDiarioDetalle obtenerPorId(
         int idControl
 ) throws Exception {
 
-    return ControlDiarioAPI.obtenerPorId(
-            idControl
+    ControlDiarioAPI.ControlDiarioDetalle detalle =
+            ControlDiarioAPI.obtenerPorId(
+                    idControl
+            );
+
+    return new ControlDiarioDetalle(
+            detalle.idControl(),
+            detalle.idProyecto(),
+            detalle.fecha(),
+            detalle.metrosLineales(),
+            detalle.ancho(),
+            detalle.espesor(),
+            detalle.volumenReal(),
+            detalle.observaciones()
     );
 }
     public static int insertar(

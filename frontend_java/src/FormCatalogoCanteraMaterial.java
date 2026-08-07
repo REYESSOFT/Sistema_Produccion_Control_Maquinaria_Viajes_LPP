@@ -264,8 +264,8 @@ public class FormCatalogoCanteraMaterial extends JDialog {
 
         try {
 
-            CatalogoCanteraMaterialDAO.TarifaDetalle detalle =
-                    CatalogoCanteraMaterialDAO.obtenerPorId(
+            CatalogoCanteraMaterialAPI.TarifaDetalle detalle =
+                    CatalogoCanteraMaterialAPI.obtenerPorId(
                             idTarifa
                     );
 
@@ -335,7 +335,7 @@ public class FormCatalogoCanteraMaterial extends JDialog {
 
             if (idTarifa == null) {
 
-                CatalogoCanteraMaterialDAO.insertar(
+                CatalogoCanteraMaterialAPI.insertar(
                         cantera,
                         material,
                         costoUnitarioMaterial
@@ -350,7 +350,7 @@ public class FormCatalogoCanteraMaterial extends JDialog {
 
             } else {
 
-                CatalogoCanteraMaterialDAO.actualizar(
+                CatalogoCanteraMaterialAPI.actualizar(
                         idTarifa,
                         cantera,
                         material,

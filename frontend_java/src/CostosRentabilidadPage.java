@@ -328,13 +328,12 @@ public class CostosRentabilidadPage extends JPanel {
 
         try {
 
-            List<CostosRentabilidadDAO.CostosRentabilidadResumen> lista =
-                    CostosRentabilidadDAO.obtenerResumen();
-
+           List<CostosRentabilidadAPI.CostosRentabilidadResumen> lista =
+                    CostosRentabilidadAPI.obtenerResumen();
             modeloTabla.setRowCount(0);
 
             for (
-                    CostosRentabilidadDAO.CostosRentabilidadResumen item
+                    CostosRentabilidadAPI.CostosRentabilidadResumen item
                     : lista
             ) {
 

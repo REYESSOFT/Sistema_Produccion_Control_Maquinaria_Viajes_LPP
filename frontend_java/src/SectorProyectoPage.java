@@ -219,8 +219,8 @@ public class SectorProyectoPage extends JPanel {
             modeloTabla.setRowCount(0);
 
             for (
-                    SectorProyectoDAO.SectorResumen sector
-                    : SectorProyectoDAO.obtenerActivos()
+                    SectorResumen sector
+        : SectorProyectoAPI.obtenerActivos()
             ) {
 
                 modeloTabla.addRow(
@@ -314,7 +314,7 @@ public class SectorProyectoPage extends JPanel {
 
         try {
 
-            SectorProyectoDAO.insertar(
+            SectorProyectoAPI.insertar(
                     txtNombre
                             .getText()
                             .trim(),
@@ -377,8 +377,8 @@ public class SectorProyectoPage extends JPanel {
 
         try {
 
-            SectorProyectoDAO.SectorResumen sector =
-                    SectorProyectoDAO.obtenerPorId(
+            SectorResumen sector =
+        SectorProyectoAPI.obtenerPorId(
                             idSector
                     );
 
@@ -451,7 +451,7 @@ public class SectorProyectoPage extends JPanel {
                 return;
             }
 
-            SectorProyectoDAO.actualizar(
+            SectorProyectoAPI.actualizar(
                     idSector,
                     txtNombre
                             .getText()
@@ -543,7 +543,7 @@ public class SectorProyectoPage extends JPanel {
 
         try {
 
-            SectorProyectoDAO.eliminar(
+            SectorProyectoAPI.eliminar(
                     idSector
             );
 

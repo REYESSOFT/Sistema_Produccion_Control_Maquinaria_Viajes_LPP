@@ -12,7 +12,7 @@ public class AvanceProyectoPage extends JPanel {
 
     private JTable tabla;
     private DefaultTableModel modelo;
-    private List<AvanceProyectoDAO.AvanceProyectoResumen>
+    private List<AvanceProyectoAPI.AvanceProyectoResumen>
         listaAvances;
 
     private JLabel lblProyectosActivos;
@@ -608,8 +608,8 @@ scroll.setVerticalScrollBarPolicy(
     private void cargarResumen()
             throws Exception {
 
-        AvanceProyectoDAO.DashboardResumen resumen =
-                AvanceProyectoDAO.obtenerResumen();
+        AvanceProyectoAPI.DashboardResumen resumen =
+        AvanceProyectoAPI.obtenerResumen();
 
         lblProyectosActivos.setText(
                 String.valueOf(
@@ -646,10 +646,10 @@ scroll.setVerticalScrollBarPolicy(
     tabla.clearSelection();
 
     listaAvances =
-        AvanceProyectoDAO.obtenerAvances();
+        AvanceProyectoAPI.obtenerAvances();
 
     for (
-        AvanceProyectoDAO.AvanceProyectoResumen item
+        AvanceProyectoAPI.AvanceProyectoResumen item
                 : listaAvances
 ) {
 
@@ -775,7 +775,7 @@ private void actualizarIndicadoresSeleccion() {
         return;
     }
 
-    AvanceProyectoDAO.AvanceProyectoResumen proyecto =
+    AvanceProyectoAPI.AvanceProyectoResumen proyecto =
             listaAvances.get(
                     filaModelo
             );
@@ -871,7 +871,7 @@ private void mostrarDetalleSeleccionado() {
         return;
     }
 
-    AvanceProyectoDAO.AvanceProyectoResumen avance =
+    AvanceProyectoAPI.AvanceProyectoResumen avance =
             listaAvances.get(
                     filaModelo
             );

@@ -12,10 +12,10 @@ import java.time.format.DateTimeParseException;
 
 public class FormAsignacionMaquinaria extends JDialog {
 
-    private JComboBox<AsignacionMaquinariaDAO.ProyectoItem>
+    private JComboBox<AsignacionMaquinariaAPI.ProyectoItem>
             cmbProyecto;
 
-    private JComboBox<AsignacionMaquinariaDAO.MaquinariaItem>
+    private JComboBox<AsignacionMaquinariaAPI.MaquinariaItem>
             cmbMaquinaria;
 
     private JComboBox<String> cmbEstado;
@@ -319,8 +319,8 @@ public FormAsignacionMaquinaria(
             cmbProyecto.removeAllItems();
 
             for (
-                    AsignacionMaquinariaDAO.ProyectoItem proyecto
-                    : AsignacionMaquinariaDAO
+                    AsignacionMaquinariaAPI.ProyectoItem proyecto
+                    : AsignacionMaquinariaAPI
                             .obtenerProyectosActivos()
             ) {
 
@@ -332,8 +332,8 @@ public FormAsignacionMaquinaria(
             cmbMaquinaria.removeAllItems();
 
             for (
-                    AsignacionMaquinariaDAO.MaquinariaItem maquinaria
-                    : AsignacionMaquinariaDAO
+                    AsignacionMaquinariaAPI.MaquinariaItem maquinaria
+                    : AsignacionMaquinariaAPI
                             .obtenerMaquinariasDisponibles()
             ) {
 
@@ -360,8 +360,8 @@ public FormAsignacionMaquinaria(
 
     private void completarDatosMaquinaria() {
 
-    AsignacionMaquinariaDAO.MaquinariaItem maquinaria =
-            (AsignacionMaquinariaDAO.MaquinariaItem)
+    AsignacionMaquinariaAPI.MaquinariaItem maquinaria =
+            (AsignacionMaquinariaAPI.MaquinariaItem)
                     cmbMaquinaria.getSelectedItem();
 
     if (maquinaria == null) {
@@ -391,8 +391,8 @@ public FormAsignacionMaquinaria(
 
     private void guardarAsignacion() {
 
-        AsignacionMaquinariaDAO.ProyectoItem proyecto =
-                (AsignacionMaquinariaDAO.ProyectoItem)
+        AsignacionMaquinariaAPI.ProyectoItem proyecto =
+                (AsignacionMaquinariaAPI.ProyectoItem)
                         cmbProyecto.getSelectedItem();
 
         if (proyecto == null) {
@@ -407,8 +407,8 @@ public FormAsignacionMaquinaria(
             return;
         }
 
-        AsignacionMaquinariaDAO.MaquinariaItem maquinaria =
-                (AsignacionMaquinariaDAO.MaquinariaItem)
+        AsignacionMaquinariaAPI.MaquinariaItem maquinaria =
+                (AsignacionMaquinariaAPI.MaquinariaItem)
                         cmbMaquinaria.getSelectedItem();
 
         if (maquinaria == null) {
@@ -548,7 +548,7 @@ if (!textoTarifa.isEmpty()) {
 
     if (modoEdicion) {
 
-        AsignacionMaquinariaDAO.actualizar(
+        AsignacionMaquinariaAPI.actualizar(
                 idAsignacionEditar,
                 cantidad,
                 fechaIngreso,
@@ -571,7 +571,7 @@ if (!textoTarifa.isEmpty()) {
 
     } else {
 
-        AsignacionMaquinariaDAO.insertar(
+        AsignacionMaquinariaAPI.insertar(
                 proyecto.idProyecto(),
                 maquinaria.idMaquinaria(),
                 cantidad,
@@ -847,7 +847,7 @@ if (!textoTarifa.isEmpty()) {
             i++
     ) {
 
-        AsignacionMaquinariaDAO.ProyectoItem item =
+        AsignacionMaquinariaAPI.ProyectoItem item =
                 cmbProyecto.getItemAt(i);
 
         if (
@@ -871,7 +871,7 @@ private void seleccionarMaquinaria(
             i++
     ) {
 
-        AsignacionMaquinariaDAO.MaquinariaItem item =
+        AsignacionMaquinariaAPI.MaquinariaItem item =
                 cmbMaquinaria.getItemAt(i);
 
         if (
@@ -905,8 +905,8 @@ private void bloquearFormulario() {
 
     try {
 
-        AsignacionMaquinariaDAO.AsignacionDetalle asignacion =
-                AsignacionMaquinariaDAO.obtenerPorId(
+        AsignacionMaquinariaAPI.AsignacionDetalle asignacion =
+                AsignacionMaquinariaAPI.obtenerPorId(
                         idAsignacionEditar
                 );
 

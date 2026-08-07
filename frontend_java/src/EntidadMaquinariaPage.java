@@ -401,8 +401,8 @@ public class EntidadMaquinariaPage extends JPanel {
                     );
 
             for (
-                    EntidadMaquinariaDAO.EntidadResumen entidad
-                    : EntidadMaquinariaDAO.obtenerTodas()
+                    EntidadMaquinariaAPI.EntidadResumen entidad
+                    : EntidadMaquinariaAPI.obtenerTodas()
             ) {
 
                 if (
@@ -672,7 +672,7 @@ private void eliminarEntidad() {
 
     try {
 
-        EntidadMaquinariaDAO.eliminarLogico(
+        EntidadMaquinariaAPI.eliminarLogico(
                 idEntidad
         );
 

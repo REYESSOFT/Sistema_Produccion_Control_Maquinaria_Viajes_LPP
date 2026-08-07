@@ -466,8 +466,8 @@ tablaTarifas
 
         try {
 
-            List<CatalogoCanteraMaterialDAO.TarifaResumen> lista =
-                    CatalogoCanteraMaterialDAO.buscar(
+            List<CatalogoCanteraMaterialAPI.TarifaResumen> lista =
+                    CatalogoCanteraMaterialAPI.buscar(
                             cantera,
                             material,
                             estado
@@ -478,7 +478,7 @@ tablaTarifas
             );
 
             for (
-                    CatalogoCanteraMaterialDAO.TarifaResumen tarifa
+                    CatalogoCanteraMaterialAPI.TarifaResumen tarifa
                     : lista
             ) {
 
@@ -631,7 +631,7 @@ tablaTarifas
 
         try {
 
-            CatalogoCanteraMaterialDAO.desactivar(
+            CatalogoCanteraMaterialAPI.desactivar(
                     idTarifa
             );
 
@@ -714,7 +714,7 @@ tablaTarifas
 
         try {
 
-            CatalogoCanteraMaterialDAO.reactivar(
+            CatalogoCanteraMaterialAPI.reactivar(
                     idTarifa
             );
 

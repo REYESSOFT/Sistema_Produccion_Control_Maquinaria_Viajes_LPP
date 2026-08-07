@@ -3,10 +3,10 @@ import java.awt.*;
 
 public class FormCodigoHistorico extends JDialog {
 
-    private JComboBox<CodigoHistoricoDAO.ItemCatalogo>
+    private JComboBox<CodigoHistoricoAPI.ItemCatalogo>
             cmbProveedor;
 
-    private JComboBox<CodigoHistoricoDAO.MaquinariaItem>
+    private JComboBox<CodigoHistoricoAPI.MaquinariaItem>
             cmbMaquinaria;
 
     private JTextField txtCodigoAnterior;
@@ -243,15 +243,15 @@ public class FormCodigoHistorico extends JDialog {
             cmbProveedor.removeAllItems();
 
             cmbProveedor.addItem(
-                    new CodigoHistoricoDAO.ItemCatalogo(
+                    new CodigoHistoricoAPI.ItemCatalogo(
                             0,
                             "Sin asignar"
                     )
             );
 
             for (
-                    CodigoHistoricoDAO.ItemCatalogo proveedor
-                    : CodigoHistoricoDAO.obtenerProveedores()
+                    CodigoHistoricoAPI.ItemCatalogo proveedor
+                    : CodigoHistoricoAPI.obtenerProveedores()
             ) {
 
                 cmbProveedor.addItem(
@@ -262,7 +262,7 @@ public class FormCodigoHistorico extends JDialog {
             cmbMaquinaria.removeAllItems();
 
             cmbMaquinaria.addItem(
-                    new CodigoHistoricoDAO.MaquinariaItem(
+                    new CodigoHistoricoAPI.MaquinariaItem(
                             0,
                             "",
                             "Sin vincular por el momento"
@@ -270,8 +270,8 @@ public class FormCodigoHistorico extends JDialog {
             );
 
             for (
-                    CodigoHistoricoDAO.MaquinariaItem maquinaria
-                    : CodigoHistoricoDAO
+                    CodigoHistoricoAPI.MaquinariaItem maquinaria
+                    : CodigoHistoricoAPI
                             .obtenerMaquinariasActivas()
             ) {
 
@@ -296,8 +296,8 @@ public class FormCodigoHistorico extends JDialog {
 
     private void completarDesdeMaquinaria() {
 
-    CodigoHistoricoDAO.MaquinariaItem maquinaria =
-            (CodigoHistoricoDAO.MaquinariaItem)
+    CodigoHistoricoAPI.MaquinariaItem maquinaria =
+            (CodigoHistoricoAPI.MaquinariaItem)
                     cmbMaquinaria.getSelectedItem();
 
     if (
@@ -353,8 +353,8 @@ public class FormCodigoHistorico extends JDialog {
 
     try {
 
-        CodigoHistoricoDAO.CodigoHistoricoDetalle detalle =
-                CodigoHistoricoDAO.obtenerPorId(
+        CodigoHistoricoAPI.CodigoHistoricoDetalle detalle =
+                CodigoHistoricoAPI.obtenerPorId(
                         idCodigoHistoricoEdicion
                 );
 
@@ -449,7 +449,7 @@ public class FormCodigoHistorico extends JDialog {
             i++
     ) {
 
-        CodigoHistoricoDAO.ItemCatalogo item =
+        CodigoHistoricoAPI.ItemCatalogo item =
                 cmbProveedor.getItemAt(i);
 
         if (
@@ -479,7 +479,7 @@ public class FormCodigoHistorico extends JDialog {
             i++
     ) {
 
-        CodigoHistoricoDAO.MaquinariaItem item =
+        CodigoHistoricoAPI.MaquinariaItem item =
                 cmbMaquinaria.getItemAt(i);
 
         if (
@@ -533,12 +533,12 @@ if (descripcion.isEmpty()) {
     return;
 }
 
-        CodigoHistoricoDAO.ItemCatalogo proveedor =
-                (CodigoHistoricoDAO.ItemCatalogo)
+        CodigoHistoricoAPI.ItemCatalogo proveedor =
+                (CodigoHistoricoAPI.ItemCatalogo)
                         cmbProveedor.getSelectedItem();
 
-        CodigoHistoricoDAO.MaquinariaItem maquinaria =
-                (CodigoHistoricoDAO.MaquinariaItem)
+        CodigoHistoricoAPI.MaquinariaItem maquinaria =
+                (CodigoHistoricoAPI.MaquinariaItem)
                         cmbMaquinaria.getSelectedItem();
 
         Integer idProveedor =
@@ -581,7 +581,7 @@ if (descripcion.isEmpty()) {
     idCodigoHistoricoEdicion == null
 ) {
 
-    CodigoHistoricoDAO.insertar(
+    CodigoHistoricoAPI.insertar(
             idMaquinaria,
             codigoAnterior,
             idProveedor,
@@ -597,7 +597,7 @@ if (descripcion.isEmpty()) {
 
 } else {
 
-    CodigoHistoricoDAO.actualizar(
+    CodigoHistoricoAPI.actualizar(
             idCodigoHistoricoEdicion,
             idMaquinaria,
             codigoAnterior,

@@ -404,14 +404,14 @@ public class ProyectoPage extends JPanel {
             );
 
             for (
-                    ProyectoDAO.EmpresaItem empresa
-                    : ProyectoDAO.obtenerEmpresas()
-            ) {
+        EmpresaItem empresa
+        : ProyectoAPI.obtenerEmpresas()
+) {
 
-                cmbEmpresaFiltro.addItem(
-                        empresa.nombre()
-                );
-            }
+    cmbEmpresaFiltro.addItem(
+            empresa.nombre()
+    );
+}
 
         } catch (Exception e) {
 
@@ -450,9 +450,9 @@ public class ProyectoPage extends JPanel {
                             .toUpperCase();
 
             for (
-                    ProyectoDAO.ProyectoResumen proyecto
-                    : ProyectoDAO.obtenerActivos()
-            ) {
+        ProyectoResumen proyecto
+        : ProyectoAPI.obtenerResumen()
+) {
 
                 if (
                     !empresaFiltro.equalsIgnoreCase(
@@ -754,9 +754,9 @@ private void eliminarProyecto() {
 
     try {
 
-        ProyectoDAO.eliminar(
-                idProyecto
-        );
+        ProyectoAPI.eliminarProyecto(
+        idProyecto
+);
 
         cargarProyectos();
 

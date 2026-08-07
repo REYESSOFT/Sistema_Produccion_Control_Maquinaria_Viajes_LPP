@@ -24,7 +24,7 @@ import javax.swing.JTextField;
 public class FormControlDiario extends JDialog {
 
     private final JComboBox<
-            ControlDiarioDAO.ProyectoItem
+            ControlDiarioAPI.ProyectoItem
             > cmbProyecto;
 
     private final JTextField txtFecha;
@@ -50,7 +50,8 @@ private final JTextArea txtObservaciones;
     private final boolean modoDetalle;
 
     private boolean guardado;
-    private SelectorGuiasAprobadasDAO.GuiaAprobadaItem guiaSeleccionada;
+    private Integer idGuiaActual;
+    private ControlDiarioAPI.GuiaAprobadaItem guiaSeleccionada;
 
     /*
      * NUEVO
@@ -112,6 +113,9 @@ private final JTextArea txtObservaciones;
 
         this.guardado =
                 false;
+
+        this.idGuiaActual =
+                null;
 
         setSize(
                 780,
@@ -701,8 +705,8 @@ add(
             cmbProyecto.removeAllItems();
 
             for (
-                    ControlDiarioDAO.ProyectoItem proyecto
-                    : ControlDiarioDAO
+                    ControlDiarioAPI.ProyectoItem proyecto
+                    : ControlDiarioAPI
                             .obtenerProyectosActivos()
             ) {
 
@@ -727,14 +731,17 @@ add(
 
         try {
 
-            ControlDiarioDAO.ControlDiarioDetalle detalle =
-                    ControlDiarioDAO.obtenerPorId(
+            ControlDiarioAPI.ControlDiarioDetalle detalle =
+                    ControlDiarioAPI.obtenerPorId(
                             idControl
                     );
 
             seleccionarProyecto(
                     detalle.idProyecto()
             );
+
+            idGuiaActual =
+                    detalle.idGuia();
 
             txtFecha.setText(
                     detalle.fecha() == null
@@ -790,7 +797,7 @@ add(
                 i++
         ) {
 
-            ControlDiarioDAO.ProyectoItem proyecto =
+            ControlDiarioAPI.ProyectoItem proyecto =
                     cmbProyecto.getItemAt(i);
 
             if (
@@ -804,10 +811,15 @@ add(
         }
     }
     public void cargarDesdeGuia(
-        SelectorGuiasAprobadasDAO.GuiaAprobadaItem guia
+        ControlDiarioAPI.GuiaAprobadaItem guia
 ) {
 
     this.guiaSeleccionada = guia;
+
+    this.idGuiaActual =
+            guia == null
+                    ? null
+                    : guia.idGuia();
 
     if (guia == null) {
         return;
@@ -860,7 +872,7 @@ lblM3Guia.setText(
 
     for (int i = 0; i < cmbProyecto.getItemCount(); i++) {
 
-        ControlDiarioDAO.ProyectoItem proyecto =
+        ControlDiarioAPI.ProyectoItem proyecto =
                 cmbProyecto.getItemAt(i);
 
         String texto = proyecto.toString().toUpperCase();
@@ -893,8 +905,8 @@ lblM3Guia.setText(
 
         try {
 
-            ControlDiarioDAO.ProyectoItem proyecto =
-                    (ControlDiarioDAO.ProyectoItem)
+            ControlDiarioAPI.ProyectoItem proyecto =
+                    (ControlDiarioAPI.ProyectoItem)
                             cmbProyecto.getSelectedItem();
 
             if (proyecto == null) {
@@ -964,10 +976,8 @@ if (requiereAvance) {
            if (idControl == null) {
 
     this.idControl =
-        ControlDiarioDAO.insertar(
-                guiaSeleccionada == null
-                        ? null
-                        : guiaSeleccionada.idGuia(),
+        ControlDiarioAPI.crearControlDiario(
+                idGuiaActual,
                 proyecto.idProyecto(),
                 fechaControl,
                 metrosLineales,
@@ -985,8 +995,9 @@ if (requiereAvance) {
 
 } else {
 
-    ControlDiarioDAO.actualizar(
+    ControlDiarioAPI.actualizarControlDiario(
             idControl,
+            idGuiaActual,
             proyecto.idProyecto(),
             fechaControl,
             metrosLineales,

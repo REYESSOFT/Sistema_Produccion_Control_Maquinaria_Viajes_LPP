@@ -551,8 +551,8 @@ public class DetalleControlDiarioMaterialDialog extends JDialog {
 
         try {
 
-            List<ControlDiarioMaterialDAO.ControlMaterialResumen> lista =
-                    ControlDiarioMaterialDAO.obtenerPorControl(
+            List<ControlDiarioAPI.ControlMaterialDetalle> lista =
+                    ControlDiarioAPI.obtenerMateriales(
                             idControl
                     );
 
@@ -570,7 +570,7 @@ public class DetalleControlDiarioMaterialDialog extends JDialog {
                     0.00;
 
             for (
-                    ControlDiarioMaterialDAO.ControlMaterialResumen item
+                    ControlDiarioAPI.ControlMaterialDetalle item
                     : lista
             ) {
 
@@ -760,7 +760,7 @@ public class DetalleControlDiarioMaterialDialog extends JDialog {
 
         try {
 
-            ControlDiarioMaterialDAO.eliminar(
+            ControlDiarioAPI.eliminarMaterial(
                     idRegistro
             );
 

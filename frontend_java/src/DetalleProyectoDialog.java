@@ -36,10 +36,10 @@ public class DetalleProyectoDialog extends JDialog {
 
         try {
 
-            ProyectoDAO.ProyectoDetalle proyecto =
-                    ProyectoDAO.obtenerPorId(
-                            idProyecto
-                    );
+            ProyectoDetalle proyecto =
+        ProyectoAPI.obtenerPorId(
+                idProyecto
+        );
 
             JPanel principal =
                     new JPanel(
@@ -321,8 +321,8 @@ public class DetalleProyectoDialog extends JDialog {
     ) throws Exception {
 
         for (
-                ProyectoDAO.EmpresaItem empresa
-                : ProyectoDAO.obtenerEmpresas()
+                EmpresaItem empresa
+        : ProyectoAPI.obtenerEmpresas()
         ) {
 
             if (
@@ -346,8 +346,8 @@ public class DetalleProyectoDialog extends JDialog {
         }
 
         for (
-                ProyectoDAO.SectorItem sector
-                : ProyectoDAO.obtenerSectores()
+                SectorItem sector
+        : ProyectoAPI.obtenerSectores()
         ) {
 
             if (
@@ -371,8 +371,8 @@ public class DetalleProyectoDialog extends JDialog {
         }
 
         for (
-                ProyectoDAO.PiscinaItem piscina
-                : ProyectoDAO.obtenerPiscinasPorSector(
+                PiscinaItem piscina
+        : ProyectoAPI.obtenerPiscinasPorSector(
                         null
                 )
         ) {
@@ -398,8 +398,8 @@ public class DetalleProyectoDialog extends JDialog {
         }
 
         for (
-                ProyectoDAO.TipoActividadItem actividad
-                : ProyectoDAO.obtenerTiposActividad()
+                TipoActividadItem actividad
+        : ProyectoAPI.obtenerTiposActividad()
         ) {
 
             if (

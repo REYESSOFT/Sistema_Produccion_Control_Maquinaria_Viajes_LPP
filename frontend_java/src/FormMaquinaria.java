@@ -250,8 +250,8 @@ public class FormMaquinaria extends JDialog {
             );
 
             for (
-                    MaquinariaDAO.CatalogoItem item
-                    : MaquinariaDAO.obtenerTiposMaquinaria()
+                    MaquinariaAPI.CatalogoItem item
+                    : MaquinariaAPI.obtenerTiposMaquinaria()
             ) {
 
                 cmbTipo.addItem(
@@ -277,8 +277,8 @@ public class FormMaquinaria extends JDialog {
             );
 
             for (
-                    MaquinariaDAO.CatalogoItem item
-                    : MaquinariaDAO.obtenerEntidades()
+                    MaquinariaAPI.CatalogoItem item
+                    : MaquinariaAPI.obtenerEntidades()
             ) {
 
                 cmbProveedor.addItem(
@@ -314,8 +314,8 @@ public class FormMaquinaria extends JDialog {
 
         try {
 
-            MaquinariaDAO.MaquinariaDetalle maquinaria =
-                    MaquinariaDAO.obtenerPorId(
+            MaquinariaAPI.MaquinariaDetalle maquinaria =
+                    MaquinariaAPI.obtenerPorId(
                             idMaquinariaEdicion
                     );
 
@@ -587,7 +587,7 @@ public class FormMaquinaria extends JDialog {
 
             if (idMaquinariaEdicion == null) {
 
-                MaquinariaDAO.insertar(
+                MaquinariaAPI.insertar(
                         codigoInterno,
                         codigoActual,
                         placa,
@@ -616,7 +616,7 @@ public class FormMaquinaria extends JDialog {
 
             } else {
 
-                MaquinariaDAO.actualizar(
+                MaquinariaAPI.actualizar(
                         idMaquinariaEdicion,
                         codigoInterno,
                         codigoActual,

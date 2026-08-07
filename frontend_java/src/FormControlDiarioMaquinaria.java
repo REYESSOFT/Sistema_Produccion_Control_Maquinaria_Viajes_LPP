@@ -7,7 +7,7 @@ public class FormControlDiarioMaquinaria extends JDialog {
     private final int idControl;
     private final Integer idControlMaquinaria;
 
-    private JComboBox<ControlDiarioMaquinariaDAO.MaquinariaItem>
+    private JComboBox<ControlDiarioAPI.MaquinariaAsignadaItem>
             cmbMaquinaria;
 
     private JTextField txtHoras;
@@ -390,15 +390,15 @@ public class FormControlDiarioMaquinaria extends JDialog {
 
         try {
 
-            List<ControlDiarioMaquinariaDAO.MaquinariaItem> lista =
-                    ControlDiarioMaquinariaDAO.obtenerMaquinariasAsignadas(
+            List<ControlDiarioAPI.MaquinariaAsignadaItem> lista =
+                    ControlDiarioAPI.obtenerMaquinariasAsignadas(
                             idControl
                     );
 
             cmbMaquinaria.removeAllItems();
 
             for (
-                    ControlDiarioMaquinariaDAO.MaquinariaItem item
+                    ControlDiarioAPI.MaquinariaAsignadaItem item
                     : lista
             ) {
 
@@ -438,39 +438,10 @@ public class FormControlDiarioMaquinaria extends JDialog {
 
         try {
 
-            List<ControlDiarioMaquinariaDAO.ControlMaquinariaResumen> lista =
-                    ControlDiarioMaquinariaDAO.obtenerPorControl(
-                            idControl
+            ControlDiarioAPI.ControlMaquinariaDetalle registro =
+                    ControlDiarioAPI.obtenerMaquinariaPorId(
+                            idControlMaquinaria
                     );
-
-            ControlDiarioMaquinariaDAO.ControlMaquinariaResumen registro =
-                    null;
-
-            for (
-                    ControlDiarioMaquinariaDAO.ControlMaquinariaResumen item
-                    : lista
-            ) {
-
-                if (
-                        item.idControlMaquinaria()
-                                == idControlMaquinaria
-                ) {
-
-                    registro =
-                            item;
-
-                    break;
-                }
-            }
-
-            if (
-                    registro == null
-            ) {
-
-                throw new Exception(
-                        "No se encontró el registro seleccionado."
-                );
-            }
 
             seleccionarMaquinaria(
                     registro.idMaquinaria()
@@ -497,7 +468,6 @@ public class FormControlDiarioMaquinaria extends JDialog {
             );
 
             e.printStackTrace();
-
             dispose();
         }
     }
@@ -512,7 +482,7 @@ public class FormControlDiarioMaquinaria extends JDialog {
                 i++
         ) {
 
-            ControlDiarioMaquinariaDAO.MaquinariaItem item =
+            ControlDiarioAPI.MaquinariaAsignadaItem item =
                     cmbMaquinaria.getItemAt(
                             i
                     );
@@ -535,8 +505,8 @@ public class FormControlDiarioMaquinaria extends JDialog {
 
         try {
 
-            ControlDiarioMaquinariaDAO.MaquinariaItem maquinaria =
-                    (ControlDiarioMaquinariaDAO.MaquinariaItem)
+            ControlDiarioAPI.MaquinariaAsignadaItem maquinaria =
+                    (ControlDiarioAPI.MaquinariaAsignadaItem)
                             cmbMaquinaria.getSelectedItem();
 
             if (
@@ -582,27 +552,13 @@ public class FormControlDiarioMaquinaria extends JDialog {
             String observaciones =
                     txtObservaciones.getText().trim();
 
-            if (
-                    idControlMaquinaria == null
-            ) {
-
-                ControlDiarioMaquinariaDAO.insertar(
-                        idControl,
-                        maquinaria.idMaquinaria(),
-                        horasTrabajadas,
-                        observaciones
-                );
-
-            } else {
-
-                ControlDiarioMaquinariaDAO.actualizar(
-                        idControlMaquinaria,
-                        idControl,
-                        maquinaria.idMaquinaria(),
-                        horasTrabajadas,
-                        observaciones
-                );
-            }
+            ControlDiarioAPI.guardarMaquinaria(
+                    idControl,
+                    idControlMaquinaria,
+                    maquinaria.idMaquinaria(),
+                    horasTrabajadas,
+                    observaciones
+            );
 
             guardado =
                     true;

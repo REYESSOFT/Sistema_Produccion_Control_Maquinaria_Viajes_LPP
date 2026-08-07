@@ -305,8 +305,8 @@ panel.add(
             modeloTabla.setRowCount(0);
 
             for (
-                    ControlDiarioDAO.ControlDiarioResumen control
-                    : ControlDiarioDAO.obtenerControles()
+                    ControlDiarioAPI.ControlDiarioResumen control
+                    : ControlDiarioAPI.obtenerResumen()
             ) {
 
                 modeloTabla.addRow(
@@ -358,7 +358,7 @@ panel.add(
 
     selector.setVisible(true);
 
-    SelectorGuiasAprobadasDAO.GuiaAprobadaItem guia =
+    ControlDiarioAPI.GuiaAprobadaItem guia =
             selector.getGuiaSeleccionada();
 
     if (guia == null) {
@@ -612,7 +612,7 @@ private void abrirMaterialPetreo() {
 
         try {
 
-            ControlDiarioDAO.eliminar(
+            ControlDiarioAPI.eliminarControlDiario(
                     idControl
             );
 

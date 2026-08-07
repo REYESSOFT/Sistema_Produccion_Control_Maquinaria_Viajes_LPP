@@ -506,8 +506,8 @@ private void cargarCodigosHistoricos() {
         modeloTabla.setRowCount(0);
 
         for (
-                CodigoHistoricoDAO.CodigoHistoricoResumen registro
-                : CodigoHistoricoDAO.obtenerActivos()
+                CodigoHistoricoAPI.CodigoHistoricoResumen registro
+                : CodigoHistoricoAPI.obtenerActivos()
         ) {
 
             modeloTabla.addRow(
@@ -703,7 +703,7 @@ private void eliminarCodigoHistorico() {
 
     try {
 
-        CodigoHistoricoDAO.eliminar(
+        CodigoHistoricoAPI.eliminar(
                 idCodigoHistorico
         );
 

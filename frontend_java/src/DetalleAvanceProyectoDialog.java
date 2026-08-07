@@ -12,7 +12,7 @@ public class DetalleAvanceProyectoDialog extends JDialog {
 
     public DetalleAvanceProyectoDialog(
             Window parent,
-            AvanceProyectoDAO.AvanceProyectoResumen avance
+           AvanceProyectoAPI.AvanceProyectoResumen avance
     ) {
 
         super(
@@ -40,7 +40,7 @@ public class DetalleAvanceProyectoDialog extends JDialog {
     }
 
     private void crearInterfaz(
-            AvanceProyectoDAO.AvanceProyectoResumen avance
+            AvanceProyectoAPI.AvanceProyectoResumen avance
     ) {
 
         JPanel principal =

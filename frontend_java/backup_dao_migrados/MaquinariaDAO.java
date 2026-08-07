@@ -5,6 +5,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class MaquinariaDAO {
 
@@ -613,4 +614,63 @@ private static double obtenerDoubleJson(
             .get(propiedad)
             .getAsDouble();
 }
+@Query(
+        value = """
+                SELECT
+                    tm.id_tipo_maquinaria AS id,
+                    tm.nombre AS nombre
+
+                FROM tipos_maquinaria tm
+
+                WHERE tm.estado = 'ACTIVO'
+
+                ORDER BY
+                    tm.nombre
+                """,
+        nativeQuery = true
+)
+List<ItemCatalogoProyeccion> obtenerTiposMaquinaria();
+
+
+@Query(
+        value = """
+                SELECT
+                    e.id_entidad AS id,
+                    e.nombre AS nombre
+
+                FROM entidades_maquinaria e
+
+                WHERE e.estado = 'ACTIVO'
+
+                ORDER BY
+                    e.nombre
+                """,
+        nativeQuery = true
+)
+List<ItemCatalogoProyeccion> obtenerEntidades();
+
+
+@Query(
+        value = """
+                SELECT
+                    m.descripcion
+
+                FROM maquinaria m
+
+                WHERE m.activo = 1
+
+                  AND (
+                        m.codigo_actual = :numeroMaquina
+                        OR m.codigo_interno = :numeroMaquina
+                        OR m.codigo_placa = :numeroMaquina
+                  )
+
+                LIMIT 1
+                """,
+        nativeQuery = true
+)
+Optional<String> obtenerDescripcionPorNumeroMaquina(
+        @Param("numeroMaquina")
+        String numeroMaquina
+);
 }

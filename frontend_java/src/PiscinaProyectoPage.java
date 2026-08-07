@@ -208,8 +208,8 @@ public class PiscinaProyectoPage extends JPanel {
             modeloTabla.setRowCount(0);
 
             for (
-                    PiscinaProyectoDAO.PiscinaResumen piscina
-                    : PiscinaProyectoDAO.obtenerActivas()
+                    PiscinaResumen piscina
+                    : PiscinaProyectoAPI.obtenerActivas()
             ) {
 
                 modeloTabla.addRow(
@@ -236,7 +236,7 @@ public class PiscinaProyectoPage extends JPanel {
 
     private void nuevaPiscina() {
 
-        JComboBox<ProyectoDAO.SectorItem> cmbSector =
+        JComboBox<SectorItem> cmbSector =
                 new JComboBox<>();
 
         JTextField txtNombre =
@@ -254,11 +254,13 @@ public class PiscinaProyectoPage extends JPanel {
         try {
 
             for (
-                    ProyectoDAO.SectorItem sector
-                    : ProyectoDAO.obtenerSectores()
+                    SectorItem sector
+                    : ProyectoAPI.obtenerSectores()
             ) {
 
-                cmbSector.addItem(sector);
+                cmbSector.addItem(
+                        sector
+                );
             }
 
         } catch (Exception e) {
@@ -290,7 +292,9 @@ public class PiscinaProyectoPage extends JPanel {
                 )
         );
 
-        datos.add(cmbSector);
+        datos.add(
+                cmbSector
+        );
 
         datos.add(
                 new JLabel(
@@ -298,7 +302,9 @@ public class PiscinaProyectoPage extends JPanel {
                 )
         );
 
-        datos.add(txtNombre);
+        datos.add(
+                txtNombre
+        );
 
         JPanel panel =
                 new JPanel(
@@ -330,15 +336,17 @@ public class PiscinaProyectoPage extends JPanel {
                 );
 
         if (
-            respuesta
-            != JOptionPane.OK_OPTION
+                respuesta
+                        != JOptionPane.OK_OPTION
         ) {
+
             return;
         }
 
-        ProyectoDAO.SectorItem sector =
-                (ProyectoDAO.SectorItem)
-                        cmbSector.getSelectedItem();
+        SectorItem sector =
+                (SectorItem)
+                        cmbSector
+                                .getSelectedItem();
 
         if (sector == null) {
 
@@ -354,10 +362,14 @@ public class PiscinaProyectoPage extends JPanel {
 
         try {
 
-            PiscinaProyectoDAO.insertar(
+            PiscinaProyectoAPI.insertar(
                     sector.idSector(),
-                    txtNombre.getText().trim(),
-                    txtDescripcion.getText().trim()
+                    txtNombre
+                            .getText()
+                            .trim(),
+                    txtDescripcion
+                            .getText()
+                            .trim()
             );
 
             cargarPiscinas();
@@ -414,24 +426,27 @@ public class PiscinaProyectoPage extends JPanel {
 
         try {
 
-            PiscinaProyectoDAO.PiscinaResumen piscina =
-                    PiscinaProyectoDAO.obtenerPorId(
-                            idPiscina
-                    );
+            PiscinaResumen piscina =
+                    PiscinaProyectoAPI
+                            .obtenerPorId(
+                                    idPiscina
+                            );
 
-            JComboBox<ProyectoDAO.SectorItem> cmbSector =
+            JComboBox<SectorItem> cmbSector =
                     new JComboBox<>();
 
             for (
-                    ProyectoDAO.SectorItem sector
-                    : ProyectoDAO.obtenerSectores()
+                    SectorItem sector
+                    : ProyectoAPI.obtenerSectores()
             ) {
 
-                cmbSector.addItem(sector);
+                cmbSector.addItem(
+                        sector
+                );
 
                 if (
-                    sector.idSector()
-                            == piscina.idSector()
+                        sector.idSector()
+                                == piscina.idSector()
                 ) {
 
                     cmbSector.setSelectedItem(
@@ -471,7 +486,9 @@ public class PiscinaProyectoPage extends JPanel {
                     )
             );
 
-            datos.add(cmbSector);
+            datos.add(
+                    cmbSector
+            );
 
             datos.add(
                     new JLabel(
@@ -479,7 +496,9 @@ public class PiscinaProyectoPage extends JPanel {
                     )
             );
 
-            datos.add(txtNombre);
+            datos.add(
+                    txtNombre
+            );
 
             JPanel panel =
                     new JPanel(
@@ -511,15 +530,17 @@ public class PiscinaProyectoPage extends JPanel {
                     );
 
             if (
-                respuesta
-                != JOptionPane.OK_OPTION
+                    respuesta
+                            != JOptionPane.OK_OPTION
             ) {
+
                 return;
             }
 
-            ProyectoDAO.SectorItem sector =
-                    (ProyectoDAO.SectorItem)
-                            cmbSector.getSelectedItem();
+            SectorItem sector =
+                    (SectorItem)
+                            cmbSector
+                                    .getSelectedItem();
 
             if (sector == null) {
 
@@ -533,11 +554,15 @@ public class PiscinaProyectoPage extends JPanel {
                 return;
             }
 
-            PiscinaProyectoDAO.actualizar(
+            PiscinaProyectoAPI.actualizar(
                     idPiscina,
                     sector.idSector(),
-                    txtNombre.getText().trim(),
-                    txtDescripcion.getText().trim()
+                    txtNombre
+                            .getText()
+                            .trim(),
+                    txtDescripcion
+                            .getText()
+                            .trim()
             );
 
             cargarPiscinas();
@@ -614,15 +639,16 @@ public class PiscinaProyectoPage extends JPanel {
                 );
 
         if (
-            respuesta
-            != JOptionPane.YES_OPTION
+                respuesta
+                        != JOptionPane.YES_OPTION
         ) {
+
             return;
         }
 
         try {
 
-            PiscinaProyectoDAO.eliminar(
+            PiscinaProyectoAPI.eliminar(
                     idPiscina
             );
 

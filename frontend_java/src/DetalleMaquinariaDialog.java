@@ -27,8 +27,8 @@ public class DetalleMaquinariaDialog extends JDialog {
 
         try {
 
-            MaquinariaDAO.MaquinariaDetalle m =
-                    MaquinariaDAO.obtenerPorId(
+           MaquinariaAPI.MaquinariaDetalle m =
+                    MaquinariaAPI.obtenerPorId(
                             idMaquinaria
                     );
 

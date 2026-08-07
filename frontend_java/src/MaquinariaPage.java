@@ -375,8 +375,8 @@ public class MaquinariaPage extends JPanel {
     try {
 
         for (
-                MaquinariaDAO.CatalogoItem tipo
-                : MaquinariaDAO.obtenerTiposMaquinaria()
+                MaquinariaAPI.CatalogoItem tipo
+                : MaquinariaAPI.obtenerTiposMaquinaria()
         ) {
 
             cmbTipoMaquina.addItem(
@@ -633,8 +633,8 @@ cargarMaquinaria();
 
         try {
 
-            List<MaquinariaDAO.MaquinariaResumen> lista =
-                    MaquinariaDAO.buscar(
+            List<MaquinariaAPI.MaquinariaResumen> lista =
+                    MaquinariaAPI.buscar(
                             estado,
                             tipoMaquinaria,
                             proveedor,
@@ -644,12 +644,12 @@ cargarMaquinaria();
             modeloTabla.setRowCount(0);
 
             for (
-                    MaquinariaDAO.MaquinariaResumen maquinaria
+                    MaquinariaAPI.MaquinariaResumen maquinaria
                             : lista
             ) {
 
-                MaquinariaDAO.MaquinariaDetalle detalle =
-                        MaquinariaDAO.obtenerPorId(
+               MaquinariaAPI.MaquinariaDetalle detalle =
+                        MaquinariaAPI.obtenerPorId(
                                 maquinaria.idMaquinaria()
                         );
 
@@ -715,7 +715,7 @@ cargarMaquinaria();
     }
 
     private String formatearCosto(
-            MaquinariaDAO.MaquinariaDetalle detalle,
+           MaquinariaAPI.MaquinariaDetalle detalle,
             String tipoCobro
     ) {
 
@@ -742,7 +742,7 @@ cargarMaquinaria();
     }
 
     private String formatearPrecio(
-            MaquinariaDAO.MaquinariaDetalle detalle,
+            MaquinariaAPI.MaquinariaDetalle detalle,
             String tipoCobro
     ) {
 
@@ -920,7 +920,7 @@ private void desactivarMaquinaria() {
 
     try {
 
-        MaquinariaDAO.desactivar(
+        MaquinariaAPI.desactivar(
                 idMaquinaria
         );
 

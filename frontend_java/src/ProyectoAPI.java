@@ -15,39 +15,385 @@ public class ProyectoAPI {
     private ProyectoAPI() {
     }
 
-    public static List<ProyectoDAO.ProyectoResumen>
-            obtenerResumen() throws Exception {
+    /*
+     * ============================================================
+     * PROYECTOS
+     * ============================================================
+     */
+
+     public static List<ProyectoResumen>
+        obtenerResumen() throws Exception {
+
+    String respuestaJson =
+            ConexionAPI.get(
+                    "/api/proyectos/resumen"
+            );
+
+    JsonObject respuesta =
+            convertirRespuesta(
+                    respuestaJson
+            );
+
+    validarRespuesta(respuesta);
+
+    List<ProyectoResumen> proyectos =
+            new ArrayList<>();
+
+    JsonArray datos =
+            obtenerArregloDatos(
+                    respuesta
+            );
+
+    if (datos == null) {
+        return proyectos;
+    }
+
+    for (JsonElement elemento : datos) {
+
+        JsonObject item =
+                elemento.getAsJsonObject();
+
+        proyectos.add(
+                new ProyectoResumen(
+                        obtenerEntero(
+                                item,
+                                "idProyecto"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "codigoProyecto"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "empresa"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "descripcion"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "sector"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "piscina"
+                        ),
+                        obtenerFecha(
+                                item,
+                                "fechaInicio"
+                        ),
+                        obtenerFecha(
+                                item,
+                                "fechaFinEstimada"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "estado"
+                        )
+                )
+        );
+    }
+
+    return proyectos;
+}
+
+    public static ProyectoDetalle
+        obtenerPorId(
+                int idProyecto
+        ) throws Exception {
 
         String respuestaJson =
                 ConexionAPI.get(
-                        "/api/proyectos/resumen"
+                        "/api/proyectos/"
+                                + idProyecto
                 );
 
         JsonObject respuesta =
-                GSON.fromJson(
-                        respuestaJson,
-                        JsonObject.class
+                convertirRespuesta(
+                        respuestaJson
                 );
 
-        if (
-                respuesta == null
-                || !respuesta.has("exito")
-                || !respuesta.get("exito").getAsBoolean()
-        ) {
+        validarRespuesta(respuesta);
+
+        JsonObject item =
+                obtenerObjetoDatos(
+                        respuesta
+                );
+
+        if (item == null) {
 
             throw new Exception(
-                    obtenerMensajeError(respuesta)
+                    "No se encontró el proyecto."
             );
         }
 
-        List<ProyectoDAO.ProyectoResumen> proyectos =
-                new ArrayList<>();
+        return new ProyectoDetalle(
+                obtenerEntero(
+                        item,
+                        "idProyecto"
+                ),
+                obtenerTexto(
+                        item,
+                        "codigoProyecto"
+                ),
+                obtenerTexto(
+                        item,
+                        "descripcion"
+                ),
+                obtenerEntero(
+                        item,
+                        "idEmpresa"
+                ),
+                obtenerEnteroNullable(
+                        item,
+                        "idSector"
+                ),
+                obtenerEnteroNullable(
+                        item,
+                        "idPiscina"
+                ),
+                obtenerTexto(
+                        item,
+                        "ordenCompra"
+                ),
+                obtenerEnteroNullable(
+                        item,
+                        "idTipoActividad"
+                ),
+                obtenerFecha(
+                        item,
+                        "fechaInicio"
+                ),
+                obtenerFecha(
+                        item,
+                        "fechaFinEstimada"
+                ),
+                obtenerFecha(
+                        item,
+                        "fechaFinReal"
+                ),
+                obtenerEnteroNullable(
+                        item,
+                        "diasEstimados"
+                ),
+                obtenerDoubleNullable(
+                        item,
+                        "areaM2"
+                ),
+                obtenerDoubleNullable(
+                        item,
+                        "espesor"
+                ),
+                obtenerDoubleNullable(
+                        item,
+                        "factorCompactacion"
+                ),
+                obtenerDoubleNullable(
+                        item,
+                        "cantidadContratada"
+                ),
+                obtenerDoubleNullable(
+                        item,
+                        "metrosLinealesContratados"
+                ),
+                obtenerDoubleNullable(
+                        item,
+                        "precioUnitario"
+                ),
+                obtenerTexto(
+                        item,
+                        "estado"
+                ),
+                obtenerTexto(
+                        item,
+                        "observaciones"
+                )
+        );
+    }
+
+    public static int crearProyecto(
+            String codigoProyecto,
+            String descripcion,
+            int idEmpresa,
+            Integer idSector,
+            Integer idPiscina,
+            String ordenCompra,
+            Integer idTipoActividad,
+            LocalDate fechaInicio,
+            LocalDate fechaFinEstimada,
+            LocalDate fechaFinReal,
+            Integer diasEstimados,
+            Double areaM2,
+            Double espesor,
+            Double factorCompactacion,
+            Double cantidadContratada,
+            Double metrosLinealesContratados,
+            Double precioUnitario,
+            String estado,
+            String observaciones
+    ) throws Exception {
+
+        JsonObject cuerpo =
+                construirCuerpoProyecto(
+                        codigoProyecto,
+                        descripcion,
+                        idEmpresa,
+                        idSector,
+                        idPiscina,
+                        ordenCompra,
+                        idTipoActividad,
+                        fechaInicio,
+                        fechaFinEstimada,
+                        fechaFinReal,
+                        diasEstimados,
+                        areaM2,
+                        espesor,
+                        factorCompactacion,
+                        cantidadContratada,
+                        metrosLinealesContratados,
+                        precioUnitario,
+                        estado,
+                        observaciones
+                );
+
+        String respuestaJson =
+                ConexionAPI.post(
+                        "/api/proyectos",
+                        GSON.toJson(cuerpo)
+                );
+
+        JsonObject respuesta =
+                convertirRespuesta(
+                        respuestaJson
+                );
+
+        validarRespuesta(respuesta);
+
+        JsonObject datos =
+                obtenerObjetoDatos(
+                        respuesta
+                );
+
+        if (
+                datos == null
+                || !datos.has("idProyecto")
+                || datos.get("idProyecto").isJsonNull()
+        ) {
+
+            throw new Exception(
+                    "El proyecto fue guardado, "
+                            + "pero la API no devolvió su ID."
+            );
+        }
+
+        return datos
+                .get("idProyecto")
+                .getAsInt();
+    }
+
+    public static void actualizarProyecto(
+            int idProyecto,
+            String codigoProyecto,
+            String descripcion,
+            int idEmpresa,
+            Integer idSector,
+            Integer idPiscina,
+            String ordenCompra,
+            Integer idTipoActividad,
+            LocalDate fechaInicio,
+            LocalDate fechaFinEstimada,
+            LocalDate fechaFinReal,
+            Integer diasEstimados,
+            Double areaM2,
+            Double espesor,
+            Double factorCompactacion,
+            Double cantidadContratada,
+            Double metrosLinealesContratados,
+            Double precioUnitario,
+            String estado,
+            String observaciones
+    ) throws Exception {
+
+        JsonObject cuerpo =
+                construirCuerpoProyecto(
+                        codigoProyecto,
+                        descripcion,
+                        idEmpresa,
+                        idSector,
+                        idPiscina,
+                        ordenCompra,
+                        idTipoActividad,
+                        fechaInicio,
+                        fechaFinEstimada,
+                        fechaFinReal,
+                        diasEstimados,
+                        areaM2,
+                        espesor,
+                        factorCompactacion,
+                        cantidadContratada,
+                        metrosLinealesContratados,
+                        precioUnitario,
+                        estado,
+                        observaciones
+                );
+
+        String respuestaJson =
+                ConexionAPI.put(
+                        "/api/proyectos/"
+                                + idProyecto,
+                        GSON.toJson(cuerpo)
+                );
+
+        JsonObject respuesta =
+                convertirRespuesta(
+                        respuestaJson
+                );
+
+        validarRespuesta(respuesta);
+    }
+
+    public static void eliminarProyecto(
+            int idProyecto
+    ) throws Exception {
+
+        ConexionAPI.delete(
+                "/api/proyectos/"
+                        + idProyecto
+        );
+    }
+
+    /*
+     * ============================================================
+     * CATÁLOGOS UTILIZADOS POR FORM PROYECTO
+     * ============================================================
+     */
+
+    public static List<EmpresaItem>
+        obtenerEmpresas() throws Exception {
+
+        String respuestaJson =
+                ConexionAPI.get(
+                        "/api/v1/proyectos/empresas"
+                );
+
+        JsonObject respuesta =
+                convertirRespuesta(
+                        respuestaJson
+                );
+
+        validarRespuesta(respuesta);
+
+        List<EmpresaItem> empresas =
+        new ArrayList<>();
 
         JsonArray datos =
-                respuesta.getAsJsonArray("datos");
+                obtenerArregloDatos(
+                        respuesta
+                );
 
         if (datos == null) {
-            return proyectos;
+            return empresas;
         }
 
         for (JsonElement elemento : datos) {
@@ -55,555 +401,427 @@ public class ProyectoAPI {
             JsonObject item =
                     elemento.getAsJsonObject();
 
-            proyectos.add(
-                    new ProyectoDAO.ProyectoResumen(
+            empresas.add(
+                    new EmpresaItem(
                             obtenerEntero(
                                     item,
-                                    "idProyecto"
+                                    "idEmpresa"
                             ),
                             obtenerTexto(
                                     item,
-                                    "codigoProyecto"
-                            ),
-                            obtenerTexto(
-                                    item,
-                                    "empresa"
-                            ),
-                            obtenerTexto(
-                                    item,
-                                    "descripcion"
-                            ),
-                            obtenerTexto(
-                                    item,
-                                    "sector"
-                            ),
-                            obtenerTexto(
-                                    item,
-                                    "piscina"
-                            ),
-                            obtenerFecha(
-                                    item,
-                                    "fechaInicio"
-                            ),
-                            obtenerFecha(
-                                    item,
-                                    "fechaFinEstimada"
-                            ),
-                            obtenerTexto(
-                                    item,
-                                    "estado"
+                                    "nombre"
                             )
                     )
             );
         }
 
-        return proyectos;
+        return empresas;
     }
 
-    public static ProyectoDAO.ProyectoDetalle
-        obtenerPorId(
-                int idProyecto
-        ) throws Exception {
+    public static List<SectorItem>
+        obtenerSectores() throws Exception {
 
     String respuestaJson =
             ConexionAPI.get(
-                    "/api/proyectos/"
-                            + idProyecto
+                    "/api/v1/proyectos/sectores"
             );
 
     JsonObject respuesta =
-            GSON.fromJson(
-                    respuestaJson,
-                    JsonObject.class
+            convertirRespuesta(
+                    respuestaJson
             );
 
-    if (
-            respuesta == null
-            || !respuesta.has("exito")
-            || !respuesta.get("exito").getAsBoolean()
-    ) {
+    validarRespuesta(respuesta);
 
-        throw new Exception(
-                obtenerMensajeError(respuesta)
+    List<SectorItem> sectores =
+            new ArrayList<>();
+
+    JsonArray datos =
+            obtenerArregloDatos(
+                    respuesta
+            );
+
+    if (datos == null) {
+        return sectores;
+    }
+
+    for (JsonElement elemento : datos) {
+
+        JsonObject item =
+                elemento.getAsJsonObject();
+
+        sectores.add(
+                new SectorItem(
+                        obtenerEntero(
+                                item,
+                                "idSector"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "nombreSector"
+                        )
+                )
         );
     }
 
-    JsonObject item =
-            respuesta.getAsJsonObject(
-                    "datos"
-            );
-
-    if (item == null) {
-
-        throw new Exception(
-                "No se encontró el proyecto."
-        );
-    }
-
-    return new ProyectoDAO.ProyectoDetalle(
-
-            obtenerEntero(
-                    item,
-                    "idProyecto"
-            ),
-
-            obtenerTexto(
-                    item,
-                    "codigoProyecto"
-            ),
-
-            obtenerTexto(
-                    item,
-                    "descripcion"
-            ),
-
-            obtenerEntero(
-                    item,
-                    "idEmpresa"
-            ),
-
-            obtenerEnteroNullable(
-                    item,
-                    "idSector"
-            ),
-
-            obtenerEnteroNullable(
-                    item,
-                    "idPiscina"
-            ),
-
-            obtenerTexto(
-                    item,
-                    "ordenCompra"
-            ),
-
-            obtenerEnteroNullable(
-                    item,
-                    "idTipoActividad"
-            ),
-
-            obtenerFecha(
-                    item,
-                    "fechaInicio"
-            ),
-
-            obtenerFecha(
-                    item,
-                    "fechaFinEstimada"
-            ),
-
-            obtenerFecha(
-                    item,
-                    "fechaFinReal"
-            ),
-
-            obtenerEnteroNullable(
-                    item,
-                    "diasEstimados"
-            ),
-
-            obtenerDoubleNullable(
-                    item,
-                    "areaM2"
-            ),
-
-            obtenerDoubleNullable(
-                    item,
-                    "espesor"
-            ),
-
-            obtenerDoubleNullable(
-                    item,
-                    "factorCompactacion"
-            ),
-
-            obtenerDoubleNullable(
-                    item,
-                    "cantidadContratada"
-            ),
-
-            obtenerDoubleNullable(
-                    item,
-                    "metrosLinealesContratados"
-            ),
-
-            obtenerDoubleNullable(
-                    item,
-                    "precioUnitario"
-            ),
-
-            obtenerTexto(
-                    item,
-                    "estado"
-            ),
-
-            obtenerTexto(
-                    item,
-                    "observaciones"
-            )
-    );
+    return sectores;
 }
-    public static int crearProyecto(
-        String codigoProyecto,
-        String descripcion,
-        int idEmpresa,
-        Integer idSector,
-        Integer idPiscina,
-        String ordenCompra,
-        Integer idTipoActividad,
-        LocalDate fechaInicio,
-        LocalDate fechaFinEstimada,
-        LocalDate fechaFinReal,
-        Integer diasEstimados,
-        Double areaM2,
-        Double espesor,
-        Double factorCompactacion,
-        Double cantidadContratada,
-        Double metrosLinealesContratados,
-        Double precioUnitario,
-        String estado,
-        String observaciones
-) throws Exception {
 
-    JsonObject cuerpo =
-            new JsonObject();
+    public static List<PiscinaItem>
+        obtenerPiscinasPorSector(
+                Integer idSector
+        ) throws Exception {
 
-    agregarTexto(
-            cuerpo,
-            "codigoProyecto",
-            codigoProyecto
-    );
+    String ruta =
+            "/api/v1/proyectos/piscinas";
 
-    agregarTexto(
-            cuerpo,
-            "descripcion",
-            descripcion
-    );
+    if (idSector != null) {
 
-    cuerpo.addProperty(
-            "idEmpresa",
-            idEmpresa
-    );
-
-    agregarEnteroNullable(
-            cuerpo,
-            "idSector",
-            idSector
-    );
-
-    agregarEnteroNullable(
-            cuerpo,
-            "idPiscina",
-            idPiscina
-    );
-
-    agregarTexto(
-            cuerpo,
-            "ordenCompra",
-            ordenCompra
-    );
-
-    agregarEnteroNullable(
-            cuerpo,
-            "idTipoActividad",
-            idTipoActividad
-    );
-
-    agregarFecha(
-            cuerpo,
-            "fechaInicio",
-            fechaInicio
-    );
-
-    agregarFecha(
-            cuerpo,
-            "fechaFinEstimada",
-            fechaFinEstimada
-    );
-
-    agregarFecha(
-            cuerpo,
-            "fechaFinReal",
-            fechaFinReal
-    );
-
-    agregarEnteroNullable(
-            cuerpo,
-            "diasEstimados",
-            diasEstimados
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "areaM2",
-            areaM2
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "espesor",
-            espesor
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "factorCompactacion",
-            factorCompactacion
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "cantidadContratada",
-            cantidadContratada
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "metrosLinealesContratados",
-            metrosLinealesContratados
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "precioUnitario",
-            precioUnitario
-    );
-
-    cuerpo.addProperty(
-            "estado",
-            estado == null || estado.isBlank()
-                    ? "PLANIFICADO"
-                    : estado
-    );
-
-    agregarTexto(
-            cuerpo,
-            "observaciones",
-            observaciones
-    );
-
-    cuerpo.addProperty(
-            "activo",
-            true
-    );
+        ruta +=
+                "?idSector="
+                        + idSector;
+    }
 
     String respuestaJson =
-            ConexionAPI.post(
-                    "/api/proyectos",
-                    GSON.toJson(cuerpo)
+            ConexionAPI.get(
+                    ruta
             );
 
     JsonObject respuesta =
-            GSON.fromJson(
-                    respuestaJson,
-                    JsonObject.class
+            convertirRespuesta(
+                    respuestaJson
             );
 
-    if (
-            respuesta == null
-            || !respuesta.has("exito")
-            || !respuesta.get("exito").getAsBoolean()
-    ) {
+    validarRespuesta(respuesta);
 
-        throw new Exception(
-                obtenerMensajeError(respuesta)
+    List<PiscinaItem> piscinas =
+            new ArrayList<>();
+
+    JsonArray datos =
+            obtenerArregloDatos(
+                    respuesta
+            );
+
+    if (datos == null) {
+        return piscinas;
+    }
+
+    for (JsonElement elemento : datos) {
+
+        JsonObject item =
+                elemento.getAsJsonObject();
+
+        piscinas.add(
+                new PiscinaItem(
+                        obtenerEntero(
+                                item,
+                                "idPiscina"
+                        ),
+                        obtenerEntero(
+                                item,
+                                "idSector"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "nombrePiscina"
+                        )
+                )
         );
     }
 
-    JsonObject datos =
-            respuesta.getAsJsonObject("datos");
-
-    if (
-            datos == null
-            || !datos.has("idProyecto")
-            || datos.get("idProyecto").isJsonNull()
-    ) {
-
-        throw new Exception(
-                "El proyecto fue guardado, pero la API no devolvió su ID."
-        );
-    }
-
-    return datos
-            .get("idProyecto")
-            .getAsInt();
+    return piscinas;
 }
-    public static void actualizarProyecto(
-        int idProyecto,
-        String codigoProyecto,
-        String descripcion,
-        int idEmpresa,
-        Integer idSector,
-        Integer idPiscina,
-        String ordenCompra,
-        Integer idTipoActividad,
-        LocalDate fechaInicio,
-        LocalDate fechaFinEstimada,
-        LocalDate fechaFinReal,
-        Integer diasEstimados,
-        Double areaM2,
-        Double espesor,
-        Double factorCompactacion,
-        Double cantidadContratada,
-        Double metrosLinealesContratados,
-        Double precioUnitario,
-        String estado,
-        String observaciones
-) throws Exception {
 
-    JsonObject cuerpo =
-            new JsonObject();
-
-    agregarTexto(
-            cuerpo,
-            "codigoProyecto",
-            codigoProyecto
-    );
-
-    agregarTexto(
-            cuerpo,
-            "descripcion",
-            descripcion
-    );
-
-    cuerpo.addProperty(
-            "idEmpresa",
-            idEmpresa
-    );
-
-    agregarEnteroNullable(
-            cuerpo,
-            "idSector",
-            idSector
-    );
-
-    agregarEnteroNullable(
-            cuerpo,
-            "idPiscina",
-            idPiscina
-    );
-
-    agregarTexto(
-            cuerpo,
-            "ordenCompra",
-            ordenCompra
-    );
-
-    agregarEnteroNullable(
-            cuerpo,
-            "idTipoActividad",
-            idTipoActividad
-    );
-
-    agregarFecha(
-            cuerpo,
-            "fechaInicio",
-            fechaInicio
-    );
-
-    agregarFecha(
-            cuerpo,
-            "fechaFinEstimada",
-            fechaFinEstimada
-    );
-
-    agregarFecha(
-            cuerpo,
-            "fechaFinReal",
-            fechaFinReal
-    );
-
-    agregarEnteroNullable(
-            cuerpo,
-            "diasEstimados",
-            diasEstimados
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "areaM2",
-            areaM2
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "espesor",
-            espesor
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "factorCompactacion",
-            factorCompactacion
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "cantidadContratada",
-            cantidadContratada
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "metrosLinealesContratados",
-            metrosLinealesContratados
-    );
-
-    agregarDoubleNullable(
-            cuerpo,
-            "precioUnitario",
-            precioUnitario
-    );
-
-    cuerpo.addProperty(
-            "estado",
-            estado == null || estado.isBlank()
-                    ? "PLANIFICADO"
-                    : estado
-    );
-
-    agregarTexto(
-            cuerpo,
-            "observaciones",
-            observaciones
-    );
-
-    cuerpo.addProperty(
-            "activo",
-            true
-    );
+    public static List<TipoActividadItem>
+        obtenerTiposActividad() throws Exception {
 
     String respuestaJson =
-            ConexionAPI.put(
-                    "/api/proyectos/" + idProyecto,
-                    GSON.toJson(cuerpo)
+            ConexionAPI.get(
+                    "/api/v1/proyectos/tipos-actividad"
             );
 
     JsonObject respuesta =
-            GSON.fromJson(
-                    respuestaJson,
-                    JsonObject.class
+            convertirRespuesta(
+                    respuestaJson
             );
 
-    if (
-            respuesta == null
-            || !respuesta.has("exito")
-            || !respuesta.get("exito").getAsBoolean()
-    ) {
+    validarRespuesta(respuesta);
 
-        throw new Exception(
-                obtenerMensajeError(respuesta)
+    List<TipoActividadItem> actividades =
+            new ArrayList<>();
+
+    JsonArray datos =
+            obtenerArregloDatos(
+                    respuesta
+            );
+
+    if (datos == null) {
+        return actividades;
+    }
+
+    for (JsonElement elemento : datos) {
+
+        JsonObject item =
+                elemento.getAsJsonObject();
+
+        actividades.add(
+                new TipoActividadItem(
+                        obtenerEntero(
+                                item,
+                                "idTipoActividad"
+                        ),
+                        obtenerTexto(
+                                item,
+                                "nombreActividad"
+                        )
+                )
         );
     }
-}
-    public static void eliminarProyecto(
-        int idProyecto
-) throws Exception {
 
-    ConexionAPI.delete(
-            "/api/proyectos/" + idProyecto
-    );
+    return actividades;
 }
+    /*
+     * ============================================================
+     * MÉTODOS AUXILIARES
+     * ============================================================
+     */
+
+    private static JsonObject construirCuerpoProyecto(
+            String codigoProyecto,
+            String descripcion,
+            int idEmpresa,
+            Integer idSector,
+            Integer idPiscina,
+            String ordenCompra,
+            Integer idTipoActividad,
+            LocalDate fechaInicio,
+            LocalDate fechaFinEstimada,
+            LocalDate fechaFinReal,
+            Integer diasEstimados,
+            Double areaM2,
+            Double espesor,
+            Double factorCompactacion,
+            Double cantidadContratada,
+            Double metrosLinealesContratados,
+            Double precioUnitario,
+            String estado,
+            String observaciones
+    ) {
+
+        JsonObject cuerpo =
+                new JsonObject();
+
+        agregarTexto(
+                cuerpo,
+                "codigoProyecto",
+                codigoProyecto
+        );
+
+        agregarTexto(
+                cuerpo,
+                "descripcion",
+                descripcion
+        );
+
+        cuerpo.addProperty(
+                "idEmpresa",
+                idEmpresa
+        );
+
+        agregarEnteroNullable(
+                cuerpo,
+                "idSector",
+                idSector
+        );
+
+        agregarEnteroNullable(
+                cuerpo,
+                "idPiscina",
+                idPiscina
+        );
+
+        agregarTexto(
+                cuerpo,
+                "ordenCompra",
+                ordenCompra
+        );
+
+        agregarEnteroNullable(
+                cuerpo,
+                "idTipoActividad",
+                idTipoActividad
+        );
+
+        agregarFecha(
+                cuerpo,
+                "fechaInicio",
+                fechaInicio
+        );
+
+        agregarFecha(
+                cuerpo,
+                "fechaFinEstimada",
+                fechaFinEstimada
+        );
+
+        agregarFecha(
+                cuerpo,
+                "fechaFinReal",
+                fechaFinReal
+        );
+
+        agregarEnteroNullable(
+                cuerpo,
+                "diasEstimados",
+                diasEstimados
+        );
+
+        agregarDoubleNullable(
+                cuerpo,
+                "areaM2",
+                areaM2
+        );
+
+        agregarDoubleNullable(
+                cuerpo,
+                "espesor",
+                espesor
+        );
+
+        agregarDoubleNullable(
+                cuerpo,
+                "factorCompactacion",
+                factorCompactacion
+        );
+
+        agregarDoubleNullable(
+                cuerpo,
+                "cantidadContratada",
+                cantidadContratada
+        );
+
+        agregarDoubleNullable(
+                cuerpo,
+                "metrosLinealesContratados",
+                metrosLinealesContratados
+        );
+
+        agregarDoubleNullable(
+                cuerpo,
+                "precioUnitario",
+                precioUnitario
+        );
+
+        cuerpo.addProperty(
+                "estado",
+                estado == null
+                        || estado.isBlank()
+                        ? "PLANIFICADO"
+                        : estado
+        );
+
+        agregarTexto(
+                cuerpo,
+                "observaciones",
+                observaciones
+        );
+
+        cuerpo.addProperty(
+                "activo",
+                true
+        );
+
+        return cuerpo;
+    }
+
+    private static JsonObject convertirRespuesta(
+            String respuestaJson
+    ) throws Exception {
+
+        if (
+                respuestaJson == null
+                || respuestaJson.isBlank()
+        ) {
+
+            throw new Exception(
+                    "La API no devolvió una respuesta."
+            );
+        }
+
+        JsonObject respuesta =
+                GSON.fromJson(
+                        respuestaJson,
+                        JsonObject.class
+                );
+
+        if (respuesta == null) {
+
+            throw new Exception(
+                    "La API no devolvió una respuesta válida."
+            );
+        }
+
+        return respuesta;
+    }
+
+    private static void validarRespuesta(
+            JsonObject respuesta
+    ) throws Exception {
+
+        if (
+                respuesta == null
+                || !respuesta.has("exito")
+                || respuesta.get("exito").isJsonNull()
+                || !respuesta
+                        .get("exito")
+                        .getAsBoolean()
+        ) {
+
+            throw new Exception(
+                    obtenerMensajeError(
+                            respuesta
+                    )
+            );
+        }
+    }
+
+    private static JsonArray obtenerArregloDatos(
+            JsonObject respuesta
+    ) {
+
+        if (
+                respuesta == null
+                || !respuesta.has("datos")
+                || respuesta.get("datos").isJsonNull()
+        ) {
+
+            return null;
+        }
+
+        return respuesta
+                .getAsJsonArray(
+                        "datos"
+                );
+    }
+
+    private static JsonObject obtenerObjetoDatos(
+            JsonObject respuesta
+    ) {
+
+        if (
+                respuesta == null
+                || !respuesta.has("datos")
+                || respuesta.get("datos").isJsonNull()
+        ) {
+
+            return null;
+        }
+
+        return respuesta
+                .getAsJsonObject(
+                        "datos"
+                );
+    }
 
     private static String obtenerMensajeError(
             JsonObject respuesta
@@ -661,6 +879,44 @@ public class ProyectoAPI {
                 .getAsInt();
     }
 
+    private static Integer obtenerEnteroNullable(
+            JsonObject objeto,
+            String propiedad
+    ) {
+
+        if (
+                objeto == null
+                || !objeto.has(propiedad)
+                || objeto.get(propiedad).isJsonNull()
+        ) {
+
+            return null;
+        }
+
+        return objeto
+                .get(propiedad)
+                .getAsInt();
+    }
+
+    private static Double obtenerDoubleNullable(
+            JsonObject objeto,
+            String propiedad
+    ) {
+
+        if (
+                objeto == null
+                || !objeto.has(propiedad)
+                || objeto.get(propiedad).isJsonNull()
+        ) {
+
+            return null;
+        }
+
+        return objeto
+                .get(propiedad)
+                .getAsDouble();
+    }
+
     private static LocalDate obtenerFecha(
             JsonObject objeto,
             String propiedad
@@ -676,131 +932,99 @@ public class ProyectoAPI {
             return null;
         }
 
-        return LocalDate.parse(valor);
-    }
-    private static Integer obtenerEnteroNullable(
-        JsonObject objeto,
-        String propiedad
-) {
-
-    if (
-            objeto == null
-            || !objeto.has(propiedad)
-            || objeto.get(propiedad).isJsonNull()
-    ) {
-        return null;
+        return LocalDate.parse(
+                valor
+        );
     }
 
-    return objeto
-            .get(propiedad)
-            .getAsInt();
-}
-
-private static Double obtenerDoubleNullable(
-        JsonObject objeto,
-        String propiedad
-) {
-
-    if (
-            objeto == null
-            || !objeto.has(propiedad)
-            || objeto.get(propiedad).isJsonNull()
-    ) {
-        return null;
-    }
-
-    return objeto
-            .get(propiedad)
-            .getAsDouble();
-}
     private static void agregarTexto(
-        JsonObject objeto,
-        String propiedad,
-        String valor
-) {
-
-    if (
-            valor == null
-            || valor.isBlank()
+            JsonObject objeto,
+            String propiedad,
+            String valor
     ) {
 
-        objeto.add(
-                propiedad,
-                com.google.gson.JsonNull.INSTANCE
-        );
+        if (
+                valor == null
+                || valor.isBlank()
+        ) {
 
-    } else {
+            objeto.add(
+                    propiedad,
+                    com.google.gson.JsonNull.INSTANCE
+            );
 
-        objeto.addProperty(
-                propiedad,
-                valor.trim()
-        );
+        } else {
+
+            objeto.addProperty(
+                    propiedad,
+                    valor.trim()
+            );
+        }
     }
-}
 
-private static void agregarEnteroNullable(
-        JsonObject objeto,
-        String propiedad,
-        Integer valor
-) {
+    private static void agregarEnteroNullable(
+            JsonObject objeto,
+            String propiedad,
+            Integer valor
+    ) {
 
-    if (valor == null) {
+        if (valor == null) {
 
-        objeto.add(
-                propiedad,
-                com.google.gson.JsonNull.INSTANCE
-        );
+            objeto.add(
+                    propiedad,
+                    com.google.gson.JsonNull.INSTANCE
+            );
 
-    } else {
+        } else {
 
-        objeto.addProperty(
-                propiedad,
-                valor
-        );
+            objeto.addProperty(
+                    propiedad,
+                    valor
+            );
+        }
     }
-}
 
-private static void agregarDoubleNullable(
-        JsonObject objeto,
-        String propiedad,
-        Double valor
-) {
+    private static void agregarDoubleNullable(
+            JsonObject objeto,
+            String propiedad,
+            Double valor
+    ) {
 
-    if (valor == null) {
+        if (valor == null) {
 
-        objeto.add(
-                propiedad,
-                com.google.gson.JsonNull.INSTANCE
-        );
+            objeto.add(
+                    propiedad,
+                    com.google.gson.JsonNull.INSTANCE
+            );
 
-    } else {
+        } else {
 
-        objeto.addProperty(
-                propiedad,
-                valor
-        );
+            objeto.addProperty(
+                    propiedad,
+                    valor
+            );
+        }
     }
-}
 
-private static void agregarFecha(
-        JsonObject objeto,
-        String propiedad,
-        LocalDate valor
-) {
+    private static void agregarFecha(
+            JsonObject objeto,
+            String propiedad,
+            LocalDate valor
+    ) {
 
-    if (valor == null) {
+        if (valor == null) {
 
-        objeto.add(
-                propiedad,
-                com.google.gson.JsonNull.INSTANCE
-        );
+            objeto.add(
+                    propiedad,
+                    com.google.gson.JsonNull.INSTANCE
+            );
 
-    } else {
+        } else {
 
-        objeto.addProperty(
-                propiedad,
-                valor.toString()
-        );
+            objeto.addProperty(
+                    propiedad,
+                    valor.toString()
+            );
+        }
     }
-}
 }

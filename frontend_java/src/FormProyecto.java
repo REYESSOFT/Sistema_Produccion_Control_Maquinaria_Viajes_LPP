@@ -11,19 +11,20 @@ import javax.swing.text.DocumentFilter;
 
 public class FormProyecto extends JDialog {
 
-    private JComboBox<ProyectoDAO.EmpresaItem> cmbEmpresa;
-    private JComboBox<String> cmbEstado;
+    private JComboBox<EmpresaItem> cmbEmpresa;
+private JComboBox<String> cmbEstado;
 
-    private JTextField txtCodigo;
-    private JTextField txtDescripcion;
-    private JComboBox<ProyectoDAO.SectorItem>
-            cmbSector;
+private JTextField txtCodigo;
+private JTextField txtDescripcion;
 
-    private JComboBox<ProyectoDAO.PiscinaItem>
-            cmbPiscina;
+private JComboBox<SectorItem>
+        cmbSector;
 
-    private JComboBox<ProyectoDAO.TipoActividadItem>
-            cmbTipoActividad;
+private JComboBox<PiscinaItem>
+        cmbPiscina;
+
+private JComboBox<TipoActividadItem>
+        cmbTipoActividad;
     private JTextField txtOrdenCompra;
     
     private JTextField txtFechaInicio;
@@ -335,12 +336,12 @@ setContentPane(principal);
             cmbEmpresa.removeAllItems();
 
             for (
-                    ProyectoDAO.EmpresaItem empresa
-                    : ProyectoDAO.obtenerEmpresas()
-            ) {
+        EmpresaItem empresa
+        : ProyectoAPI.obtenerEmpresas()
+) {
 
-                cmbEmpresa.addItem(empresa);
-            }
+    cmbEmpresa.addItem(empresa);
+}
 
         } catch (Exception e) {
 
@@ -389,9 +390,9 @@ setContentPane(principal);
             return;
         }
 
-        ProyectoDAO.EmpresaItem empresa =
-                (ProyectoDAO.EmpresaItem)
-                        cmbEmpresa.getSelectedItem();
+        EmpresaItem empresa =
+        (EmpresaItem)
+                cmbEmpresa.getSelectedItem();
 
         if (empresa == null) {
 
@@ -405,16 +406,16 @@ setContentPane(principal);
             return;
         }
 
-        ProyectoDAO.SectorItem sector =
-        (ProyectoDAO.SectorItem)
+        SectorItem sector =
+        (SectorItem)
                 cmbSector.getSelectedItem();
 
-ProyectoDAO.PiscinaItem piscina =
-        (ProyectoDAO.PiscinaItem)
+PiscinaItem piscina =
+        (PiscinaItem)
                 cmbPiscina.getSelectedItem();
 
-ProyectoDAO.TipoActividadItem actividad =
-        (ProyectoDAO.TipoActividadItem)
+TipoActividadItem actividad =
+        (TipoActividadItem)
                 cmbTipoActividad.getSelectedItem();
 
 Integer idSector =
@@ -438,7 +439,7 @@ Integer idTipoActividad =
     idProyectoEdicion == null
 ) {
 
-    ProyectoDAO.insertar(
+    ProyectoAPI.crearProyecto(
             codigo,
             descripcion,
             empresa.idEmpresa(),
@@ -484,7 +485,7 @@ convertirDecimal(
 
 } else {
 
-    ProyectoDAO.actualizar(
+    ProyectoAPI.actualizarProyecto(
             idProyectoEdicion,
             codigo,
             descripcion,
@@ -869,10 +870,10 @@ private void cargarDatosEdicion() {
 
     try {
 
-        ProyectoDAO.ProyectoDetalle proyecto =
-                ProyectoDAO.obtenerPorId(
-                        idProyectoEdicion
-                );
+        ProyectoDetalle proyecto =
+        ProyectoAPI.obtenerPorId(
+                idProyectoEdicion
+        );
 
         txtCodigo.setText(
                 proyecto.codigoProyecto()
@@ -989,8 +990,8 @@ private void seleccionarEmpresa(
             i++
     ) {
 
-        ProyectoDAO.EmpresaItem item =
-                cmbEmpresa.getItemAt(i);
+        EmpresaItem item =
+        cmbEmpresa.getItemAt(i);
 
         if (
             item.idEmpresa() == idEmpresa
@@ -1015,8 +1016,8 @@ private void seleccionarSector(
             i++
     ) {
 
-        ProyectoDAO.SectorItem item =
-                cmbSector.getItemAt(i);
+         SectorItem item =
+        cmbSector.getItemAt(i);
 
         if (
             item.idSector() == idSector
@@ -1041,8 +1042,8 @@ private void seleccionarPiscina(
             i++
     ) {
 
-        ProyectoDAO.PiscinaItem item =
-                cmbPiscina.getItemAt(i);
+        PiscinaItem item =
+        cmbPiscina.getItemAt(i);
 
         if (
             item.idPiscina() == idPiscina
@@ -1067,8 +1068,8 @@ private void seleccionarTipoActividad(
             i++
     ) {
 
-        ProyectoDAO.TipoActividadItem item =
-                cmbTipoActividad.getItemAt(i);
+        TipoActividadItem item =
+        cmbTipoActividad.getItemAt(i);
 
         if (
             item.idTipoActividad()
@@ -1290,12 +1291,12 @@ private void cargarSectores() {
         cmbSector.removeAllItems();
 
         for (
-                ProyectoDAO.SectorItem sector
-                : ProyectoDAO.obtenerSectores()
-        ) {
+        SectorItem sector
+        : ProyectoAPI.obtenerSectores()
+) {
 
-            cmbSector.addItem(sector);
-        }
+    cmbSector.addItem(sector);
+}
 
         cargarPiscinas();
 
@@ -1316,9 +1317,9 @@ private void cargarPiscinas() {
 
         cmbPiscina.removeAllItems();
 
-        ProyectoDAO.SectorItem sector =
-                (ProyectoDAO.SectorItem)
-                        cmbSector.getSelectedItem();
+        SectorItem sector =
+        (SectorItem)
+                cmbSector.getSelectedItem();
 
         Integer idSector =
                 sector == null
@@ -1326,14 +1327,14 @@ private void cargarPiscinas() {
                         : sector.idSector();
 
         for (
-                ProyectoDAO.PiscinaItem piscina
-                : ProyectoDAO.obtenerPiscinasPorSector(
-                        idSector
-                )
-        ) {
+        PiscinaItem piscina
+        : ProyectoAPI.obtenerPiscinasPorSector(
+                idSector
+        )
+) {
 
-            cmbPiscina.addItem(piscina);
-        }
+    cmbPiscina.addItem(piscina);
+}
 
     } catch (Exception e) {
 
@@ -1353,14 +1354,14 @@ private void cargarTiposActividad() {
         cmbTipoActividad.removeAllItems();
 
         for (
-                ProyectoDAO.TipoActividadItem actividad
-                : ProyectoDAO.obtenerTiposActividad()
-        ) {
+        TipoActividadItem actividad
+        : ProyectoAPI.obtenerTiposActividad()
+) {
 
-            cmbTipoActividad.addItem(
-                    actividad
-            );
-        }
+    cmbTipoActividad.addItem(
+            actividad
+    );
+}
 
     } catch (Exception e) {
 
